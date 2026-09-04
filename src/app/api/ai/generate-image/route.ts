@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       });
       if (brand?.logo) {
         logoUrl = brand.logo;
-        logoPosition = (brand.logoPosition as typeof logoPosition) || undefined;
+        layoutArchetypes: brand.styleGuide.layoutArchetypes as unknown as StyleGuideData["layoutArchetypes"],
         logoScale = brand.logoScale ?? undefined;
       }
       if (brand?.styleGuide) {
