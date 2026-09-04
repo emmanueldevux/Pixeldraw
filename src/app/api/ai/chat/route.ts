@@ -79,8 +79,7 @@ export async function POST(request: Request) {
           include: { styleGuide: true },
         });
 
-        loadedBrand = brand;
-
+loadedBrand = brand as any;
         if (brand?.styleGuide) {
           const refImages = brand.styleGuide.referenceImages;
           console.log("[CHAT] 📋 Style guide loaded for:", brand.name, `(brand id: ${brand.id})`);
