@@ -6,13 +6,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-
-export const maxDuration = 300;
 import { db } from "@/lib/db";
 import { openaiGenerateImage } from "@/lib/ai/providers/openai";
 import { togetherGenerateImage } from "@/lib/ai/providers/together";
 import type { ImageSize } from "@/types";
-import type { LogoPosition } from "@/lib/ai/logoComposite";
 
 export async function POST(request: Request) {
   try {
@@ -36,7 +33,7 @@ export async function POST(request: Request) {
     // Brand lookup — loads both the logo (for compositing) AND the style
     // guide colors, so brand colors apply here too, not just in chat.
     let logoUrl: string | null = null;
-    let logoPosition: LogoPosition | undefined = undefined;
+    let logoPosition: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | undefined = undefined;
     let logoScale: number | undefined = undefined;
     let brandStyleGuide: Record<string, unknown> | null = null;
 
@@ -47,7 +44,7 @@ export async function POST(request: Request) {
       });
       if (brand?.logo) {
         logoUrl = brand.logo;
-        logoPosition = (brand.logoPosition as unknown as LogoPosition) || undefined;
+        logoPosition = (brand.logoPosition as unknown as typeof logoPosition) || undefined;
         logoScale = brand.logoScale ?? undefined;
       }
       if (brand?.styleGuide) {
