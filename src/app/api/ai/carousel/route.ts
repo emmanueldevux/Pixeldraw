@@ -69,7 +69,7 @@ export async function POST(request: Request) {
           tone: sg.tone as StyleGuideData["tone"],
           extraNotes: sg.extraNotes ?? undefined,
           rawMarkdown: sg.rawMarkdown ?? undefined,
-          layoutArchetypes: sg.layoutArchetypes as LayoutArchetype[] | undefined,
+          layoutArchetypes: sg.layoutArchetypes as unknown as LayoutArchetype[] | undefined,
         }
       : null;
 
