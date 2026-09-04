@@ -81,8 +81,9 @@ export async function POST(request: Request) {
     if (Array.isArray(referenceImages) && referenceImages.length > 0) {
       resolvedReferences = referenceImages;
       console.log("[CAROUSEL API] 📸 Using carousel-specific references:", resolvedReferences.length);
-    } else if (Array.isArray(sg?.generationPool) && (sg?.generationPool as string[]).length > 0) {
-      resolvedReferences = sg!.generationPool as string[];
+    } else if (Array.isArray((sg as any)?.generationPool) && ((sg as any)?.generationPool as string[]).length > 0) {
+  resolvedReferences = (sg as any)!.generationPool as string[];
+
       console.log("[CAROUSEL API] 📸 Falling back to brand generation pool:", resolvedReferences.length);
     } else if (Array.isArray(sg?.referenceImages) && (sg?.referenceImages as string[]).length > 0) {
       resolvedReferences = sg!.referenceImages as string[];
