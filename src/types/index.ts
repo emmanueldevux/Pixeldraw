@@ -157,20 +157,11 @@ export interface JobConfig {
 
 // ==================== Chat Types ====================
 
-export interface CarouselSlideMessage {
-  slideNumber: number;
-  role: string;
-  headline: string;
-  body: string;
-  imageUrl: string;
-}
-
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
   imageUrl?: string | null;
-  carouselSlides?: CarouselSlideMessage[] | null;
   createdAt: Date;
   isLoading?: boolean;
 }

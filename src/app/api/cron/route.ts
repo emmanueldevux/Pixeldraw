@@ -13,6 +13,7 @@ import { sendContentEmail } from "@/lib/delivery/email";
 import { sendTelegramContent } from "@/lib/delivery/telegram";
 import { extractImagePrompt } from "@/lib/utils";
 import type { AIMessage, ImageSize } from "@/types";
+import type { LogoPosition } from "@/lib/ai/logoComposite";
 
 export async function GET(request: Request) {
   // Verify cron secret
@@ -41,7 +42,20 @@ export async function GET(request: Request) {
           {
             brandName: job.channel.brand.name,
             platform: job.platform,
-            styleGuide: job.channel.brand.styleGuide || null,
+            styleGuide: job.channel.brand.styleGuide
+              ? {
+                  primaryColor: job.channel.brand.styleGuide.primaryColor,
+                  secondaryColor: job.channel.brand.styleGuide.secondaryColor,
+                  accentColor: job.channel.brand.styleGuide.accentColor,
+                  backgroundColor: job.channel.brand.styleGuide.backgroundColor ?? undefined,
+                  headingFont: job.channel.brand.styleGuide.headingFont,
+                  tone: job.channel.brand.styleGuide.tone as unknown as
+                    | "professional" | "casual" | "bold" | "minimal" | "playful"
+                    | undefined,
+                  extraNotes: job.channel.brand.styleGuide.extraNotes ?? undefined,
+                  rawMarkdown: job.channel.brand.styleGuide.rawMarkdown ?? undefined,
+                }
+              : null,
           }
         );
 
@@ -68,13 +82,12 @@ export async function GET(request: Request) {
                   accentColor: brand.styleGuide.accentColor,
                   backgroundColor: brand.styleGuide.backgroundColor ?? undefined,
                   headingFont: brand.styleGuide.headingFont,
-                  tone: brand.styleGuide.tone as
+                  tone: brand.styleGuide.tone as unknown as
                     | "professional" | "casual" | "bold" | "minimal" | "playful",
                 }
               : null,
             logoUrl: brand.logo || null,
-            logoPosition: (brand.logoPosition || undefined) as
-              | "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | undefined,
+            logoPosition: (brand.logoPosition as unknown as LogoPosition) || undefined,
             logoScale: brand.logoScale ?? undefined,
           });
           imageUrl = img.url;

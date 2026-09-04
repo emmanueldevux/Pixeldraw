@@ -74,7 +74,7 @@ export async function generateCarouselSlides(params: {
   const direction = await pickCreativeDirection(
     client,
     plan.topic,
-    (styleGuide?.layoutArchetypes as LayoutArchetype[] | undefined) || null,
+    (styleGuide?.layoutArchetypes as unknown as LayoutArchetype[] | undefined) || null,
     styleGuide?.tone
   );
   const lockedBackgroundPattern = direction.backgroundPattern;
@@ -108,7 +108,7 @@ export async function generateCarouselSlides(params: {
       const slideDirection = await pickCreativeDirection(
         client,
         `${slide.headline}. ${slide.body}`,
-        (styleGuide?.layoutArchetypes as LayoutArchetype[] | undefined) || null,
+        (styleGuide?.layoutArchetypes as unknown as LayoutArchetype[] | undefined) || null,
         styleGuide?.tone
       );
 

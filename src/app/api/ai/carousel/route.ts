@@ -6,6 +6,12 @@
 // ============================================================
 
 import { NextResponse } from "next/server";
+
+// Vercel: a carousel generates several slides sequentially at ~100-130s
+// each — this can genuinely run long. 300 is safe on Pro+Fluid Compute
+// for shorter carousels; if you're regularly generating 7+ slides,
+// raise this toward Pro's 800s ceiling (requires Fluid Compute enabled).
+export const maxDuration = 300;
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -81,12 +87,14 @@ export async function POST(request: Request) {
     if (Array.isArray(referenceImages) && referenceImages.length > 0) {
       resolvedReferences = referenceImages;
       console.log("[CAROUSEL API] 📸 Using carousel-specific references:", resolvedReferences.length);
-    } else if (Array.isArray((sg as any)?.generationPool) && ((sg as any)?.generationPool as string[]).length > 0) {
-  resolvedReferences = (sg as any)!.generationPool as string[];
-
+    } else if (
+      Array.isArray((sg as unknown as { generationPool?: unknown } | null)?.generationPool) &&
+      ((sg as unknown as { generationPool?: unknown[] } | null)?.generationPool?.length ?? 0) > 0
+    ) {
+      resolvedReferences = (sg as unknown as { generationPool: string[] }).generationPool;
       console.log("[CAROUSEL API] 📸 Falling back to brand generation pool:", resolvedReferences.length);
-    } else if (Array.isArray(sg?.referenceImages) && (sg?.referenceImages as string[]).length > 0) {
-      resolvedReferences = sg!.referenceImages as string[];
+    } else if (Array.isArray(sg?.referenceImages) && (sg?.referenceImages as unknown as string[]).length > 0) {
+      resolvedReferences = sg!.referenceImages as unknown as string[];
       console.log("[CAROUSEL API] 📸 Falling back to raw reference board:", resolvedReferences.length);
     } else {
       console.log("[CAROUSEL API] 📸 No references available — text-only generation");
@@ -112,7 +120,7 @@ export async function POST(request: Request) {
       brandName: brand.name,
       size: imageSize,
       logoUrl: brand.logo || null,
-      logoPosition: (brand.logoPosition as LogoPosition | null) || undefined,
+      logoPosition: (brand.logoPosition as unknown as LogoPosition | null) || undefined,
       logoScale: brand.logoScale ?? undefined,
     });
 

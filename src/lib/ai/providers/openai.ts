@@ -21,7 +21,7 @@ import { compositeLogo, pickLogoPlacement, type LogoPosition } from "@/lib/ai/lo
 import { getFontStyleDescriptor } from "@/lib/fonts";
 import type { LayoutArchetype } from "@/types";
 
-export function getClient(): OpenAI {
+function getClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
   return new OpenAI({ apiKey });
@@ -32,7 +32,7 @@ export function getClient(): OpenAI {
 // especially on the larger reference-image payloads sent to images.edit.
 // One retry with a short delay recovers most of these transient drops
 // without falling all the way back to the no-reference generation path.
-export async function withRetry<T>(fn: () => Promise<T>, attempts = 2, delayMs = 1500): Promise<T> {
+async function withRetry<T>(fn: () => Promise<T>, attempts = 2, delayMs = 1500): Promise<T> {
   let lastErr: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
@@ -162,14 +162,19 @@ export async function openaiGenerateImage(
 
 // ==================== STRUCTURED PIPELINE ====================
 
-// ==================== Extract Visual DNA (Step 1, reusable) ====================
-// Factored out so the carousel pipeline can call this once and reuse the
-// result across all slides, instead of every consumer needing its own copy.
-
-export async function extractVisualDNA(
+async function structuredPipeline(
   client: OpenAI,
-  referenceImages: string[]
-): Promise<Record<string, unknown>> {
+  userPrompt: string,
+  referenceImages: string[],
+  style: Partial<StyleGuideData> | null | undefined,
+  size: "1024x1024" | "1024x1536" | "1536x1024",
+  platform?: string,
+  brandName?: string | null
+): Promise<ImageGenerationResponse> {
+
+  // ========== STEP 1: Reference → Base Prompt JSON ==========
+  console.log("[OPENAI] Step 1: Extracting visual DNA from reference...");
+
   const visionContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
 
   // Sample randomly from the reference pool for analysis — with a grid
@@ -221,55 +226,11 @@ CRITICAL: The brand's own colors will be applied separately and MUST override an
   try {
     const cleaned = rawJSON.replace(/```json\n?|```\n?/g, "").trim();
     basePromptJSON = JSON.parse(cleaned);
-    console.log("[OPENAI] Visual DNA extracted:", Object.keys(basePromptJSON).join(", "));
+    console.log("[OPENAI] Step 1 done. Visual DNA extracted:", Object.keys(basePromptJSON).join(", "));
   } catch {
-    console.log("[OPENAI] Visual DNA: JSON parse failed, using raw text");
+    console.log("[OPENAI] Step 1: JSON parse failed, using raw text");
     basePromptJSON = { raw_description: rawJSON };
   }
-
-  return basePromptJSON;
-}
-
-// ==================== Prepare Desaturated Reference (reusable) ====================
-// Picks one reference at random and strips its color, same as Step 4 of
-// the single-image pipeline — factored out so the carousel pipeline can
-// call this ONCE and reuse the same edit-base image across every slide,
-// instead of a different random reference winning per slide (which would
-// break visual cohesion across the set).
-
-export async function prepareDesaturatedReference(
-  referenceImages: string[]
-): Promise<{ editRef: string; imageBuffer: Buffer } | null> {
-  if (referenceImages.length === 0) return null;
-
-  const editIdx = Math.floor(Math.random() * referenceImages.length);
-  const editRef = referenceImages[editIdx];
-  console.log("[OPENAI] Carousel — locked reference at index", editIdx, "of", referenceImages.length);
-
-  let refUrl = editRef;
-  if (refUrl.startsWith("data:") && !refUrl.match(/^data:image\/(png|jpeg|gif|webp)/)) {
-    refUrl = refUrl.replace(/^data:[^;]+;/, "data:image/jpeg;");
-  }
-  const base64Data = refUrl.replace(/^data:image\/\w+;base64,/, "");
-  const rawImageBuffer = Buffer.from(base64Data, "base64");
-  const imageBuffer = await sharp(rawImageBuffer).modulate({ saturation: 0 }).png().toBuffer();
-
-  return { editRef, imageBuffer };
-}
-
-async function structuredPipeline(
-  client: OpenAI,
-  userPrompt: string,
-  referenceImages: string[],
-  style: Partial<StyleGuideData> | null | undefined,
-  size: "1024x1024" | "1024x1536" | "1536x1024",
-  platform?: string,
-  brandName?: string | null
-): Promise<ImageGenerationResponse> {
-
-  // ========== STEP 1: Reference → Base Prompt JSON ==========
-  console.log("[OPENAI] Step 1: Extracting visual DNA from reference...");
-  const basePromptJSON = await extractVisualDNA(client, referenceImages);
 
   // ========== STEP 1.5: Creative Direction (layout + background variety) ==========
   // This is what stops every generation from reusing the same composition.
@@ -404,7 +365,7 @@ let refUrl = editRef;
 
 // ==================== Build Final Prompt from JSON + Brand ==========
 
-export function buildFinalPrompt(
+function buildFinalPrompt(
   visualDNA: Record<string, unknown>,
   brand: {
     content: string;

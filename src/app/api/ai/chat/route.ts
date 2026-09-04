@@ -6,6 +6,12 @@
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+
+// Vercel: generation regularly takes 100-130s. Requires Fluid Compute
+// enabled on the project (Vercel dashboard → Settings → Functions) —
+// without it, this value is capped much lower (10-60s) and every
+// generation will time out with a 504 regardless of this setting.
+export const maxDuration = 300;
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { aiComplete } from "@/lib/ai/provider";
@@ -14,6 +20,7 @@ import { extractImagePrompt } from "@/lib/utils";
 import { openaiGenerateImage } from "@/lib/ai/providers/openai";
 import { togetherGenerateImage } from "@/lib/ai/providers/together";
 import type { AIMessage, ImageSize, StyleGuideData } from "@/types";
+import type { LogoPosition } from "@/lib/ai/logoComposite";
 
 // Pick the right image provider based on what's configured
 async function generateImage(
@@ -30,7 +37,7 @@ async function generateImage(
   const provider = process.env.IMAGE_PROVIDER || "together";
   const logoOpts = {
     logoUrl,
-    logoPosition: (logoPosition || undefined) as "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | undefined,
+    logoPosition: (logoPosition as unknown as LogoPosition) || undefined,
     logoScale: logoScale ?? undefined,
   };
 
@@ -68,7 +75,7 @@ export async function POST(request: Request) {
       logo: string | null;
       logoPosition: string;
       logoScale: number;
-      styleGuide: { referenceImages: unknown; generationPool: unknown } | null;
+      styleGuide: { referenceImages: unknown; generationPool?: unknown } | null;
     } | null = null;
 
     const lookupId = brandId;
@@ -79,7 +86,8 @@ export async function POST(request: Request) {
           include: { styleGuide: true },
         });
 
-loadedBrand = brand as any;
+        loadedBrand = brand;
+
         if (brand?.styleGuide) {
           const refImages = brand.styleGuide.referenceImages;
           console.log("[CHAT] 📋 Style guide loaded for:", brand.name, `(brand id: ${brand.id})`);
