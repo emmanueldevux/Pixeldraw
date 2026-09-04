@@ -104,7 +104,7 @@ loadedBrand = brand as any;
             tone: brand.styleGuide.tone,
             extraNotes: brand.styleGuide.extraNotes,
             rawMarkdown: brand.styleGuide.rawMarkdown,
-            layoutArchetypes: brand.styleGuide.layoutArchetypes as StyleGuideData["layoutArchetypes"],
+            layoutArchetypes: brand.styleGuide.layoutArchetypes as unknown as StyleGuideData["layoutArchetypes"],
           };
         } else {
           console.log("[CHAT] ⚠️ Brand found but no style guide");
