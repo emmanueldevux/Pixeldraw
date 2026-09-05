@@ -72,7 +72,7 @@ export async function POST(request: Request) {
           accentColor: sg.accentColor,
           backgroundColor: sg.backgroundColor ?? undefined,
           headingFont: sg.headingFont,
-          tone: sg.tone as StyleGuideData["tone"],
+          tone: sg.tone as unknown as StyleGuideData["tone"],
           extraNotes: sg.extraNotes ?? undefined,
           rawMarkdown: sg.rawMarkdown ?? undefined,
           layoutArchetypes: sg.layoutArchetypes as unknown as LayoutArchetype[] | undefined,
@@ -87,11 +87,8 @@ export async function POST(request: Request) {
     if (Array.isArray(referenceImages) && referenceImages.length > 0) {
       resolvedReferences = referenceImages;
       console.log("[CAROUSEL API] 📸 Using carousel-specific references:", resolvedReferences.length);
-    } else if (
-      Array.isArray((sg as unknown as { generationPool?: unknown } | null)?.generationPool) &&
-      ((sg as unknown as { generationPool?: unknown[] } | null)?.generationPool?.length ?? 0) > 0
-    ) {
-      resolvedReferences = (sg as unknown as { generationPool: string[] }).generationPool;
+    } else if (Array.isArray((sg as any)?.generationPool) && ((sg as any)?.generationPool as string[]).length > 0) {
+  resolvedReferences = (sg as any)!.generationPool as string[];
       console.log("[CAROUSEL API] 📸 Falling back to brand generation pool:", resolvedReferences.length);
     } else if (Array.isArray(sg?.referenceImages) && (sg?.referenceImages as unknown as string[]).length > 0) {
       resolvedReferences = sg!.referenceImages as unknown as string[];

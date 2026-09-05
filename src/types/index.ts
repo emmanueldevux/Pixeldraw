@@ -52,6 +52,7 @@ export interface InspirationImageData {
 export interface ImageGenerationResponse {
   url: string;
   revisedPrompt?: string;
+  compositionText?: string; // internal — lets logo placement react to where the main content sits
 }
 
 // ==================== Platform Types ====================
@@ -157,11 +158,20 @@ export interface JobConfig {
 
 // ==================== Chat Types ====================
 
+export interface CarouselSlideMessage {
+  slideNumber: number;
+  role: string;
+  headline: string;
+  body: string;
+  imageUrl: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
   imageUrl?: string | null;
+  carouselSlides?: CarouselSlideMessage[] | null;
   createdAt: Date;
   isLoading?: boolean;
 }

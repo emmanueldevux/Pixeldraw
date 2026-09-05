@@ -10,7 +10,7 @@
 
 import sharp from "sharp";
 
-export type LogoPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
+export type LogoPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "top-middle" | "bottom-middle" | "center";
 
 // ==================== Automatic Placement ====================
 // Used when a brand hasn't explicitly locked in a fixed logo position —
@@ -29,6 +29,8 @@ const AUTO_POSITIONS: { position: LogoPosition; weight: number; scale: number }[
   { position: "top-left", weight: 3, scale: 0.13 },
   { position: "bottom-left", weight: 2, scale: 0.14 },
   { position: "top-right", weight: 2, scale: 0.13 },
+  { position: "top-middle", weight: 2, scale: 0.13 },
+  { position: "bottom-middle", weight: 1, scale: 0.13 },
   { position: "center", weight: 1, scale: 0.1 }, // rare — only when it genuinely fits
 ];
 
@@ -40,6 +42,28 @@ export function pickLogoPlacement(): LogoPlacement {
     roll -= p.weight;
   }
   return { position: "bottom-right", scale: 0.14 }; // fallback, should never hit
+}
+
+// ==================== Composition-Aware Placement ====================
+// The logo shouldn't be picked in a vacuum — if this generation's main
+// visual/subject is centered, the logo belongs at top-middle (clear of
+// the centered content, still reads as a clean masthead), not wherever
+// the random corner pick happens to land. Falls back to the general
+// weighted random pick when the composition isn't centered.
+
+export function pickLogoPlacementForComposition(compositionText?: string | null): LogoPlacement {
+  if (compositionText) {
+    const lower = compositionText.toLowerCase();
+    const isCentered =
+      /main visual\/graphic placement[^.]*\bcentr/.test(lower) ||
+      /centrally placed/.test(lower) ||
+      /\bcenter[- ]aligned\b.*\bmiddle\b/.test(lower) ||
+      (lower.includes("center") && lower.includes("dominant"));
+    if (isCentered) {
+      return { position: "top-middle", scale: 0.13 };
+    }
+  }
+  return pickLogoPlacement();
 }
 
 // ==================== Load Buffer (data URL or http URL) ====================
@@ -99,6 +123,14 @@ export async function compositeLogo(
       break;
     case "bottom-right":
       left = canvasW - logoW - padding;
+      top = canvasH - logoH - padding;
+      break;
+    case "top-middle":
+      left = Math.round((canvasW - logoW) / 2);
+      top = padding;
+      break;
+    case "bottom-middle":
+      left = Math.round((canvasW - logoW) / 2);
       top = canvasH - logoH - padding;
       break;
     case "center":

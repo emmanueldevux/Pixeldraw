@@ -16,9 +16,13 @@ import {
   Sparkles,
   ChevronDown,
   FolderKanban,
+  Layers,
 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
-import type { ChatMessage, PlatformKey } from "@/types";
+import Modal from "@/components/ui/Modal";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
+import type { ChatMessage, PlatformKey, CarouselSlideMessage } from "@/types";
 import { PLATFORM_PRESETS } from "@/lib/platforms";
 import { extractImagePrompt } from "@/lib/utils";
 
@@ -50,6 +54,12 @@ export default function AIStudioPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [carouselSlides, setCarouselSlides] = useState<CarouselSlideMessage[] | null>(null);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [showCarouselModal, setShowCarouselModal] = useState(false);
+  const [carouselTopic, setCarouselTopic] = useState("");
+  const [carouselSlideCount, setCarouselSlideCount] = useState<string>("auto");
+  const [carouselCtaGoal, setCarouselCtaGoal] = useState("");
   const [selectedPlatform, setSelectedPlatform] =
     useState<PlatformKey>("instagram_post");
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
@@ -116,6 +126,17 @@ export default function AIStudioPage() {
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
+    // Detect a carousel request in plain chat — "make a 6-slide carousel
+    // about X" — and route to the carousel pipeline instead of a single
+    // image. Slide count is optional; the planner decides if omitted.
+    const carouselMatch = input.match(/carousel/i);
+    if (carouselMatch) {
+      const slideCountMatch = input.match(/(\d+)\s*-?\s*slides?/i);
+      const slideCount = slideCountMatch ? parseInt(slideCountMatch[1], 10) : undefined;
+      await handleGenerateCarousel(input.trim(), slideCount);
+      return;
+    }
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
@@ -178,7 +199,7 @@ export default function AIStudioPage() {
       );
 
       if (data.imageUrl) {
-        setGeneratedImage(data.imageUrl);
+        setGeneratedImage(data.imageUrl); setCarouselSlides(null);
       }
 
       const prompt = extractImagePrompt(data.content);
@@ -213,7 +234,7 @@ export default function AIStudioPage() {
 
       const data = await response.json();
       if (data.imageUrl) {
-        setGeneratedImage(data.imageUrl);
+        setGeneratedImage(data.imageUrl); setCarouselSlides(null);
         setMessages((prev) => [
           ...prev,
           {
@@ -230,7 +251,86 @@ export default function AIStudioPage() {
     }
   };
 
-  // ==================== Key handler ====================
+  // ==================== Generate Carousel ====================
+  const handleGenerateCarousel = async (
+    topic: string,
+    slideCount?: number,
+    ctaGoal?: string,
+    carouselReferenceImages?: string[]
+  ) => {
+    if (!selectedChannel) return;
+
+    setInput("");
+    setLoading(true);
+    setShowCarouselModal(false);
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content: topic,
+      createdAt: new Date(),
+    };
+    const loadingMsg: ChatMessage = {
+      id: "loading",
+      role: "assistant",
+      content: "",
+      createdAt: new Date(),
+      isLoading: true,
+    };
+    setMessages((prev) => [...prev, userMessage, loadingMsg]);
+
+    try {
+      const response = await fetch("/api/ai/carousel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandId: selectedChannel.brand.id,
+          topic,
+          platform: selectedPlatform,
+          slideCount,
+          ctaGoal,
+          referenceImages: carouselReferenceImages && carouselReferenceImages.length > 0 ? carouselReferenceImages : undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Carousel generation failed");
+      }
+
+      const slides: CarouselSlideMessage[] = data.data.slides;
+      const successCount = slides.filter((s) => s.imageUrl).length;
+
+      const assistantMessage: ChatMessage = {
+        id: Date.now().toString() + "-carousel",
+        role: "assistant",
+        content: `Here's your ${slides.length}-slide carousel${successCount < slides.length ? ` (${successCount}/${slides.length} slides generated)` : ""}:`,
+        carouselSlides: slides,
+        createdAt: new Date(),
+      };
+      setMessages((prev) => prev.filter((m) => m.id !== "loading").concat(assistantMessage));
+
+      setCarouselSlides(slides);
+      setActiveSlideIndex(0);
+      const firstGood = slides.find((s) => s.imageUrl);
+      setGeneratedImage(firstGood?.imageUrl || null);
+    } catch (err) {
+      console.error("Carousel generation failed:", err);
+      setMessages((prev) =>
+        prev.filter((m) => m.id !== "loading").concat({
+          id: Date.now().toString() + "-err",
+          role: "assistant",
+          content: "Something went wrong generating the carousel. Please try again.",
+          createdAt: new Date(),
+        })
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -428,6 +528,28 @@ export default function AIStudioPage() {
                         className="mt-3 rounded-lg max-w-full"
                       />
                     )}
+                    {msg.carouselSlides && msg.carouselSlides.length > 0 && (
+                      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                        {msg.carouselSlides.map((slide, i) => (
+                          <button
+                            key={slide.slideNumber}
+                            onClick={() => {
+                              setCarouselSlides(msg.carouselSlides!);
+                              setActiveSlideIndex(i);
+                              if (slide.imageUrl) setGeneratedImage(slide.imageUrl);
+                            }}
+                            className="shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 border-surface-200 hover:border-brand-400 transition-colors bg-surface-100"
+                            title={`Slide ${slide.slideNumber} — ${slide.role}`}
+                          >
+                            {slide.imageUrl ? (
+                              <img src={slide.imageUrl} alt={`Slide ${slide.slideNumber}`} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[9px] text-red-400">failed</div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -438,6 +560,16 @@ export default function AIStudioPage() {
 
         {/* ==================== Input Area ==================== */}
         <div className="uxlly-chat-input-container">
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={() => setShowCarouselModal(true)}
+              disabled={!selectedChannel}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-surface-200 text-xs font-medium text-ink-600 hover:bg-surface-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <Layers size={13} />
+              Create Carousel
+            </button>
+          </div>
           <div className="uxlly-chat-input-wrapper">
             <textarea
               ref={textareaRef}
@@ -506,7 +638,43 @@ export default function AIStudioPage() {
         </div>
 
         <div className="uxlly-gen-panel-canvas">
-          {generatedImage ? (
+          {carouselSlides && carouselSlides.length > 0 ? (
+            <div className="flex flex-col items-center gap-3 w-full">
+              {carouselSlides[activeSlideIndex]?.imageUrl ? (
+                <img
+                  src={carouselSlides[activeSlideIndex].imageUrl}
+                  alt={`Slide ${carouselSlides[activeSlideIndex].slideNumber}`}
+                  className="rounded-xl shadow-card max-h-[58vh] object-contain"
+                  style={{ aspectRatio: `${platform.width} / ${platform.height}` }}
+                />
+              ) : (
+                <div className="w-full max-h-[58vh] aspect-square flex items-center justify-center rounded-xl bg-surface-100 text-xs text-red-400">
+                  This slide failed to generate
+                </div>
+              )}
+              <p className="text-xs text-ink-500 font-medium">
+                Slide {carouselSlides[activeSlideIndex]?.slideNumber} of {carouselSlides.length}
+                <span className="text-ink-300"> · {carouselSlides[activeSlideIndex]?.role}</span>
+              </p>
+              <div className="flex gap-1.5 overflow-x-auto max-w-full pb-1">
+                {carouselSlides.map((slide, i) => (
+                  <button
+                    key={slide.slideNumber}
+                    onClick={() => setActiveSlideIndex(i)}
+                    className={`shrink-0 w-10 h-10 rounded-md overflow-hidden border-2 transition-colors ${
+                      i === activeSlideIndex ? "border-brand-500" : "border-surface-200 hover:border-surface-300"
+                    } bg-surface-100`}
+                  >
+                    {slide.imageUrl ? (
+                      <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[8px] text-red-400">✕</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : generatedImage ? (
             <div className="relative">
               <img
                 src={generatedImage}
@@ -530,7 +698,37 @@ export default function AIStudioPage() {
           )}
         </div>
 
-        {generatedImage && (
+        {carouselSlides && carouselSlides.length > 0 ? (
+          <div className="uxlly-gen-panel-controls">
+            {carouselSlides[activeSlideIndex]?.imageUrl && (
+              <a
+                href={carouselSlides[activeSlideIndex].imageUrl}
+                download={`slide-${carouselSlides[activeSlideIndex].slideNumber}.png`}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-surface-200 text-xs font-medium text-ink-600 hover:bg-surface-50 transition-colors"
+              >
+                <Download size={14} />
+                This slide
+              </a>
+            )}
+            <button
+              onClick={() => {
+                carouselSlides.forEach((slide, i) => {
+                  if (!slide.imageUrl) return;
+                  setTimeout(() => {
+                    const a = document.createElement("a");
+                    a.href = slide.imageUrl;
+                    a.download = `slide-${slide.slideNumber}.png`;
+                    a.click();
+                  }, i * 300);
+                });
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-500 text-white text-xs font-medium hover:bg-brand-600 transition-colors"
+            >
+              <Download size={14} />
+              Download all ({carouselSlides.filter((s) => s.imageUrl).length})
+            </button>
+          </div>
+        ) : generatedImage && (
           <div className="uxlly-gen-panel-controls">
             <button
               onClick={() => handleGenerateImage(input)}
@@ -550,6 +748,69 @@ export default function AIStudioPage() {
           </div>
         )}
       </div>
+
+      {/* ==================== Create Carousel Modal ==================== */}
+      <Modal
+        isOpen={showCarouselModal}
+        onClose={() => setShowCarouselModal(false)}
+        title="Create Carousel"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Topic"
+            placeholder="e.g. 5 mistakes beginners make with SEO"
+            value={carouselTopic}
+            onChange={(e) => setCarouselTopic(e.target.value)}
+            hint="What's this carousel about? The hook, content flow, and CTA all get planned from this."
+          />
+
+          <div>
+            <label className="text-xs text-ink-600 mb-1 block">Slide count</label>
+            <select
+              value={carouselSlideCount}
+              onChange={(e) => setCarouselSlideCount(e.target.value)}
+              className="uxlly-input text-xs"
+            >
+              <option value="auto">Auto — AI decides based on the topic</option>
+              {[3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                <option key={n} value={n}>{n} slides</option>
+              ))}
+            </select>
+          </div>
+
+          <Input
+            label="CTA goal (optional)"
+            placeholder="e.g. follow for more, save this, visit link in bio"
+            value={carouselCtaGoal}
+            onChange={(e) => setCarouselCtaGoal(e.target.value)}
+            hint="Leave blank and the AI will pick a sensible ask based on the topic."
+          />
+
+          <p className="text-xs text-ink-400">
+            References: uses {selectedChannel?.brand.name || "this brand"}&apos;s existing reference pool automatically. Layout, background, and reference image are locked across all slides for a cohesive set — only content and subject vary per slide.
+          </p>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setShowCarouselModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              loading={loading}
+              disabled={!carouselTopic.trim() || !selectedChannel}
+              onClick={() =>
+                handleGenerateCarousel(
+                  carouselTopic.trim(),
+                  carouselSlideCount === "auto" ? undefined : parseInt(carouselSlideCount, 10),
+                  carouselCtaGoal.trim() || undefined
+                )
+              }
+            >
+              Generate Carousel
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

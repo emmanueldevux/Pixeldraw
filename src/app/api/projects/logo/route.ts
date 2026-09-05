@@ -11,7 +11,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { persistLogo } from "@/lib/storage";
 
-const VALID_POSITIONS = ["top-left", "top-right", "bottom-left", "bottom-right", "center"];
+const VALID_POSITIONS = ["top-left", "top-right", "bottom-left", "bottom-right", "top-middle", "bottom-middle", "center"];
 
 export async function PUT(request: Request) {
   try {

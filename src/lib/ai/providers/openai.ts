@@ -17,11 +17,11 @@ import type {
 } from "@/types";
 import { pickInspiration } from "@/lib/ai/inspiration";
 import { pickCreativeDirection, pickVisualSubject } from "@/lib/ai/creativeDirector";
-import { compositeLogo, pickLogoPlacement, type LogoPosition } from "@/lib/ai/logoComposite";
+import { compositeLogo, pickLogoPlacementForComposition, type LogoPosition } from "@/lib/ai/logoComposite";
 import { getFontStyleDescriptor } from "@/lib/fonts";
 import type { LayoutArchetype } from "@/types";
 
-function getClient(): OpenAI {
+export function getClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
   return new OpenAI({ apiKey });
@@ -32,7 +32,7 @@ function getClient(): OpenAI {
 // especially on the larger reference-image payloads sent to images.edit.
 // One retry with a short delay recovers most of these transient drops
 // without falling all the way back to the no-reference generation path.
-async function withRetry<T>(fn: () => Promise<T>, attempts = 2, delayMs = 1500): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, attempts = 2, delayMs = 1500): Promise<T> {
   let lastErr: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
@@ -141,13 +141,15 @@ export async function openaiGenerateImage(
   // recolored, or distorted, just resized proportionally and positioned.
   if (request.logoUrl && result.url) {
     try {
-      // No explicit position locked in → vary automatically each time,
-      // same as layout/subject/background already do. An explicit
+      // No explicit position locked in → react to where THIS generation's
+      // main content actually sits (e.g. centered content pairs with a
+      // top-middle logo), falling back to weighted random variety when
+      // the composition doesn't indicate anything centered. An explicit
       // position (set in Settings) is respected exactly, every time.
       const placement =
         request.logoPosition
           ? { position: request.logoPosition, scale: request.logoScale ?? 0.14 }
-          : pickLogoPlacement();
+          : pickLogoPlacementForComposition(result.compositionText);
 
       console.log("[OPENAI] Compositing logo at", placement.position, `(${Math.round(placement.scale * 100)}%)`, request.logoPosition ? "[locked]" : "[auto]");
       const composited = await compositeLogo(result.url, request.logoUrl, placement.position, placement.scale);
@@ -162,19 +164,14 @@ export async function openaiGenerateImage(
 
 // ==================== STRUCTURED PIPELINE ====================
 
-async function structuredPipeline(
+// ==================== Extract Visual DNA (Step 1, reusable) ====================
+// Factored out so the carousel pipeline can call this once and reuse the
+// result across all slides, instead of every consumer needing its own copy.
+
+export async function extractVisualDNA(
   client: OpenAI,
-  userPrompt: string,
-  referenceImages: string[],
-  style: Partial<StyleGuideData> | null | undefined,
-  size: "1024x1024" | "1024x1536" | "1536x1024",
-  platform?: string,
-  brandName?: string | null
-): Promise<ImageGenerationResponse> {
-
-  // ========== STEP 1: Reference → Base Prompt JSON ==========
-  console.log("[OPENAI] Step 1: Extracting visual DNA from reference...");
-
+  referenceImages: string[]
+): Promise<Record<string, unknown>> {
   const visionContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
 
   // Sample randomly from the reference pool for analysis — with a grid
@@ -226,11 +223,55 @@ CRITICAL: The brand's own colors will be applied separately and MUST override an
   try {
     const cleaned = rawJSON.replace(/```json\n?|```\n?/g, "").trim();
     basePromptJSON = JSON.parse(cleaned);
-    console.log("[OPENAI] Step 1 done. Visual DNA extracted:", Object.keys(basePromptJSON).join(", "));
+    console.log("[OPENAI] Visual DNA extracted:", Object.keys(basePromptJSON).join(", "));
   } catch {
-    console.log("[OPENAI] Step 1: JSON parse failed, using raw text");
+    console.log("[OPENAI] Visual DNA: JSON parse failed, using raw text");
     basePromptJSON = { raw_description: rawJSON };
   }
+
+  return basePromptJSON;
+}
+
+// ==================== Prepare Desaturated Reference (reusable) ====================
+// Picks one reference at random and strips its color, same as Step 4 of
+// the single-image pipeline — factored out so the carousel pipeline can
+// call this ONCE and reuse the same edit-base image across every slide,
+// instead of a different random reference winning per slide (which would
+// break visual cohesion across the set).
+
+export async function prepareDesaturatedReference(
+  referenceImages: string[]
+): Promise<{ editRef: string; imageBuffer: Buffer } | null> {
+  if (referenceImages.length === 0) return null;
+
+  const editIdx = Math.floor(Math.random() * referenceImages.length);
+  const editRef = referenceImages[editIdx];
+  console.log("[OPENAI] Carousel — locked reference at index", editIdx, "of", referenceImages.length);
+
+  let refUrl = editRef;
+  if (refUrl.startsWith("data:") && !refUrl.match(/^data:image\/(png|jpeg|gif|webp)/)) {
+    refUrl = refUrl.replace(/^data:[^;]+;/, "data:image/jpeg;");
+  }
+  const base64Data = refUrl.replace(/^data:image\/\w+;base64,/, "");
+  const rawImageBuffer = Buffer.from(base64Data, "base64");
+  const imageBuffer = await sharp(rawImageBuffer).modulate({ saturation: 0 }).png().toBuffer();
+
+  return { editRef, imageBuffer };
+}
+
+async function structuredPipeline(
+  client: OpenAI,
+  userPrompt: string,
+  referenceImages: string[],
+  style: Partial<StyleGuideData> | null | undefined,
+  size: "1024x1024" | "1024x1536" | "1536x1024",
+  platform?: string,
+  brandName?: string | null
+): Promise<ImageGenerationResponse> {
+
+  // ========== STEP 1: Reference → Base Prompt JSON ==========
+  console.log("[OPENAI] Step 1: Extracting visual DNA from reference...");
+  const basePromptJSON = await extractVisualDNA(client, referenceImages);
 
   // ========== STEP 1.5: Creative Direction (layout + background variety) ==========
   // This is what stops every generation from reusing the same composition.
@@ -242,7 +283,7 @@ CRITICAL: The brand's own colors will be applied separately and MUST override an
   const direction = await pickCreativeDirection(
     client,
     userPrompt,
-    (style?.layoutArchetypes as LayoutArchetype[] | undefined) || null,
+    (style?.layoutArchetypes as unknown as LayoutArchetype[] | undefined) || null,
     style?.tone
   );
   console.log("[OPENAI] Step 1.5: Layout →", direction.layoutName, "| Background →", direction.backgroundPattern);
@@ -360,12 +401,16 @@ let refUrl = editRef;
     console.log("[OPENAI] ✅ HIGH QUALITY image generated! Size:", size, "Length:", url.length);
   }
 
-  return { url, revisedPrompt: finalPrompt };
+  return {
+    url,
+    revisedPrompt: finalPrompt,
+    compositionText: direction?.layoutComposition || (basePromptJSON.composition as string | undefined),
+  };
 }
 
 // ==================== Build Final Prompt from JSON + Brand ==========
 
-function buildFinalPrompt(
+export function buildFinalPrompt(
   visualDNA: Record<string, unknown>,
   brand: {
     content: string;

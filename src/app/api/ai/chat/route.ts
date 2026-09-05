@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       logo: string | null;
       logoPosition: string;
       logoScale: number;
-      styleGuide: { referenceImages: unknown; generationPool?: unknown } | null;
+      styleGuide: { referenceImages: unknown; generationPool: unknown } | null;
     } | null = null;
 
     const lookupId = brandId;
@@ -86,8 +86,8 @@ export async function POST(request: Request) {
           include: { styleGuide: true },
         });
 
-        loadedBrand = brand;
-
+        loadedBrand = brand as any;
+        
         if (brand?.styleGuide) {
           const refImages = brand.styleGuide.referenceImages;
           console.log("[CHAT] 📋 Style guide loaded for:", brand.name, `(brand id: ${brand.id})`);

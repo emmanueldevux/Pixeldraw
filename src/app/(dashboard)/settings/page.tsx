@@ -402,6 +402,8 @@ export default function SettingsPage() {
                                   { value: "top-right", label: "Top right" },
                                   { value: "bottom-left", label: "Bottom left" },
                                   { value: "bottom-right", label: "Bottom right" },
+                                  { value: "top-middle", label: "Top middle" },
+                                  { value: "bottom-middle", label: "Bottom middle" },
                                   { value: "center", label: "Center" },
                                 ]}
                               />

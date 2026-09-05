@@ -6,10 +6,14 @@
 // ============================================================
 
 import { NextResponse } from "next/server";
+
+export const maxDuration = 120;
+
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import OpenAI from "openai";
+import { Prisma } from "@prisma/client";
 import { detectAndSliceGrid } from "@/lib/ai/gridDetect";
 import type { LayoutArchetype } from "@/types";
 
@@ -247,7 +251,7 @@ export async function POST(request: Request) {
     // through unchanged. Merges with any existing pool from a prior
     // analysis so re-analyzing (e.g. adding another reference later) grows
     // the pool instead of replacing it. Capped to keep payload size sane.
-    const existingPool = (brand.styleGuide?.generationPool as string[] | null) || [];
+    const existingPool = ((brand.styleGuide as any)?.generationPool as string[] | null) || [];
     const newPool = Array.from(new Set([...existingPool, ...allCells])).slice(0, 30);
     console.log("[ANALYZE] 🎲 Generation pool:", newPool.length, "images (", allCells.length, "new from this analysis )");
 
@@ -256,7 +260,7 @@ export async function POST(request: Request) {
     // not replace it. Same name = update its composition, else append.
     let mergedArchetypes: LayoutArchetype[] | undefined;
     if (layoutArchetypes) {
-      const existing = (brand.styleGuide?.layoutArchetypes as LayoutArchetype[] | null) || [];
+      const existing = (brand.styleGuide?.layoutArchetypes as unknown as LayoutArchetype[] | null) || [];
       const byName = new Map(existing.map((a) => [a.name, a]));
       for (const a of layoutArchetypes) byName.set(a.name, a);
       mergedArchetypes = Array.from(byName.values());
@@ -274,7 +278,7 @@ export async function POST(request: Request) {
           headingFont: finalFont,
           tone: finalTone,
           generationPool: newPool,
-          ...(mergedArchetypes ? { layoutArchetypes: mergedArchetypes } : {}),
+          ...(mergedArchetypes ? { layoutArchetypes: mergedArchetypes as unknown as Prisma.InputJsonValue } : {}),
         },
       });
     } else {
@@ -289,7 +293,7 @@ export async function POST(request: Request) {
           tone: finalTone,
           referenceImages: referenceImages,
           generationPool: newPool,
-          ...(mergedArchetypes ? { layoutArchetypes: mergedArchetypes } : {}),
+          ...(mergedArchetypes ? { layoutArchetypes: mergedArchetypes as unknown as Prisma.InputJsonValue } : {}),
         },
       });
     }

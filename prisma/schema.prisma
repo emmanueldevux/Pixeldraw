@@ -91,12 +91,13 @@ model StyleGuide {
   primaryColor    String   @default("#2563EB")
   secondaryColor  String   @default("#1D4ED8")
   accentColor     String   @default("#22C55E")
-  backgroundColor String   @default("#FFFFFF")
+  backgroundColor String?  // null = let the AI decide from visual DNA, as before. Set = enforced.
   headingFont     String   @default("Inter")
   bodyFont        String   @default("Inter")
   tone            String   @default("professional") // professional, casual, bold, minimal
   extraNotes      String?  @db.Text // free-form style notes
-  referenceImages Json?    // array of URLs to reference images
+  referenceImages Json?    // array of URLs to reference images — user-facing, shown in Settings' Reference Board
+  generationPool  Json?    // array of URLs used for generation: grid references get exploded into their individual panels here, plain uploads pass through as-is. This is what generation actually picks from at random — referenceImages stays as the clean original uploads for the UI.
   rawMarkdown     String?  @db.Text // uploaded .md style guide content
   layoutArchetypes Json?   // array of {name, composition} extracted from grid/moodboard references
   createdAt       DateTime @default(now())
