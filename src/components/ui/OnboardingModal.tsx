@@ -375,6 +375,19 @@ export default function OnboardingModal({
             </p>
           </div>
 
+          {/* Pick a Style — always-visible template shortcut */}
+          <div>
+            <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">Pick a style</p>
+            <button
+              type="button"
+              onClick={() => setShowTemplatePicker(true)}
+              className="w-full flex items-center justify-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700 py-3 rounded-lg border-2 border-dashed border-brand-200 hover:bg-brand-50/30 transition-colors"
+            >
+              <Palette size={16} />
+              Browse templates
+            </button>
+          </div>
+
           {/* Reference Image Upload */}
           <div>
             <label className="text-sm font-medium text-ink-800 mb-1.5 block">
@@ -419,16 +432,6 @@ export default function OnboardingModal({
                 </label>
               )}
             </div>
-
-            {referenceImages.length === 0 && (
-              <button
-                type="button"
-                onClick={() => setShowTemplatePicker(true)}
-                className="w-full text-xs font-medium text-brand-600 hover:text-brand-700 py-2 rounded-lg border border-dashed border-brand-200 hover:bg-brand-50/30 transition-colors"
-              >
-                No image handy? Choose a template instead
-              </button>
-            )}
 
             <p className="text-xs text-ink-400">
               Screenshots of posts you like, brand mood boards, competitor
