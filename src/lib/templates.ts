@@ -1,9 +1,15 @@
 // ============================================================
 // UXLLY — Built-in Reference Templates
 // Fallback references for brands that haven't uploaded their own.
-// Drop PNGs into /public/templates/ using the exact filenames below —
-// see /public/templates/README.md for details.
+//
+// Drop ANY image files into /public/templates/ — any names, any mix of
+// .png/.jpg/.jpeg/.webp/.gif. This scans the folder at request time and
+// picks up whatever's actually there, so there's no renaming required
+// and no fixed count to hit.
 // ============================================================
+
+import path from "path";
+import fs from "fs/promises";
 
 export interface TemplateReference {
   id: string;
@@ -12,45 +18,77 @@ export interface TemplateReference {
   publicUrl: string; // served directly by Next.js from /public
 }
 
-export const TEMPLATE_REFERENCES: TemplateReference[] = Array.from({ length: 12 }, (_, i) => {
-  const n = i + 1;
-  return {
-    id: `template-${n}`,
-    name: `Template ${n}`,
-    filename: `reference${n}.png`,
-    publicUrl: `/templates/reference${n}.png`,
-  };
-});
+const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif"];
+
+function mimeTypeFor(filename: string): string {
+  const ext = path.extname(filename).toLowerCase();
+  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+  if (ext === ".webp") return "image/webp";
+  if (ext === ".gif") return "image/gif";
+  return "image/png";
+}
+
+function nameFromFilename(filename: string): string {
+  // "7.jpeg" -> "7", "sunset-poster.png" -> "sunset poster"
+  const base = path.basename(filename, path.extname(filename));
+  const cleaned = base.replace(/[-_]+/g, " ").trim();
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1) || "Template";
+}
+
+// ==================== List available templates ====================
+// Server-only — scans the actual folder contents. Used both by the
+// /api/templates route (for the picker modal) and internally by the
+// random-fallback picker below.
+
+export async function listAvailableTemplates(): Promise<TemplateReference[]> {
+  const dir = path.join(process.cwd(), "public", "templates");
+
+  try {
+    const files = await fs.readdir(dir);
+    const images = files.filter((f) => IMAGE_EXTENSIONS.includes(path.extname(f).toLowerCase()));
+
+    return images
+      .sort() // stable order across requests
+      .map((filename) => ({
+        id: filename,
+        name: nameFromFilename(filename),
+        filename,
+        publicUrl: `/templates/${filename}`,
+      }));
+  } catch (err) {
+    console.warn("[TEMPLATES] Could not read /public/templates/ folder:", err);
+    return [];
+  }
+}
 
 // ==================== Server-side: random fallback ====================
 // Used by the generation pipeline when a brand has no references of its
-// own at all — picks one template at random and returns it as a base64
-// data URL, matching the format the rest of the pipeline expects
-// (see prepareDesaturatedReference, extractVisualDNA, etc. — all assume
-// data: URLs, not plain file paths).
+// own at all — picks one available template at random and returns it as
+// a base64 data URL, matching the format the rest of the pipeline
+// expects (see prepareDesaturatedReference, extractVisualDNA, etc. — all
+// assume data: URLs, not plain file paths).
 //
 // This is a per-generation fallback only — it does NOT get saved to the
 // brand's own reference board or generation pool in the database.
 
 export async function getRandomTemplateAsBase64(): Promise<string | null> {
-  // Node-only imports, safe here since this function only ever runs
-  // server-side (API routes), never in a client component.
-  const fs = await import("fs/promises");
-  const path = await import("path");
+  const templates = await listAvailableTemplates();
+  if (templates.length === 0) {
+    console.warn("[TEMPLATES] No template images found in /public/templates/ — falling back to text-only generation");
+    return null;
+  }
 
-  const template = TEMPLATE_REFERENCES[Math.floor(Math.random() * TEMPLATE_REFERENCES.length)];
+  const template = templates[Math.floor(Math.random() * templates.length)];
   const filePath = path.join(process.cwd(), "public", "templates", template.filename);
 
   try {
     const buffer = await fs.readFile(filePath);
     const base64 = buffer.toString("base64");
-    console.log("[TEMPLATES] 🎲 Using fallback template:", template.name);
-    return `data:image/png;base64,${base64}`;
+    const mime = mimeTypeFor(template.filename);
+    console.log("[TEMPLATES] 🎲 Using fallback template:", template.name, `(${mime})`);
+    return `data:${mime};base64,${base64}`;
   } catch (err) {
-    // File genuinely missing (e.g. templates haven't been added to the
-    // folder yet) — fail gracefully to text-only generation rather than
-    // crashing the whole request.
-    console.warn("[TEMPLATES] Could not load template file:", template.filename, "— has it been added to /public/templates/?", err);
+    console.warn("[TEMPLATES] Could not read template file:", template.filename, err);
     return null;
   }
 }

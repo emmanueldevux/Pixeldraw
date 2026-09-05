@@ -1,16 +1,17 @@
 // ============================================================
 // UXLLY — Template Picker Modal
 // Lets a user browse and pick one of the built-in reference
-// templates (see /public/templates/ and src/lib/templates.ts)
-// instead of uploading their own reference image.
+// templates (whatever's actually in /public/templates/, scanned
+// dynamically — any filenames, any common image format) instead
+// of uploading their own reference image.
 // ============================================================
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
-import { TEMPLATE_REFERENCES } from "@/lib/templates";
 import { Loader2 } from "lucide-react";
+import type { TemplateReference } from "@/lib/templates";
 
 interface TemplatePickerModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ interface TemplatePickerModalProps {
   onSelect: (base64DataUrl: string) => void;
 }
 
-// Converts a public template PNG into a base64 data URL, the same
+// Converts a public template image into a base64 data URL, the same
 // format uploaded reference files already use — so a picked template
 // flows through the exact same reference pipeline as a real upload,
 // no special-casing needed anywhere downstream.
@@ -34,8 +35,24 @@ async function fetchAsBase64(publicUrl: string): Promise<string> {
 }
 
 export default function TemplatePickerModal({ isOpen, onClose, onSelect }: TemplatePickerModalProps) {
+  const [templates, setTemplates] = useState<TemplateReference[]>([]);
+  const [listLoading, setListLoading] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setListLoading(true);
+    setError(null);
+    fetch("/api/templates")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setTemplates(data.templates);
+        else setError("Couldn't load templates.");
+      })
+      .catch(() => setError("Couldn't load templates."))
+      .finally(() => setListLoading(false));
+  }, [isOpen]);
 
   const handlePick = async (templateId: string, publicUrl: string) => {
     setLoadingId(templateId);
@@ -46,7 +63,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelect }: Templ
       onClose();
     } catch (err) {
       console.error("Failed to load template:", err);
-      setError("Couldn't load that template — has it been added to /public/templates/ yet?");
+      setError("Couldn't load that template.");
     } finally {
       setLoadingId(null);
     }
@@ -63,37 +80,42 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelect }: Templ
           <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
         )}
 
-        <div className="grid grid-cols-4 gap-3">
-          {TEMPLATE_REFERENCES.map((template) => (
-            <button
-              key={template.id}
-              type="button"
-              onClick={() => handlePick(template.id, template.publicUrl)}
-              disabled={loadingId !== null}
-              className="relative aspect-square rounded-lg overflow-hidden border-2 border-surface-200 hover:border-brand-400 transition-colors bg-surface-100 disabled:opacity-50 disabled:cursor-not-allowed group"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={template.publicUrl}
-                alt={template.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Template file not added to /public/templates/ yet —
-                  // show a plain placeholder instead of a broken image icon.
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-colors">
-                {loadingId === template.id && (
-                  <Loader2 size={20} className="text-white animate-spin" />
-                )}
-              </div>
-              <span className="absolute bottom-1 left-1 right-1 text-[10px] font-medium text-white bg-black/50 rounded px-1.5 py-0.5 truncate">
-                {template.name}
-              </span>
-            </button>
-          ))}
-        </div>
+        {listLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 size={24} className="text-ink-300 animate-spin" />
+          </div>
+        ) : templates.length === 0 ? (
+          <p className="text-xs text-ink-400 text-center py-10">
+            No templates found yet — add some image files to /public/templates/ on the server.
+          </p>
+        ) : (
+          <div className="grid grid-cols-4 gap-3">
+            {templates.map((template) => (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => handlePick(template.id, template.publicUrl)}
+                disabled={loadingId !== null}
+                className="relative aspect-square rounded-lg overflow-hidden border-2 border-surface-200 hover:border-brand-400 transition-colors bg-surface-100 disabled:opacity-50 disabled:cursor-not-allowed group"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={template.publicUrl}
+                  alt={template.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-colors">
+                  {loadingId === template.id && (
+                    <Loader2 size={20} className="text-white animate-spin" />
+                  )}
+                </div>
+                <span className="absolute bottom-1 left-1 right-1 text-[10px] font-medium text-white bg-black/50 rounded px-1.5 py-0.5 truncate">
+                  {template.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </Modal>
   );
