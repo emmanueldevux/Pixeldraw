@@ -5,13 +5,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
 import { PLATFORM_PRESETS } from "@/lib/platforms";
 import { FONT_OPTIONS } from "@/lib/fonts";
+import type { TemplateReference } from "@/lib/templates";
 import type { PlatformKey } from "@/types";
 import {
   Building2,
@@ -21,6 +22,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Upload,
+  Loader2,
 } from "lucide-react";
 
 interface OnboardingModalProps {
@@ -52,6 +54,8 @@ export default function OnboardingModal({
   const [platform, setPlatform] = useState<PlatformKey>("instagram_post");
   const [channelDescription, setChannelDescription] = useState("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
+  const [templates, setTemplates] = useState<TemplateReference[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
   const [referencePreviews, setReferencePreviews] = useState<string[]>([]);
   const [styleNotes, setStyleNotes] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#1A1A1A");
@@ -66,6 +70,18 @@ export default function OnboardingModal({
     value: p.key,
     label: `${p.name} (${p.width}×${p.height})`,
   }));
+
+  // Fetch the template grid directly on mount — shown inline, no button
+  // or modal needed to reveal it.
+  useEffect(() => {
+    fetch("/api/templates")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setTemplates(data.templates);
+      })
+      .catch((err) => console.error("Failed to load templates:", err))
+      .finally(() => setTemplatesLoading(false));
+  }, []);
 
   // ==================== Step Navigation ====================
   const currentIndex = STEPS.findIndex((s) => s.key === step);
@@ -86,6 +102,22 @@ export default function OnboardingModal({
     if (files.length === 0) return;
 
     const newFiles = [...referenceImages, ...files].slice(0, 10); // max 10
+    setReferenceImages(newFiles);
+
+    const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
+    referencePreviews.forEach((url) => URL.revokeObjectURL(url));
+    setReferencePreviews(newPreviews);
+  };
+
+  // Clicking a template thumbnail directly converts it to a File and
+  // merges it into the existing reference state — same handling an
+  // upload gets, just triggered from the grid instead of a file input.
+  const handlePickTemplate = async (publicUrl: string) => {
+    const imgRes = await fetch(publicUrl);
+    const blob = await imgRes.blob();
+    const file = new File([blob], `template-${Date.now()}.png`, { type: blob.type || "image/png" });
+
+    const newFiles = [...referenceImages, file].slice(0, 10);
     setReferenceImages(newFiles);
 
     const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
@@ -353,6 +385,39 @@ export default function OnboardingModal({
               colors, fonts, layout, and vibe to match your style when
               generating new content.
             </p>
+          </div>
+
+          {/* Pick a Style — templates shown directly, no button/modal */}
+          <div>
+            <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">Pick a style</p>
+            {templatesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 size={20} className="text-ink-300 animate-spin" />
+              </div>
+            ) : templates.length === 0 ? (
+              <p className="text-xs text-ink-400 py-4">No templates available yet.</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {templates.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => handlePickTemplate(template.publicUrl)}
+                    className="relative aspect-square rounded-lg overflow-hidden border-2 border-surface-200 hover:border-brand-400 transition-colors bg-surface-100 group"
+                  >
+                    <img
+                      src={template.publicUrl}
+                      alt={template.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                    <span className="absolute bottom-1 left-1 right-1 text-[9px] font-medium text-white bg-black/50 rounded px-1 py-0.5 truncate">
+                      {template.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Reference Image Upload */}
