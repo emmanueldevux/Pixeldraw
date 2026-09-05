@@ -21,6 +21,7 @@ import { openaiGenerateImage } from "@/lib/ai/providers/openai";
 import { togetherGenerateImage } from "@/lib/ai/providers/together";
 import type { AIMessage, ImageSize, StyleGuideData } from "@/types";
 import type { LogoPosition } from "@/lib/ai/logoComposite";
+import { getRandomTemplateAsBase64 } from "@/lib/templates";
 
 // Pick the right image provider based on what's configured
 async function generateImage(
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
         });
 
         loadedBrand = brand as any;
-        
+
         if (brand?.styleGuide) {
           const refImages = brand.styleGuide.referenceImages;
           console.log("[CHAT] 📋 Style guide loaded for:", brand.name, `(brand id: ${brand.id})`);
@@ -177,7 +178,10 @@ export async function POST(request: Request) {
         // their individual panels here, giving real variety to pick from.
         // Falls back to the raw reference board if no pool exists yet
         // (e.g. brand hasn't been analyzed, or references are all plain
-        // single uploads with nothing to explode).
+        // single uploads with nothing to explode). Final fallback: a
+        // built-in template, so a brand with zero references of its own
+        // still gets a real structural anchor instead of pure text-only
+        // generation.
         let refs: string[] = [];
         const rawPool = loadedBrand?.styleGuide?.generationPool;
         if (Array.isArray(rawPool) && rawPool.length > 0) {
@@ -185,12 +189,20 @@ export async function POST(request: Request) {
           console.log("[CHAT] 📸 Using generation pool:", refs.length, "images");
         } else if (loadedBrand?.styleGuide?.referenceImages) {
           const rawRefs = loadedBrand.styleGuide.referenceImages;
-          if (Array.isArray(rawRefs)) {
+          if (Array.isArray(rawRefs) && rawRefs.length > 0) {
             refs = rawRefs as string[];
+            console.log("[CHAT] 📸 No generation pool yet, using raw reference board:", refs.length, "images");
           }
-          console.log("[CHAT] 📸 No generation pool yet, using raw reference board:", refs.length, "images");
         }
-
+        if (refs.length === 0) {
+          const template = await getRandomTemplateAsBase64();
+          if (template) {
+            refs = [template];
+            console.log("[CHAT] 📸 No brand references at all — using a built-in template as fallback");
+          } else {
+            console.log("[CHAT] 📸 No brand references and no templates available — generating text-only");
+          }
+        }
 
 // Map platform to image size
 const platformSizes: Record<string, string> = {
