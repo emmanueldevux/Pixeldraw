@@ -28,6 +28,7 @@ import TikTokSlideshowModal, {
   type TikTokCtaGoal,
   type TikTokSlideshowParams,
 } from "@/components/ai/TikTokSlideshowModal";
+import TikTokSlideEditor, { type TikTokDisclosure } from "@/components/ai/TikTokSlideEditor";
 import type { ChatMessage, PlatformKey, CarouselSlideMessage } from "@/types";
 import { PLATFORM_PRESETS } from "@/lib/platforms";
 import { extractImagePrompt } from "@/lib/utils";
@@ -77,6 +78,12 @@ function AIStudioPageInner() {
   const [carouselSlideCount, setCarouselSlideCount] = useState<string>("auto");
   const [carouselCtaGoal, setCarouselCtaGoal] = useState("");
   const [showTikTokModal, setShowTikTokModal] = useState(false);
+  // Set when the latest generation is a TikTok slideshow; the right panel
+  // then shows the text editor instead of the plain carousel preview.
+  const [tiktokSet, setTiktokSet] = useState<{
+    slides: CarouselSlideMessage[];
+    disclosure: TikTokDisclosure | null;
+  } | null>(null);
   const [selectedPlatform, setSelectedPlatform] =
     useState<PlatformKey>("instagram_post");
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
@@ -362,6 +369,11 @@ function AIStudioPageInner() {
       setMessages((prev) => prev.filter((m) => m.id !== "loading").concat(assistantMessage));
 
       setCarouselSlides(slides);
+      setTiktokSet(
+        data.data.format === "tiktok_slideshow"
+          ? { slides, disclosure: data.data.disclosure ?? null }
+          : null
+      );
       setActiveSlideIndex(0);
       const firstGood = slides.find((s) => s.imageUrl);
       setGeneratedImage(firstGood?.imageUrl || null);
@@ -653,6 +665,11 @@ function AIStudioPageInner() {
       {/* ============================================================
          RIGHT: Generation Preview Panel
          ============================================================ */}
+      {tiktokSet ? (
+        <div className="uxlly-gen-panel hidden lg:flex flex-col">
+          <TikTokSlideEditor slides={tiktokSet.slides} disclosure={tiktokSet.disclosure} />
+        </div>
+      ) : (
       <div className="uxlly-gen-panel hidden lg:flex">
         <div className="uxlly-gen-panel-header">
           <h3 className="text-sm font-semibold text-ink-900">Preview</h3>
@@ -806,6 +823,7 @@ function AIStudioPageInner() {
           </div>
         )}
       </div>
+      )}
 
       {/* ==================== Create Carousel Modal ==================== */}
       <Modal

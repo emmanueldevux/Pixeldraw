@@ -50,6 +50,11 @@ const sizeMap: Record<string, "1024x1024" | "1024x1536" | "1536x1024"> = {
   "1000x1500": "1024x1536",
 };
 
+// Used for TikTok slideshows: the model draws only the background and subject.
+// The caption is added afterwards in the editor, so it stays editable.
+const NO_TEXT_RULE =
+  " ABSOLUTE RULE: render NO text of any kind in this image — no letters, words, numbers, captions, labels, watermarks, or UI elements. This is a clean background and subject only; the caption is added by the designer afterwards.";
+
 export async function generateCarouselSlides(params: {
   plan: CarouselPlan;
   referenceImages: string[]; // already resolved: carousel-specific pool, or brand fallback
@@ -59,8 +64,9 @@ export async function generateCarouselSlides(params: {
   logoUrl?: string | null;
   logoPosition?: LogoPosition; // explicit lock from brand settings, if any
   logoScale?: number;
+  noText?: boolean; // true for TikTok slideshows: background-only images
 }): Promise<GeneratedSlide[]> {
-  const { plan, referenceImages, styleGuide, brandName, size, logoUrl, logoPosition, logoScale } = params;
+  const { plan, referenceImages, styleGuide, brandName, size, logoUrl, logoPosition, logoScale, noText } = params;
   const client = getClient();
   const imageSize = sizeMap[params.size as string] || "1024x1536";
 
@@ -70,7 +76,12 @@ export async function generateCarouselSlides(params: {
   const prepared = await prepareDesaturatedReference(referenceImages);
   const visualDNA = prepared ? await extractVisualDNA(client, [prepared.editRef]) : {};
 
-  // ========== LOCK: background pattern (once, via a single creative-direction call) ==========
+  // ========== LOCK: layout composition AND background pattern (once) ==========
+  // A carousel should read as ONE cohesive piece with a consistent shell —
+  // same text alignment/position pattern on every slide — with only the
+  // actual content and subject changing slide to slide. Picking a fresh
+  // layout per slide (varying alignment, position) is exactly what made
+  // consecutive slides feel inconsistent/broken rather than intentional.
   const direction = await pickCreativeDirection(
     client,
     plan.topic,
@@ -78,7 +89,8 @@ export async function generateCarouselSlides(params: {
     styleGuide?.tone
   );
   const lockedBackgroundPattern = direction.backgroundPattern;
-  console.log("[CAROUSEL] 🔒 Locked background pattern:", lockedBackgroundPattern, "| reference:", prepared ? "yes" : "no (text-only)");
+  const lockedLayoutComposition = direction.layoutComposition;
+  console.log("[CAROUSEL] 🔒 Locked layout + background for entire carousel:", lockedBackgroundPattern, "| reference:", prepared ? "yes" : "no (text-only)");
 
   // ========== LOCK: logo placement (once, respects an explicit brand setting) ==========
   const placement = logoUrl
@@ -103,25 +115,23 @@ export async function generateCarouselSlides(params: {
     console.log(`[CAROUSEL] === Slide ${slide.slideNumber}/${plan.totalSlides} (${slide.role}) ===`);
 
     try {
-      // Per-slide layout — content-aware to THIS slide's specific copy,
-      // varying across the carousel, but background stays locked.
-      const slideDirection = await pickCreativeDirection(
-        client,
-        `${slide.headline}. ${slide.body}`,
-        (styleGuide?.layoutArchetypes as unknown as LayoutArchetype[] | undefined) || null,
-        styleGuide?.tone
-      );
-
       // Build this slide's content block — the narrative beats (pattern
       // interrupt / forward hook) get folded in as guidance, not literal
       // on-image text, so the visible copy stays clean.
-      const contentParts = [
-        `Slide ${slide.slideNumber} of ${plan.totalSlides} in a carousel (role: ${slide.role}).`,
-        `Headline text to display: "${slide.headline}"`,
-        slide.body ? `Supporting text to display: "${slide.body}"` : "",
-        slide.role === "cta" && slide.ctaText ? `Call-to-action text to display: "${slide.ctaText}"` : "",
-        slide.patternInterrupt ? `Visual framing should reflect: ${slide.patternInterrupt}` : "",
-      ].filter(Boolean).join(" ");
+      const contentParts = noText
+        ? [
+            `Slide ${slide.slideNumber} of ${plan.totalSlides} in a carousel (role: ${slide.role}).`,
+            `The image should visually support this message without writing it: "${slide.headline}".`,
+            "Leave calm, uncluttered space in the upper and lower thirds for a caption that is added later.",
+            slide.patternInterrupt ? `Visual framing should reflect: ${slide.patternInterrupt}` : "",
+          ].filter(Boolean).join(" ")
+        : [
+            `Slide ${slide.slideNumber} of ${plan.totalSlides} in a carousel (role: ${slide.role}).`,
+            `Headline text to display: "${slide.headline}"`,
+            slide.body ? `Supporting text to display: "${slide.body}"` : "",
+            slide.role === "cta" && slide.ctaText ? `Call-to-action text to display: "${slide.ctaText}"` : "",
+            slide.patternInterrupt ? `Visual framing should reflect: ${slide.patternInterrupt}` : "",
+          ].filter(Boolean).join(" ");
 
       const brandLayer = {
         content: contentParts,
@@ -130,14 +140,16 @@ export async function generateCarouselSlides(params: {
         font: styleGuide?.headingFont || "Inter",
       };
 
-      const finalPrompt = buildFinalPrompt(
+      const basePrompt = buildFinalPrompt(
         visualDNA,
         brandLayer,
         imageSize,
         null, // no inspiration injection for carousel slides — kept simpler/faster
-        { layoutComposition: slideDirection.layoutComposition, backgroundPattern: lockedBackgroundPattern },
+        { layoutComposition: lockedLayoutComposition, backgroundPattern: lockedBackgroundPattern },
         slide.visualSubjectHint
       );
+
+      const finalPrompt = noText ? basePrompt + NO_TEXT_RULE : basePrompt;
 
       let url = "";
 

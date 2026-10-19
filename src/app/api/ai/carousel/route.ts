@@ -49,7 +49,12 @@ export async function POST(request: Request) {
       slideCount, // number | "auto" | undefined
       ctaGoal,
       referenceImages, // optional — carousel-specific references for THIS carousel only
+      format, // "carousel" | "tiktok_slideshow"
+      clientName, // TikTok: the client being promoted, if any
+      brandedContent, // TikTok: whether the branded-content disclosure applies
     } = body;
+
+    const isTikTok = format === "tiktok_slideshow";
 
     if (!brandId || !topic) {
       return NextResponse.json({ error: "brandId and topic are required" }, { status: 400 });
@@ -119,6 +124,7 @@ export async function POST(request: Request) {
       logoUrl: brand.logo || null,
       logoPosition: (brand.logoPosition as unknown as LogoPosition | null) || undefined,
       logoScale: brand.logoScale ?? undefined,
+      noText: isTikTok, // TikTok slides come back as clean backgrounds; text is added in the editor
     });
 
     const successCount = slides.filter((s) => s.imageUrl).length;
@@ -128,6 +134,10 @@ export async function POST(request: Request) {
       success: true,
       data: {
         plan: { topic: plan.topic, totalSlides: plan.totalSlides, ctaGoal: plan.ctaGoal },
+        format: isTikTok ? "tiktok_slideshow" : "carousel",
+        disclosure: isTikTok
+          ? { brandedContent: !!brandedContent, clientName: clientName || null }
+          : null,
         slides,
       },
     });
