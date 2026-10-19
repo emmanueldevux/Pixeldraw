@@ -6,7 +6,8 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import {
   Send,
@@ -17,11 +18,16 @@ import {
   ChevronDown,
   FolderKanban,
   Layers,
+  Video,
 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import TikTokSlideshowModal, {
+  type TikTokCtaGoal,
+  type TikTokSlideshowParams,
+} from "@/components/ai/TikTokSlideshowModal";
 import type { ChatMessage, PlatformKey, CarouselSlideMessage } from "@/types";
 import { PLATFORM_PRESETS } from "@/lib/platforms";
 import { extractImagePrompt } from "@/lib/utils";
@@ -49,9 +55,19 @@ interface ProjectChannel {
   };
 }
 
-export default function AIStudioPage() {
+function AIStudioPageInner() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const searchParams = useSearchParams();
+
+  // Pre-fills from /home's prompt entry point (?prompt=...). Deliberately
+  // does NOT auto-send — a channel/platform still needs to be selected,
+  // and the user should see what's about to be sent before it goes.
+  useEffect(() => {
+    const prefill = searchParams.get("prompt");
+    if (prefill) setInput(prefill);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [loading, setLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [carouselSlides, setCarouselSlides] = useState<CarouselSlideMessage[] | null>(null);
@@ -60,6 +76,7 @@ export default function AIStudioPage() {
   const [carouselTopic, setCarouselTopic] = useState("");
   const [carouselSlideCount, setCarouselSlideCount] = useState<string>("auto");
   const [carouselCtaGoal, setCarouselCtaGoal] = useState("");
+  const [showTikTokModal, setShowTikTokModal] = useState(false);
   const [selectedPlatform, setSelectedPlatform] =
     useState<PlatformKey>("instagram_post");
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
@@ -251,12 +268,42 @@ export default function AIStudioPage() {
     }
   };
 
+  // ==================== Generate TikTok Slideshow ====================
+  const TIKTOK_CTA_TEXT: Record<TikTokCtaGoal, string | undefined> = {
+    save: "Save this for your next check.",
+    follow: "Follow for the next tip.",
+    try_tool: "Try it from the link in bio.",
+    none: undefined,
+  };
+
+  const handleGenerateTikTokSlideshow = (params: TikTokSlideshowParams) => {
+    setShowTikTokModal(false);
+    handleGenerateCarousel(
+      params.topic,
+      params.slideCount,
+      TIKTOK_CTA_TEXT[params.ctaGoal],
+      undefined,
+      {
+        platform: "tiktok",
+        format: "tiktok_slideshow",
+        clientName: params.clientName,
+        brandedContent: params.brandedContent,
+      }
+    );
+  };
+
   // ==================== Generate Carousel ====================
   const handleGenerateCarousel = async (
     topic: string,
     slideCount?: number,
     ctaGoal?: string,
-    carouselReferenceImages?: string[]
+    carouselReferenceImages?: string[],
+    options?: {
+      platform?: PlatformKey;
+      format?: "carousel" | "tiktok_slideshow";
+      clientName?: string;
+      brandedContent?: boolean;
+    }
   ) => {
     if (!selectedChannel) return;
 
@@ -286,10 +333,13 @@ export default function AIStudioPage() {
         body: JSON.stringify({
           brandId: selectedChannel.brand.id,
           topic,
-          platform: selectedPlatform,
+          platform: options?.platform ?? selectedPlatform,
           slideCount,
           ctaGoal,
           referenceImages: carouselReferenceImages && carouselReferenceImages.length > 0 ? carouselReferenceImages : undefined,
+          format: options?.format ?? "carousel",
+          clientName: options?.clientName,
+          brandedContent: options?.brandedContent,
         }),
       });
 
@@ -348,7 +398,7 @@ export default function AIStudioPage() {
          ============================================================ */}
       <div className="uxlly-chat-panel">
         {/* ==================== Chat Header ==================== */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-surface-200 bg-white gap-2">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-surface-200 bg-surface-0 gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <Sparkles size={18} className="text-brand-500 shrink-0" />
             <h2 className="text-sm font-semibold text-ink-900 truncate">AI Studio</h2>
@@ -379,7 +429,7 @@ export default function AIStudioPage() {
             </button>
 
             {showProjectPicker && (
-              <div className="absolute left-0 top-full mt-1 bg-white border border-surface-200 rounded-xl shadow-modal p-2 z-10 w-80 max-h-96 overflow-y-auto">
+              <div className="absolute left-0 top-full mt-1 bg-surface-0 border border-surface-200 rounded-xl shadow-modal p-2 z-10 w-80 max-h-96 overflow-y-auto">
                 {channels.length === 0 && (
                   <p className="text-xs text-ink-400 px-3 py-2">No projects yet. Create one first.</p>
                 )}
@@ -569,6 +619,14 @@ export default function AIStudioPage() {
               <Layers size={13} />
               Create Carousel
             </button>
+            <button
+              onClick={() => setShowTikTokModal(true)}
+              disabled={!selectedChannel}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-surface-200 text-xs font-medium text-ink-600 hover:bg-surface-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <Video size={13} />
+              Create TikTok Slideshow
+            </button>
           </div>
           <div className="uxlly-chat-input-wrapper">
             <textarea
@@ -612,7 +670,7 @@ export default function AIStudioPage() {
             </button>
 
             {showPlatformPicker && (
-              <div className="absolute right-0 top-full mt-1 bg-white border border-surface-200 rounded-xl shadow-modal p-2 z-10 w-56 max-h-64 overflow-y-auto">
+              <div className="absolute right-0 top-full mt-1 bg-surface-0 border border-surface-200 rounded-xl shadow-modal p-2 z-10 w-56 max-h-64 overflow-y-auto">
                 {Object.values(PLATFORM_PRESETS).map((p) => (
                   <button
                     key={p.key}
@@ -811,6 +869,22 @@ export default function AIStudioPage() {
           </div>
         </div>
       </Modal>
+
+      {/* ==================== Create TikTok Slideshow Modal ==================== */}
+      <TikTokSlideshowModal
+        isOpen={showTikTokModal}
+        onClose={() => setShowTikTokModal(false)}
+        brandName={selectedChannel?.brand.name}
+        loading={loading}
+        onGenerate={handleGenerateTikTokSlideshow}
+      />
     </div>
+  );
+}
+export default function AIStudioPage() {
+  return (
+    <Suspense fallback={null}>
+      <AIStudioPageInner />
+    </Suspense>
   );
 }

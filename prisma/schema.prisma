@@ -195,9 +195,26 @@ model InspirationImage {
   addedBy   String?  // userId who tagged it
   createdAt DateTime @default(now())
 
+  // ---- Slideshow reference fields ----
+  set              String?  // e.g. "set1" - groups slides from one creator/post
+  slideNumber      Int?     // 1-based position within the source post
+  role             String?  // hook | tip | qa | content_rehook | cta | product_ad
+  onSlideText      String?  // the copy shown on the slide
+  imageSubject     String?  // what the photo shows, in plain words
+  imageStyle       String?  // setting, lighting, colour, text treatment
+  psychologyDevice String?  // e.g. "loss aversion", "social proof", "specific number"
+  status           String   @default("exemplar") // exemplar | anti_pattern | rejected
+  aspectRatio      String?  // e.g. "3:4", "9:16"
+  notes            String?
+  usageRights      String?  // reminder: style/structure reference only
+  creatorSource    String?  // who it came from, if known
+
   @@index([platform])
   @@index([style])
   @@index([mood])
+  @@index([role])
+  @@index([status])
+  @@index([set])
 }
 
 // ==================== Scheduled Jobs ====================
