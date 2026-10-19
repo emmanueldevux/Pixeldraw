@@ -56,18 +56,30 @@ export async function POST(request: Request) {
 
     const isTikTok = format === "tiktok_slideshow";
 
-    if (!brandId || !topic) {
+    // TikTok slideshows don't need a project: they run on the reference
+    // library and a neutral style. Carousels still need a brand.
+    if (!topic || (!brandId && !isTikTok)) {
       return NextResponse.json({ error: "brandId and topic are required" }, { status: 400 });
     }
 
-    const brand = await db.brand.findFirst({
-      where: { id: brandId, userId: session.user.id },
-      include: { styleGuide: true },
-    });
+    const brandRecord = brandId
+      ? await db.brand.findFirst({
+          where: { id: brandId, userId: session.user.id },
+          include: { styleGuide: true },
+        })
+      : null;
 
-    if (!brand) {
+    if (brandId && !brandRecord) {
       return NextResponse.json({ error: "Brand not found" }, { status: 404 });
     }
+
+    const brand = brandRecord ?? {
+      name: "TikTok slideshow",
+      logo: null,
+      logoPosition: null,
+      logoScale: null,
+      styleGuide: null,
+    };
 
     const sg = brand.styleGuide;
     const styleGuide: Partial<StyleGuideData> | null = sg
@@ -98,6 +110,16 @@ export async function POST(request: Request) {
     } else if (Array.isArray(sg?.referenceImages) && (sg?.referenceImages as unknown as string[]).length > 0) {
       resolvedReferences = sg!.referenceImages as unknown as string[];
       console.log("[CAROUSEL API] 📸 Falling back to raw reference board:", resolvedReferences.length);
+    } else if (isTikTok) {
+      // No project: use the shared reference library (exemplar slides).
+      const library = await db.inspirationImage.findMany({
+        where: { status: "exemplar" },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        select: { url: true },
+      });
+      resolvedReferences = library.map((item) => item.url);
+      console.log("[CAROUSEL API] 📚 TikTok reference library:", resolvedReferences.length);
     } else {
       console.log("[CAROUSEL API] 📸 No references available — text-only generation");
     }

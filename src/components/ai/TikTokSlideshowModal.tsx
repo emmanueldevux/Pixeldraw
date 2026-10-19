@@ -162,7 +162,7 @@ export default function TikTokSlideshowModal({
         </div>
 
         <p className="text-xs text-ink-400">
-          Brand: {brandName || "none selected"}. Slides are 9:16 and the layout, background and character stay locked across the set. Only the copy and subject change per slide.
+          Uses the reference library, so no project is needed. The background and layout stay consistent across the set, and only the copy and subject change per slide. You add the text in the editor after generation.
         </p>
 
         {error && <p className="text-xs text-red-500">{error}</p>}

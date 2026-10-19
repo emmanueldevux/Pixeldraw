@@ -224,29 +224,16 @@ export function CarouselQuickModal({ isOpen, onClose }: { isOpen: boolean; onClo
 
 // ==================== TikTok Slideshow ====================
 export function TikTokQuickModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [projects, setProjects] = useState<ProjectOption[]>([]);
-  const [projectId, setProjectId] = useState("");
+  // No project needed: TikTok slideshows use the reference library.
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerationResult | null>(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    loadProjects().then((opts) => {
-      setProjects(opts);
-      setProjectId((cur) => cur || opts[0]?.id || "");
-    });
-  }, [isOpen]);
-
-  const project = projects.find((p) => p.id === projectId);
-
   const handleGenerate = async (params: TikTokSlideshowParams) => {
-    if (!project) return;
     setLoading(true);
     setError(null);
     try {
       const out = await generateSlides({
-        brandId: project.brandId,
         topic: params.topic,
         platform: "tiktok",
         slideCount: params.slideCount,
@@ -274,13 +261,9 @@ export function TikTokQuickModal({ isOpen, onClose }: { isOpen: boolean; onClose
       <TikTokSlideshowModal
         isOpen={isOpen && !result}
         onClose={handleClose}
-        brandName={project?.label}
         loading={loading}
         error={error}
         onGenerate={handleGenerate}
-        projects={projects.map((p) => ({ id: p.id, label: p.label }))}
-        projectId={projectId}
-        onProjectChange={setProjectId}
       />
 
       <Modal
