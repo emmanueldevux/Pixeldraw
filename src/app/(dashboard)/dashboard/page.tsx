@@ -18,11 +18,16 @@ import {
   ArrowRight,
   Plus,
   TrendingUp,
+  Layers,
+  Video,
 } from "lucide-react";
 import Link from "next/link";
+import { CarouselQuickModal, TikTokQuickModal } from "@/components/ai/QuickCreate";
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showCarousel, setShowCarousel] = useState(false);
+  const [showTikTok, setShowTikTok] = useState(false);
 
   // ==================== Stats (placeholder data) ====================
   const stats = [
@@ -121,6 +126,46 @@ export default function DashboardPage() {
                 </div>
               </Link>
 
+              <button
+                type="button"
+                onClick={() => setShowCarousel(true)}
+                className="w-full text-left"
+              >
+                <div className="flex items-center gap-4 p-3 rounded-xl border border-surface-200 hover:border-brand-200 hover:bg-brand-50/30 transition-all cursor-pointer group">
+                  <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                    <Layers size={18} className="text-purple-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-ink-900">Create Carousel</p>
+                    <p className="text-xs text-ink-400">Plan and generate a multi-slide carousel</p>
+                  </div>
+                  <ArrowRight
+                    size={16}
+                    className="text-ink-300 group-hover:text-brand-500 transition-colors"
+                  />
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowTikTok(true)}
+                className="w-full text-left"
+              >
+                <div className="flex items-center gap-4 p-3 rounded-xl border border-surface-200 hover:border-brand-200 hover:bg-brand-50/30 transition-all cursor-pointer group">
+                  <div className="w-10 h-10 rounded-lg bg-pink-50 flex items-center justify-center">
+                    <Video size={18} className="text-pink-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-ink-900">Create TikTok Slideshow</p>
+                    <p className="text-xs text-ink-400">Hook, value slides, and close, with text you edit</p>
+                  </div>
+                  <ArrowRight
+                    size={16}
+                    className="text-ink-300 group-hover:text-brand-500 transition-colors"
+                  />
+                </div>
+              </button>
+
               <Link href="/projects">
                 <div className="flex items-center gap-4 p-3 rounded-xl border border-surface-200 hover:border-brand-200 hover:bg-brand-50/30 transition-all cursor-pointer group">
                   <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
@@ -184,6 +229,9 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
+
+      <CarouselQuickModal isOpen={showCarousel} onClose={() => setShowCarousel(false)} />
+      <TikTokQuickModal isOpen={showTikTok} onClose={() => setShowTikTok(false)} />
     </>
   );
 }

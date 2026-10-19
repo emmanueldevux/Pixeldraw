@@ -27,7 +27,12 @@ interface TikTokSlideshowModalProps {
   onClose: () => void;
   brandName?: string;
   loading?: boolean;
+  error?: string | null;
   onGenerate: (params: TikTokSlideshowParams) => void;
+  // Optional project picker, used when opened from the dashboard.
+  projects?: { id: string; label: string }[];
+  projectId?: string;
+  onProjectChange?: (id: string) => void;
 }
 
 const CTA_OPTIONS: { value: TikTokCtaGoal; label: string; hint: string }[] = [
@@ -42,7 +47,11 @@ export default function TikTokSlideshowModal({
   onClose,
   brandName,
   loading = false,
+  error = null,
   onGenerate,
+  projects,
+  projectId,
+  onProjectChange,
 }: TikTokSlideshowModalProps) {
   const [topic, setTopic] = useState("");
   const [slideCount, setSlideCount] = useState<string>("auto");
@@ -53,7 +62,8 @@ export default function TikTokSlideshowModal({
   // A paid or free-product post needs the client named for the
   // branded-content tag, so block submit until it is filled in.
   const needsClient = brandedContent && !clientName.trim();
-  const canSubmit = topic.trim().length > 0 && !needsClient && !loading;
+  const needsProject = !!projects && !projectId;
+  const canSubmit = topic.trim().length > 0 && !needsClient && !needsProject && !loading;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -69,6 +79,22 @@ export default function TikTokSlideshowModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Create TikTok Slideshow">
       <div className="space-y-4">
+        {projects && (
+          <div>
+            <label className="text-xs text-ink-600 mb-1 block">Project</label>
+            <select
+              value={projectId || ""}
+              onChange={(e) => onProjectChange?.(e.target.value)}
+              className="uxlly-input text-xs"
+            >
+              {projects.length === 0 && <option value="">No projects yet — create one first</option>}
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <Input
           label="Topic or hook angle"
           placeholder="e.g. 5 review traps that quietly hurt your Amazon listing"
@@ -138,6 +164,8 @@ export default function TikTokSlideshowModal({
         <p className="text-xs text-ink-400">
           Brand: {brandName || "none selected"}. Slides are 9:16 and the layout, background and character stay locked across the set. Only the copy and subject change per slide.
         </p>
+
+        {error && <p className="text-xs text-red-500">{error}</p>}
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose}>
