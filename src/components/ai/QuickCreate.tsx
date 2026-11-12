@@ -11,6 +11,9 @@ import { useEffect, useState } from "react";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import WizardShell from "@/components/ui/WizardShell";
+import LModal from "@/components/ui/LModal";
+import { Chip, Field, LButton, LInput, LSelect, LTextarea } from "@/components/ui/light";
 import TikTokSlideEditor, { type TikTokDisclosure } from "@/components/ai/TikTokSlideEditor";
 import TikTokSlideshowModal, {
   type TikTokCtaGoal,
@@ -70,9 +73,15 @@ async function generateSlides(body: Record<string, unknown>): Promise<Generation
   return { slides: data.data.slides, disclosure: data.data.disclosure ?? null };
 }
 
-// ==================== Carousel ====================
+// ==================== Carousel (light wizard, same look as the slideshow one) ====================
+const CAROUSEL_STEPS = [
+  { id: "topic", title: "What's the carousel about?", sub: "The hook, the flow and the call to action are planned from this." },
+  { id: "options", title: "Length and goal", sub: "Let the AI decide, or set it yourself." },
+];
+
 export function CarouselQuickModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [i, setI] = useState(0);
+  const [projects, setProjects] = useState<ProjectOption[] | null>(null);
   const [projectId, setProjectId] = useState("");
   const [topic, setTopic] = useState("");
   const [slideCount, setSlideCount] = useState("auto");
@@ -89,9 +98,18 @@ export function CarouselQuickModal({ isOpen, onClose }: { isOpen: boolean; onClo
     });
   }, [isOpen]);
 
-  const project = projects.find((p) => p.id === projectId);
+  if (!isOpen) return null;
+  const project = (projects || []).find((p) => p.id === projectId);
 
-  const handleGenerate = async () => {
+  const handleClose = () => {
+    if (loading) return;
+    setSlides(null);
+    setError(null);
+    setI(0);
+    onClose();
+  };
+
+  const run = async () => {
     if (!project || !topic.trim()) return;
     setLoading(true);
     setError(null);
@@ -112,113 +130,90 @@ export function CarouselQuickModal({ isOpen, onClose }: { isOpen: boolean; onClo
     }
   };
 
-  const handleClose = () => {
-    setSlides(null);
-    setError(null);
-    onClose();
-  };
+  if (slides) {
+    return (
+      <LModal
+        wide
+        title="Your carousel"
+        sub={`${slides.length} slides`}
+        onClose={handleClose}
+        footer={
+          <>
+            <LButton variant="secondary" onClick={() => { setSlides(null); setI(0); }}>Create another</LButton>
+            <LButton onClick={handleClose}>Done</LButton>
+          </>
+        }
+      >
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {slides.map((s) => (
+            <div key={s.slideNumber} className="space-y-1.5">
+              {s.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="rounded-xl w-full border border-gray-200" />
+              ) : (
+                <div className="aspect-[4/5] flex items-center justify-center rounded-xl bg-gray-100 text-xs text-red-500">failed</div>
+              )}
+              {s.imageUrl && (
+                <a href={s.imageUrl} download={`carousel-slide-${s.slideNumber}.png`} className="text-xs font-medium text-gray-600 hover:text-gray-900">
+                  Download slide {s.slideNumber}
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      </LModal>
+    );
+  }
+
+  const noProjects = projects !== null && projects.length === 0;
+  const canNext = i === 0 ? !!project && topic.trim().length >= 4 : true;
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create Carousel" size="lg">
-      {slides ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {slides.map((s) => (
-              <div key={s.slideNumber} className="space-y-1">
-                {s.imageUrl ? (
-                  <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="rounded-lg w-full" />
-                ) : (
-                  <div className="aspect-[2/3] flex items-center justify-center rounded-lg bg-surface-100 text-xs text-red-400">
-                    failed
-                  </div>
-                )}
-                {s.imageUrl && (
-                  <a
-                    href={s.imageUrl}
-                    download={`carousel-slide-${s.slideNumber}.png`}
-                    className="text-xs text-brand-600 hover:underline"
-                  >
-                    Download slide {s.slideNumber}
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setSlides(null)}>
-              Create another
-            </Button>
-            <Button variant="primary" onClick={handleClose}>
-              Done
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs text-ink-600 mb-1 block">Project</label>
-            <select
+    <WizardShell
+      heading="Carousel"
+      steps={CAROUSEL_STEPS}
+      index={i}
+      busy={loading}
+      continueDisabled={!canNext}
+      finishLabel={loading ? "Making your carousel…" : "Make carousel"}
+      onBack={() => setI((x) => Math.max(0, x - 1))}
+      onNext={() => (i === CAROUSEL_STEPS.length - 1 ? run() : setI((x) => x + 1))}
+      onClose={handleClose}
+    >
+      {i === 0 && (
+        <div className="space-y-5">
+          {noProjects ? (
+            <p className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">You need a project first. Use Create project at the top to set one up.</p>
+          ) : (
+            <LSelect
+              label="Project"
               value={projectId}
               onChange={(e) => setProjectId(e.target.value)}
-              className="uxlly-input text-xs"
-            >
-              {projects.length === 0 && <option value="">No projects yet — create one first</option>}
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <Input
-            label="Topic"
-            placeholder="e.g. 5 mistakes beginners make with SEO"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            hint="The hook, content flow, and CTA are planned from this."
-          />
-
-          <div>
-            <label className="text-xs text-ink-600 mb-1 block">Slide count</label>
-            <select
-              value={slideCount}
-              onChange={(e) => setSlideCount(e.target.value)}
-              className="uxlly-input text-xs"
-            >
-              <option value="auto">Auto — AI decides based on the topic</option>
-              {[3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                <option key={n} value={n}>{n} slides</option>
-              ))}
-            </select>
-          </div>
-
-          <Input
-            label="CTA goal (optional)"
-            placeholder="e.g. follow for more, save this, visit link in bio"
-            value={ctaGoal}
-            onChange={(e) => setCtaGoal(e.target.value)}
-          />
-
-          {loading && (
-            <p className="text-xs text-ink-400">Generating slides. This can take a few minutes.</p>
+              options={(projects || []).map((p) => ({ value: p.id, label: p.label }))}
+            />
           )}
-          {error && <p className="text-xs text-red-500">{error}</p>}
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              loading={loading}
-              disabled={!project || !topic.trim() || loading}
-              onClick={handleGenerate}
-            >
-              Generate Carousel
-            </Button>
-          </div>
+          <Field label="Topic">
+            <LTextarea rows={3} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. 5 mistakes beginners make with SEO" autoFocus />
+          </Field>
         </div>
       )}
-    </Modal>
+      {i === 1 && (
+        <div className="space-y-6">
+          <div>
+            <p className="text-sm font-medium text-gray-800 mb-2">Slides</p>
+            <div className="flex flex-wrap gap-2">
+              {["auto", "3", "4", "5", "6", "7", "8", "9", "10"].map((n) => (
+                <Chip key={n} on={slideCount === n} onClick={() => setSlideCount(n)}>{n === "auto" ? "Auto" : n}</Chip>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-1.5">Auto lets the AI choose based on the topic.</p>
+          </div>
+          <LInput label="Call to action (optional)" placeholder="e.g. follow for more, save this, visit link in bio" value={ctaGoal} onChange={(e) => setCtaGoal(e.target.value)} />
+          {loading && <p className="text-xs text-gray-500">Making your slides. This can take a few minutes.</p>}
+        </div>
+      )}
+      {error && <p className="text-sm text-red-600 mt-4">{error}</p>}
+    </WizardShell>
   );
 }
 

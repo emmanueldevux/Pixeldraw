@@ -10,9 +10,10 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listOwnPacks, listTemplates } from "@/lib/designTemplates/store";
 import { studyPack } from "@/lib/designTemplates/pack";
+import { studyThumbPack } from "@/lib/designTemplates/thumb";
 import { withUsage } from "@/lib/billing/usage";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
-import type { DesignTemplate } from "@/lib/designTemplates/types";
+import { isThumbPack, type DesignTemplate } from "@/lib/designTemplates/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -25,11 +26,12 @@ const shape = (t: DesignTemplate, mine: boolean) => ({
   coverImages: (t.coverImages.length ? t.coverImages : t.refImages).slice(0, 4),
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const ready = (await listTemplates({ publishedOnly: true })).filter((t) => t.kind === "pack" && t.refImages.length > 0).map((t) => shape(t, false));
-    const own = session?.user?.id ? (await listOwnPacks(session.user.id)).map((t) => shape(t, true)) : [];
+    const thumb = new URL(request.url).searchParams.get("purpose") === "thumbnail";
+    const ready = (await listTemplates({ publishedOnly: true })).filter((t) => t.kind === "pack" && t.refImages.length > 0 && isThumbPack(t) === thumb).map((t) => shape(t, false));
+    const own = session?.user?.id ? (await listOwnPacks(session.user.id)).filter((t) => isThumbPack(t) === thumb).map((t) => shape(t, true)) : [];
     return NextResponse.json({ packs: [...own, ...ready] });
   } catch (e) {
     console.error("[AD PACKS] list failed:", e);
@@ -42,8 +44,9 @@ async function handlePOST(request: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = session.user.id;
   const b = await request.json().catch(() => ({}));
+  const thumb = b.purpose === "thumbnail";
   const refs: string[] = Array.isArray(b.refs) ? b.refs.filter((x: unknown): x is string => typeof x === "string" && x.length > 8).slice(0, 8) : [];
-  if (!refs.length) return NextResponse.json({ error: "Add at least one reference ad." }, { status: 400 });
+  if (!refs.length) return NextResponse.json({ error: thumb ? "Add at least one reference thumbnail." : "Add at least one reference ad." }, { status: 400 });
   if ((await db.designTemplate.count({ where: { ownerId: userId } })) >= 10) {
     return NextResponse.json({ error: "You have 10 packs already. Delete one first." }, { status: 400 });
   }
@@ -57,15 +60,16 @@ async function handlePOST(request: Request) {
   }
 
   try {
-    const { packDna, refDnas } = await studyPack(refs);
+    const { packDna, refDnas } = thumb ? await studyThumbPack(refs) : await studyPack(refs);
     const last = await db.designTemplate.findFirst({ orderBy: { number: "desc" } });
     const row = await db.designTemplate.create({
       data: {
         number: (last?.number ?? 0) + 1,
-        title: (typeof b.name === "string" && b.name.trim() ? b.name.trim() : "My ad pack").slice(0, 80),
+        title: (typeof b.name === "string" && b.name.trim() ? b.name.trim() : thumb ? "My thumbnail pack" : "My ad pack").slice(0, 80),
         description: "",
         kind: "pack",
-        aspect: "4:5",
+        category: thumb ? "Thumbnails" : "",
+        aspect: thumb ? "16:9" : "4:5",
         prompt: "",
         params: [],
         styles: [],
@@ -79,7 +83,7 @@ async function handlePOST(request: Request) {
         ownerId: userId,
       },
     });
-    await commit(userId, auth, [{ key: "chat.text", qty: 3 }], { ref: `adpack:${row.id}`, note: "Ad pack: studied references" }).catch((e) => console.error("[AD PACKS] billing failed:", e));
+    await commit(userId, auth, [{ key: "chat.text", qty: 3 }], { ref: `adpack:${row.id}`, note: thumb ? "Thumbnail pack: studied references" : "Ad pack: studied references" }).catch((e) => console.error("[AD PACKS] billing failed:", e));
     return NextResponse.json({ success: true, pack: { id: row.id, title: row.title, description: "", mine: true, coverImages: refs.slice(0, 4) } });
   } catch (e) {
     console.error("[AD PACKS] create failed:", e);

@@ -30,7 +30,7 @@ function TemplatesInner() {
   }, []);
 
   const isRec = (t: T) => t.tags.some((x) => x.toLowerCase() === "recommended");
-  const ORDER = ["Static ads", "Carousel", "Slideshows"];
+  const ORDER = ["Static ads", "Carousel", "Slideshows", "Thumbnails"];
 
   const tabs = useMemo(() => {
     const list = templates || [];

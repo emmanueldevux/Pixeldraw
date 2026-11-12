@@ -27,6 +27,7 @@ interface ChatMsg {
   role: "user" | "assistant";
   content: string;
   imageUrl?: string | null;
+  ref?: string | null; // the photo attached to a user message
   isLoading?: boolean;
 }
 
@@ -187,19 +188,19 @@ export default function FreeChatPage() {
     reader.readAsDataURL(file);
   }
 
-  const handleSend = async () => {
-    if (!input.trim() || loading || sendingRef.current) return;
+  const handleSend = async (override?: { text: string; ref?: string | null }) => {
+    if (!(override?.text ?? input).trim() || loading || sendingRef.current) return;
     // Anonymous: open the login popup and replay after sign-in. (Don't pass the
     // action when already signed in — requireAuth would run it AND we'd run again.)
     if (!isAuthenticated) {
-      requireAuth(() => handleSend());
+      requireAuth(() => handleSend(override));
       return;
     }
     sendingRef.current = true;
 
-    const userText = input.trim();
-    const ref = attachedImage;
-    const userMsg: ChatMsg = { id: Date.now() + "-u", role: "user", content: userText };
+    const userText = (override?.text ?? input).trim();
+    const ref = override ? override.ref ?? null : attachedImage;
+    const userMsg: ChatMsg = { id: Date.now() + "-u", role: "user", content: userText, ref };
     setMessages((p) => [...p, userMsg, { id: "loading", role: "assistant", content: "", isLoading: true }]);
     setInput("");
     setLoading(true);
@@ -272,7 +273,7 @@ export default function FreeChatPage() {
     <ProjectPrompt
       value={input}
       onChange={setInput}
-      onSubmit={handleSend}
+      onSubmit={() => handleSend()}
       attachedImage={attachedImage}
       onAttachImage={setAttachedImage}
       imageModel={imageModel}
@@ -373,7 +374,21 @@ export default function FreeChatPage() {
                         <div className="rounded-2xl border border-[#E7E7EA] bg-white shadow-sm p-2 max-w-[460px]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={m.imageUrl} alt="Generated" className="w-full rounded-xl" />
-                          <div className="flex justify-end mt-1.5">
+                          <div className="flex justify-end gap-1 mt-1.5">
+                            {(() => {
+                              const at = messages.findIndex((x) => x.id === m.id);
+                              const prevUser = [...messages.slice(0, Math.max(0, at))].reverse().find((x) => x.role === "user");
+                              if (!prevUser || !/\b(thumbnails?|thumbs?)\b/i.test(prevUser.content) || loading) return null;
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSend({ text: `${prevUser.content.replace(/\s*\n*Make a completely different version[^]*$/i, "")}\n\nMake a completely different version: new composition, new pose and expression.`, ref: prevUser.ref })}
+                                  className="flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px] font-medium text-zinc-700 hover:bg-[#F4F4F5]"
+                                >
+                                  <Sparkles size={14} /> Redo thumbnail
+                                </button>
+                              );
+                            })()}
                             <button
                               type="button"
                               onClick={() => download(m.imageUrl!, "uxlly-free.png")}

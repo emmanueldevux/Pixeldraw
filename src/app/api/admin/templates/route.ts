@@ -12,6 +12,7 @@ import { requireAdmin } from "@/lib/billing/http";
 import { deleteTemplate, listTemplates, saveTemplate, storeCover } from "@/lib/designTemplates/store";
 import { cleanTemplateInput, renderPrompt } from "@/lib/designTemplates/types";
 import { studyPack } from "@/lib/designTemplates/pack";
+import { studyThumbPack } from "@/lib/designTemplates/thumb";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ url: await storeCover(String(body.dataUrl || "")) });
       case "studyPack": {
         const refs = Array.isArray(body.refs) ? body.refs.filter((r: unknown) => typeof r === "string") : [];
-        return NextResponse.json(await studyPack(refs));
+        return NextResponse.json(String(body.category || "").trim().toLowerCase() === "thumbnails" ? await studyThumbPack(refs) : await studyPack(refs));
       }
       case "preview": {
         const t = cleanTemplateInput(body.template || {});

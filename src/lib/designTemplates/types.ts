@@ -65,6 +65,9 @@ export type PublicTemplate = Omit<DesignTemplate, "prompt" | "params" | "packDna
   fields: { key: string; label: string; placeholder: string }[];
 };
 
+/** A reference pack for thumbnails (kept apart from ad packs by its category). */
+export const isThumbPack = (t: { category?: string | null }) => (t.category || "").trim().toLowerCase() === "thumbnails";
+
 export const ASPECTS = ["9:16", "4:5", "1:1", "16:9"] as const;
 /** Placeholders the system fills itself; admins don't define params for these. */
 export const RESERVED = ["STYLES", "BRAND_COLOURS"];

@@ -21,6 +21,7 @@ import {
   FolderKanban,
 } from "lucide-react";
 import Link from "next/link";
+import { MAKE } from "@/components/layout/AppHeader";
 import { CarouselQuickModal } from "@/components/ai/QuickCreate";
 import TikTokWizard from "@/components/ai/TikTokWizard";
 import { formatRelative } from "@/lib/utils";
@@ -110,68 +111,46 @@ export default function DashboardPage() {
     { label: "AI Conversations", value: "0", change: "Start chatting", icon: Sparkles, color: "text-green-500", bg: "bg-green-50" },
   ];
 
+  // Same quick actions as the header's "Create project" menu, plus the calendar.
   const quickActions: QuickAction[] = [
-    {
-      href: "/ai",
-      title: "Open AI Studio",
-      hint: "Chat with AI to generate graphics and copy",
-      icon: Sparkles,
-      tint: "bg-blue-50",
-      iconColor: "text-blue-500",
-    },
-    {
-      onClick: () => setShowCarousel(true),
-      title: "Create Carousel",
-      hint: "Plan and generate a multi-slide carousel",
-      icon: Layers,
-      tint: "bg-purple-50",
-      iconColor: "text-purple-500",
-    },
-    {
-      onClick: () => setShowTikTok(true),
-      title: "Create TikTok Slideshow",
-      hint: "Hook, value slides, and close, with text you edit",
-      icon: Video,
-      tint: "bg-pink-50",
-      iconColor: "text-pink-500",
-    },
+    ...MAKE.map((m) => ({
+      ...(/carousel/i.test(m.prompt) ? { onClick: () => setShowCarousel(true) } : { href: `/ai?prompt=${encodeURIComponent(m.prompt)}` }),
+      title: m.label,
+      hint: m.hint,
+      icon: m.icon as typeof Sparkles,
+      tint: "bg-gray-100",
+      iconColor: "text-gray-700",
+    })),
     {
       href: "/projects",
-      title: "Create a Project",
-      hint: "Set up a content channel with your brand style",
+      title: "Create a project",
+      hint: "Set up a brand and start creating",
       icon: Plus,
-      tint: "bg-green-50",
-      iconColor: "text-green-500",
+      tint: "bg-[#A3F76B]",
+      iconColor: "text-gray-900",
     },
     {
-      href: "/jobs",
-      title: "Schedule a Job",
-      hint: "Auto-generate and deliver content on a schedule",
+      href: "/calendar",
+      title: "Schedule a job",
+      hint: "Auto-make and send content on a schedule",
       icon: Zap,
-      tint: "bg-amber-50",
-      iconColor: "text-amber-500",
+      tint: "bg-gray-100",
+      iconColor: "text-gray-700",
     },
   ];
 
-  // Each quick action is a card with its own background and generous padding.
+  // Rows look like the header's Create project menu; border goes black on hover.
   const quickCard = (a: QuickAction) => (
-    <LightCard
-      interactive
-      padding="sm"
-      className="group flex items-center gap-3 bg-gray-50 hover:bg-blue-50/40"
-    >
-      <div className={`w-9 h-9 rounded-lg ${a.tint} flex items-center justify-center shrink-0`}>
-        <a.icon size={16} className={a.iconColor} />
-      </div>
+    <div className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 transition-colors hover:border-gray-900">
+      <span className={`w-10 h-10 rounded-xl ${a.tint} flex items-center justify-center shrink-0`}>
+        <a.icon size={18} className={a.iconColor} />
+      </span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">{a.title}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{a.hint}</p>
+        <p className="text-sm font-semibold text-gray-900">{a.title}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{a.hint}</p>
       </div>
-      <ArrowRight
-        size={16}
-        className="text-gray-300 group-hover:text-blue-500 transition-colors shrink-0"
-      />
-    </LightCard>
+      <ArrowRight size={16} className="text-gray-300 group-hover:text-gray-900 transition-colors shrink-0" />
+    </div>
   );
 
   return (
@@ -182,9 +161,9 @@ export default function DashboardPage() {
         {/* ==================== Stat cards ==================== */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {stats.map((stat) => (
-            <LightCard key={stat.label} className="flex items-start gap-4">
-              <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
-                <stat.icon size={20} className={stat.color} />
+            <LightCard key={stat.label} className="flex items-stretch gap-4">
+              <div className={`self-stretch aspect-square rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
+                <stat.icon size={32} className={stat.color} />
               </div>
               <div>
                 <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
@@ -291,7 +270,7 @@ export default function DashboardPage() {
           </LightCard>
 
           {/* ---- Right: Quick actions ---- */}
-          <div className="flex flex-col gap-3 rounded-xl bg-gray-100 border border-gray-200 p-3">
+          <div className="flex flex-col gap-3 rounded-xl bg-white border border-gray-200 p-3">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-base font-semibold text-gray-900">Quick Actions</h3>
               <Badge variant="brand">Get Started</Badge>

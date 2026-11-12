@@ -15,10 +15,11 @@ import { Bell, ChevronDown, FolderPlus, History, Image as ImageIcon, LayoutGrid,
 import { CreditsPill } from "@/components/billing/CreditsPill";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import OnboardingModal from "@/components/projects/OnboardingModal";
+import { CarouselQuickModal } from "@/components/ai/QuickCreate";
 
 type Recent = { id: string; name: string; sub: string; href: string; at: string };
 
-const MAKE = [
+export const MAKE = [
   { label: "Make ads", hint: "One scroll-stopping ad", icon: ImageIcon, prompt: "Make an ad for " },
   { label: "Make carousels", hint: "Swipeable multi-slide posts", icon: LayoutGrid, prompt: "Make a carousel about " },
   { label: "Make slideshows", hint: "TikTok photo slideshows", icon: Smartphone, prompt: "Make a tiktok slideshow about " },
@@ -50,6 +51,7 @@ export default function AppHeader() {
   const [menu, setMenu] = useState<null | "create" | "history" | "bell">(null);
   const [recent, setRecent] = useState<Recent[] | null>(null);
   const [onboarding, setOnboarding] = useState(false);
+  const [carousel, setCarousel] = useState(false);
   const [q, setQ] = useState("");
   const loadedFor = useRef<string | null>(null);
 
@@ -78,7 +80,14 @@ export default function AppHeader() {
     router.push(href);
   };
 
-  const makeThing = (prompt: string) => go(`/ai?prompt=${encodeURIComponent(prompt)}`);
+  const makeThing = (prompt: string) => {
+    if (/carousel/i.test(prompt)) {
+      setMenu(null);
+      requireAuth(() => setCarousel(true));
+      return;
+    }
+    go(`/ai?prompt=${encodeURIComponent(prompt)}`);
+  };
 
   const submitSearch = () => {
     const t = q.trim();
@@ -183,6 +192,7 @@ export default function AppHeader() {
         </div>
       </header>
 
+      <CarouselQuickModal isOpen={carousel} onClose={() => setCarousel(false)} />
       <OnboardingModal isOpen={onboarding} onClose={() => { setOnboarding(false); router.refresh(); loadedFor.current = null; setRecent(null); }} />
     </>
   );

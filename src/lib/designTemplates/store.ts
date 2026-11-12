@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { uploadImage } from "@/lib/storage";
 import { BUILT_IN_TEMPLATES, TEMPLATE_1_NEW_COLOUR_LINE, TEMPLATE_1_OLD_COLOUR_LINE } from "./defaults";
 import { pickPack } from "./pack";
-import { cleanTemplateInput, type DesignTemplate, type TemplateParam, type TemplateStyle } from "./types";
+import { cleanTemplateInput, isThumbPack, type DesignTemplate, type TemplateParam, type TemplateStyle } from "./types";
 
 type Row = Omit<DesignTemplate, "params" | "styles" | "aspect" | "kind"> & { params: unknown; styles: unknown; aspect: string; kind?: string | null };
 
@@ -110,15 +110,16 @@ export async function listOwnPacks(userId: string): Promise<DesignTemplate[]> {
  */
 export async function resolvePack(
   packId: string | null | undefined,
-  ctx: { userId?: string; brief?: string; hint?: string } = {},
+  ctx: { userId?: string; brief?: string; hint?: string; purpose?: "ad" | "thumbnail" } = {},
 ): Promise<DesignTemplate | null> {
+  const wantThumb = ctx.purpose === "thumbnail";
   const usable = (t: DesignTemplate | null) =>
-    !!t && t.kind === "pack" && t.refImages.length > 0 && ((t.published && !t.ownerId) || (!!ctx.userId && t.ownerId === ctx.userId));
+    !!t && t.kind === "pack" && t.refImages.length > 0 && isThumbPack(t) === wantThumb && ((t.published && !t.ownerId) || (!!ctx.userId && t.ownerId === ctx.userId));
   if (packId) {
     const t = await getTemplate(packId).catch(() => null);
     if (usable(t)) return t;
   }
-  const own = ctx.userId ? await listOwnPacks(ctx.userId).catch(() => []) : [];
+  const own = (ctx.userId ? await listOwnPacks(ctx.userId).catch(() => []) : []).filter((t) => isThumbPack(t) === wantThumb);
   const pool = own.length ? own : (await listTemplates({ publishedOnly: true })).filter((t) => usable(t));
   if (pool.length <= 1) return pool[0] ?? null;
   return pickPack(pool, ctx.brief || "", ctx.hint || "");

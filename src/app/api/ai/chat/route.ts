@@ -7,6 +7,8 @@
 import { withUsage, applyProjectNegative } from "@/lib/billing/usage";
 import { resolvePack } from "@/lib/designTemplates/store";
 import { generatePackAd } from "@/lib/designTemplates/pack";
+import { classifySubject, generateThumbnail, isThumbnailRequest, thumbSpec, thumbText } from "@/lib/designTemplates/thumb";
+import { loadContext } from "@/lib/slideshow/context";
 import { adCraftNote, moodFromVoice } from "@/lib/ai/adCraft";
 import { brandColoursText } from "@/lib/designTemplates/types";
 import { getBrain, generateBrain } from "@/lib/brain/generate";
@@ -183,6 +185,16 @@ async function handlePOST(request: Request) {
       ? `\n\nFREE CHAT MODE: There is no brand and no project. The user wants an image NOW. Do NOT greet, do NOT ask questions, do NOT offer captions or menus. Reply with one short friendly sentence, then ONE \`\`\`prompt block that turns the user's request (and any attached reference/product image) into a detailed image-generation prompt. If the request is vague, make a confident creative choice. Always include the \`\`\`prompt block.`
       : "";
 
+    // Thumbnail requests: a picture-only brief (no text in the image unless asked).
+    const lastUserMsg = [...(messages as AIMessage[])].reverse().find((m) => m.role === "user");
+    const askText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content : "";
+    const thumbReq = isThumbnailRequest(askText, platform);
+    const thumbSpecNow = thumbSpec(askText);
+    const thumbTextNow = thumbText(askText);
+    const thumbRule = thumbReq
+      ? `\n\nTHUMBNAIL MODE: The user wants a thumbnail (${thumbSpecNow.aspect}). Reply with one short friendly sentence, then ONE \`\`\`prompt block that describes the SCENE only: the subject, their expression and pose, the setting, the mood and the colours. ${thumbTextNow.mode === "none" ? "Put NO text, words or letters in the image; the user did not ask for any." : "Include only the text the user asked for."} Do not ask questions; make confident choices.`
+      : "";
+
     // The project's Brand Brain: audience, voice, positioning, real offers.
     // Every caption and headline the chat writes comes from this.
     let brainBlock = "";
@@ -194,7 +206,7 @@ async function handlePOST(request: Request) {
 
     // Prepend system message
     const fullMessages: AIMessage[] = [
-      { role: "system", content: systemPrompt + brainBlock + freeChatRule },
+      { role: "system", content: systemPrompt + brainBlock + freeChatRule + thumbRule },
       ...messages,
     ];
 
@@ -252,9 +264,52 @@ async function handlePOST(request: Request) {
             console.log("[CHAT] 📸 No generation pool yet, using raw reference board:", refs.length, "images");
           }
         }
-        // No references of the project's own → the project's ad pack (admin reference packs).
+        // Thumbnails: the thumbnail brain (reference thumbnails, subject photo or character, size, no text unless asked).
         let packImage: string | null = null;
-        if (refs.length === 0 && lookupId && process.env.OPENAI_API_KEY) {
+        if (thumbReq && process.env.OPENAI_API_KEY) {
+          try {
+            const adv = ((loadedBrand?.styleGuide as unknown as { advancedSettings?: { thumbPackId?: string } } | null)?.advancedSettings) || {};
+            const brain = lookupId ? await getBrain(lookupId).catch(() => null) : null;
+            const brainOk = !!brain && !isEmptyBrain(brain.data);
+            const matchHint = brainOk ? [brain!.data.business.industry, brain!.data.voice.oneLine].filter(Boolean).join("; ") : "";
+            const pack = await resolvePack(adv.thumbPackId, { userId: session.user.id, brief: askText, hint: matchHint, purpose: "thumbnail" }).catch(() => null);
+            // Subject: an attached photo wins; otherwise the project's character sheet (by name if mentioned).
+            const subjects: { url: string; kind: "person" | "product" }[] = [];
+            let characterNote = "";
+            if (productImage) {
+              subjects.push({ url: productImage, kind: await classifySubject(productImage) });
+            } else if (lookupId) {
+              const ctx = await loadContext(session.user.id, lookupId).catch(() => null);
+              const chars = ctx?.characters || [];
+              const named = chars.find((c) => c.name && askText.toLowerCase().includes(c.name.toLowerCase()));
+              const ch = named || chars[0];
+              if (ch) {
+                ch.photos.slice(0, 2).forEach((u) => subjects.push({ url: u, kind: "person" }));
+                characterNote = [ch.name, ch.description].filter(Boolean).join(": ");
+              }
+            }
+            const sgAny = loadedBrand?.styleGuide as unknown as Record<string, string | null> | null;
+            const out = await generateThumbnail({
+              pack,
+              packId: pack?.id,
+              brief: `${askText}\n\nScene notes from the assistant: ${imagePrompt}`.slice(0, 2500),
+              spec: thumbSpecNow,
+              text: thumbTextNow,
+              subjects,
+              characterNote,
+              colours: sgAny ? brandColoursText({ primary: sgAny.primaryColor, secondary: sgAny.secondaryColor, accent: sgAny.accentColor, background: sgAny.backgroundColor }) : null,
+              brandNote: brainOk ? brainImageNote(brain!.data) : "",
+              matchHint,
+            });
+            packImage = out.url;
+            if (pack && out.refIndex !== null) packUsed = { id: pack.id, refIndex: out.refIndex };
+            console.log("[CHAT] 🖼️ Thumbnail", thumbSpecNow.aspect, pack ? `from pack ${pack.number} ref ${(out.refIndex ?? 0) + 1}` : "(no pack)", subjects.length ? `with ${subjects.length} subject photo(s)` : "");
+          } catch (thumbErr) {
+            console.error("[CHAT] thumbnail generation failed, falling back:", thumbErr);
+          }
+        }
+        // No references of the project's own → the project's ad pack (admin reference packs).
+        if (!thumbReq && refs.length === 0 && lookupId && process.env.OPENAI_API_KEY) {
           const adv = ((loadedBrand?.styleGuide as unknown as { advancedSettings?: { adPackId?: string } } | null)?.advancedSettings) || {};
           const brain = await getBrain(lookupId).catch(() => null);
           const lastUser = [...(messages as AIMessage[])].reverse().find((m) => m.role === "user");
@@ -313,7 +368,7 @@ const platformSizes: Record<string, string> = {
   threads: "1080x1080",
   snapchat: "1080x1920",
 };
-const imageSize = platformSizes[platform] || "1080x1080";
+const imageSize = thumbReq ? `${thumbSpecNow.w}x${thumbSpecNow.h}` : platformSizes[platform] || "1080x1080";
 console.log("[CHAT] 📐 Platform:", platform, "→ Size:", imageSize);
 const imageResponse = packImage ? { url: packImage } : await generateImage(
   imagePrompt,

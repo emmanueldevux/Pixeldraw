@@ -14,7 +14,7 @@ import { ASPECTS, missingParams, renderPrompt, type DesignTemplate, type Templat
 const label = "block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5";
 const box = "rounded-xl border border-gray-200 bg-white p-5";
 
-export const TYPE_CATEGORIES = ["Static ads", "Carousel", "Slideshows"];
+export const TYPE_CATEGORIES = ["Static ads", "Carousel", "Slideshows", "Thumbnails"];
 const isRec = (tags: string[]) => tags.some((t) => t.toLowerCase() === "recommended");
 const withRec = (tags: string[], on: boolean) => {
   const rest = tags.filter((t) => t.toLowerCase() !== "recommended");
@@ -462,7 +462,7 @@ function PackEditor({ draft, setDraft, setMsg }: { draft: Draft; setDraft: React
     setBusy("study");
     setMsg(null);
     try {
-      const r = await fetch("/api/admin/templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "studyPack", refs: draft.refImages }) });
+      const r = await fetch("/api/admin/templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "studyPack", refs: draft.refImages, category: draft.category }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Study failed");
       setDraft((cur) => (cur ? { ...cur, packDna: d.packDna, refDnas: d.refDnas } : cur));

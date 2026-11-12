@@ -67,6 +67,8 @@ interface Props {
   generationId?: string | null;
   /** Called when a single slide was redone, so the message can swap it in. */
   onSlideRedone?: (slideIndex: number, imageUrl: string) => void;
+  /** Thumbnails only: make a fresh version with the same request. */
+  onRedoThumb?: () => void;
   /** Re-generate the selected image with an extra instruction. Resolve when done. */
   onEdit: (prompt: string, target: { imageUrl: string; slideIndex?: number }) => Promise<void>;
 }
@@ -86,7 +88,7 @@ function download(url: string, name: string) {
   a.remove();
 }
 
-function ChatMediaCard({ text, imageUrl, slides, logo, aspect, downloadName = "uxlly-gen.png", generationId, onSlideRedone, onEdit }: Props) {
+function ChatMediaCard({ text, imageUrl, slides, logo, aspect, downloadName = "uxlly-gen.png", generationId, onSlideRedone, onRedoThumb, onEdit }: Props) {
   const [panel, setPanel] = useState<Panel>(null);
   const [selected, setSelected] = useState(0);
   const [editPrompt, setEditPrompt] = useState("");
@@ -223,6 +225,11 @@ function ChatMediaCard({ text, imageUrl, slides, logo, aspect, downloadName = "u
           {generationId && isCarousel && (
             <button type="button" onClick={redoSlide} disabled={redoing} className={`${PILL} text-zinc-700 hover:bg-[#F4F4F5] disabled:opacity-40`}>
               {redoing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Redo slide {selected + 1}
+            </button>
+          )}
+          {onRedoThumb && !isCarousel && (
+            <button type="button" onClick={onRedoThumb} className={`${PILL} text-zinc-700 hover:bg-[#F4F4F5]`}>
+              <Sparkles size={14} /> Redo thumbnail
             </button>
           )}
           {generationId && (
@@ -421,44 +428,45 @@ function AIStudioPageInner() {
   }, [messages]);
 
   // ==================== Send Message ====================
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  const handleSend = async (override?: string) => {
+    const text = (override ?? input).trim();
+    if (!text || loading) return;
     // Gated action: anonymous users get the login popup first; their message is
     // replayed automatically once they finish signing in.
     if (!isAuthenticated) {
-      requireAuth(() => handleSend());
+      requireAuth(() => handleSend(override));
       return;
     }
     if (!selectedChannel) return;
 
     // "plan my next 30 days of content" → open the plan wizard on the Calendar page.
-    const planMatch = input.match(/\b(content|posting)\s+(plan|calendar|schedule)\b|\bplan\b[^.?!]{0,40}\b(\d+|a|the next|next)?\s*(days?|weeks?|month)\b|\b(fill|build|map out)\b[^.?!]{0,30}\b(calendar|schedule)\b/i);
-    if (planMatch && !/carousel/i.test(input)) {
-      const n = input.match(/(\d+)\s*(day|week|month)/i);
-      const dayCount = n ? Math.min(60, Math.max(1, Number(n[1]) * (/week/i.test(n[2]) ? 7 : /month/i.test(n[2]) ? 30 : 1))) : /month/i.test(input) ? 30 : /week/i.test(input) ? 7 : 30;
-      const q = new URLSearchParams({ plan: "1", days: String(dayCount), brand: selectedChannel.brand.id, brief: input.trim().slice(0, 400) });
+    const planMatch = text.match(/\b(content|posting)\s+(plan|calendar|schedule)\b|\bplan\b[^.?!]{0,40}\b(\d+|a|the next|next)?\s*(days?|weeks?|month)\b|\b(fill|build|map out)\b[^.?!]{0,30}\b(calendar|schedule)\b/i);
+    if (planMatch && !/carousel/i.test(text)) {
+      const n = text.match(/(\d+)\s*(day|week|month)/i);
+      const dayCount = n ? Math.min(60, Math.max(1, Number(n[1]) * (/week/i.test(n[2]) ? 7 : /month/i.test(n[2]) ? 30 : 1))) : /month/i.test(text) ? 30 : /week/i.test(text) ? 7 : 30;
+      const q = new URLSearchParams({ plan: "1", days: String(dayCount), brand: selectedChannel.brand.id, brief: text.trim().slice(0, 400) });
       setInput("");
       window.location.href = `/calendar?${q.toString()}`;
       return;
     }
 
     // "make a tiktok slideshow about …" → open the slideshow setup.
-    if (/\b(tiktok\s+)?slide\s?show\b/i.test(input) && !/carousel/i.test(input)) {
-      setSlideshowAsk(input.trim());
+    if (/\b(tiktok\s+)?slide\s?show\b/i.test(text) && !/carousel/i.test(text)) {
+      setSlideshowAsk(text.trim());
       setInput("");
       return;
     }
 
-    const carouselMatch = input.match(/carousel/i);
+    const carouselMatch = text.match(/carousel/i);
     if (carouselMatch) {
-      startCarousel(input.trim());
+      startCarousel(text.trim());
       return;
     }
 
     const userMessage: StudioMessage = {
       id: Date.now().toString(),
       role: "user",
-      content: input.trim(),
+      content: text.trim(),
       createdAt: new Date(),
     };
 
@@ -871,7 +879,7 @@ function AIStudioPageInner() {
       <ProjectPrompt
         value={input}
         onChange={setInput}
-        onSubmit={handleSend}
+        onSubmit={() => handleSend()}
         disabled={isAuthenticated && !selectedChannel}
         attachedImage={attachedImage}
         onAttachImage={setAttachedImage}
@@ -1034,6 +1042,13 @@ function AIStudioPageInner() {
                             prev.map((m) => (m.id === msg.id ? { ...m, carouselSlides: (m.carouselSlides || []).map((sl, k) => (k === i ? { ...sl, imageUrl: url } : sl)) } : m)),
                           )
                         }
+                        onRedoThumb={(() => {
+                          const at = messages.findIndex((m) => m.id === msg.id);
+                          const prevUser = [...messages.slice(0, Math.max(0, at))].reverse().find((m) => m.role === "user");
+                          return prevUser && /\b(thumbnails?|thumbs?)\b/i.test(prevUser.content)
+                            ? () => handleSend(`${prevUser.content.replace(/\s*\n*Make a completely different version[^]*$/i, "")}\n\nMake a completely different version: new composition, new pose and expression.`)
+                            : undefined;
+                        })()}
                         onEdit={(p, t) => handleEditImage(msg.id, p, t)}
                       />
                     );

@@ -5,7 +5,7 @@
 // ============================================================
 import sharp from "sharp";
 
-const RATIO: Record<string, number> = { "9:16": 9 / 16, "4:5": 4 / 5, "1:1": 1, "16:9": 16 / 9 };
+const RATIO: Record<string, number> = { "9:16": 9 / 16, "4:5": 4 / 5, "1:1": 1, "16:9": 16 / 9, "1.91:1": 1.91, "3:2": 3 / 2, "4:3": 4 / 3 };
 
 async function toBuffer(src: string): Promise<Buffer> {
   if (src.startsWith("data:")) return Buffer.from(src.slice(src.indexOf(",") + 1), "base64");

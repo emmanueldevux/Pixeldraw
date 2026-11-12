@@ -60,6 +60,7 @@ interface State {
   ecommerce: EcommerceSettings;
   carousel: ProjectCarouselSettings;
   adPackId: string;
+  thumbPackId: string;
   negativePrompt: string;
   characters: Character[];
 }
@@ -300,6 +301,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
         ecommerce: { ...EMPTY_ECOM, ...(adv.ecommerce || {}) },
         carousel: readProjectCarousel(adv) || EMPTY_PROJECT_CAROUSEL,
         adPackId: typeof adv.adPackId === "string" ? adv.adPackId : "",
+        thumbPackId: typeof adv.thumbPackId === "string" ? adv.thumbPackId : "",
         negativePrompt: typeof adv.negativePrompt === "string" ? adv.negativePrompt : "",
         characters: cleanCharacters(adv.characters),
       });
@@ -367,7 +369,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
           headingFont: state.headingFont,
           tone: state.tone,
           referenceImages: state.referenceImages,
-          advancedSettings: { bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, negativePrompt: state.negativePrompt, characters: state.characters },
+          advancedSettings: { bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, negativePrompt: state.negativePrompt, characters: state.characters },
         }),
       });
       const logoPut = fetch("/api/projects/logo", {
@@ -563,6 +565,11 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
           <AdPackPicker value={state.adPackId} onChange={(v) => patch({ adPackId: v })} />
         </Section>
 
+        {/* ===== Thumbnails ===== */}
+        <Section icon={<ImageIcon size={15} />} title="Thumbnails">
+          <AdPackPicker purpose="thumbnail" value={state.thumbPackId} onChange={(v) => patch({ thumbPackId: v })} />
+        </Section>
+
         {/* ===== Characters (TikTok slideshows) ===== */}
         <Section icon={<UserRound size={15} />} title="Characters">
           <CharacterSheet characters={state.characters} onChange={(characters) => patch({ characters })} />
@@ -753,11 +760,12 @@ function CarouselSettings({ value, onChange }: { value: ProjectCarouselSettings;
 
 
 // ==================== Default reference pack for single ads ====================
-function AdPackPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function AdPackPicker({ value, onChange, purpose = "ad" }: { value: string; onChange: (v: string) => void; purpose?: "ad" | "thumbnail" }) {
+  const thumb = purpose === "thumbnail";
   const [packs, setPacks] = useState<{ id: string; title: string; description: string; coverImages: string[]; mine?: boolean }[] | null>(null);
   const [creating, setCreating] = useState(false);
   const load = useCallback(() => {
-    fetch("/api/ad-packs")
+    fetch(thumb ? "/api/ad-packs?purpose=thumbnail" : "/api/ad-packs")
       .then((r) => r.json())
       .then((d) => setPacks(d.packs || []))
       .catch(() => setPacks([]));
@@ -773,7 +781,7 @@ function AdPackPicker({ value, onChange }: { value: string; onChange: (v: string
   const AUTO = "__auto__";
   return (
     <div>
-      <label className={LABEL}>Ad style (reference pack)</label>
+      <label className={LABEL}>{thumb ? "Thumbnail style (reference pack)" : "Ad style (reference pack)"}</label>
       {packs === null ? (
         <p className="text-xs text-zinc-400">Loading…</p>
       ) : (
@@ -781,14 +789,14 @@ function AdPackPicker({ value, onChange }: { value: string; onChange: (v: string
           muted
           value={chosen ? value : AUTO}
           onChange={(v) => onChange(v === AUTO ? "" : v)}
-          options={[{ value: AUTO, label: "Auto: the AI picks the best pack" }, ...packs.map((p) => ({ value: p.id, label: p.mine ? `${p.title} (yours)` : p.title }))]}
+          options={[{ value: AUTO, label: thumb ? "Auto: the AI picks the best style" : "Auto: the AI picks the best pack" }, ...packs.map((p) => ({ value: p.id, label: p.mine ? `${p.title} (yours)` : p.title }))]}
         />
       )}
       {chosen && chosen.coverImages.length > 0 && (
         <div className="mt-2.5 flex gap-1.5">
           {chosen.coverImages.slice(0, 3).map((src, i) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={src} alt="" className="w-1/3 aspect-[4/5] object-cover rounded-md border border-[#E3E3E6]" />
+            <img key={i} src={src} alt="" className={`w-1/3 ${thumb ? "aspect-video" : "aspect-[4/5]"} object-cover rounded-md border border-[#E3E3E6]`} />
           ))}
         </div>
       )}
@@ -796,10 +804,11 @@ function AdPackPicker({ value, onChange }: { value: string; onChange: (v: string
         <button type="button" onClick={() => removePack(chosen.id)} className="text-[11px] text-red-500 mt-1.5 hover:underline">Delete this pack</button>
       )}
       <button type="button" onClick={() => setCreating(true)} className="mt-2.5 flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900">
-        <Plus className="w-3.5 h-3.5" /> Create my own pack
+        <Plus className="w-3.5 h-3.5" /> {thumb ? "Add my own reference thumbnails" : "Create my own pack"}
       </button>
       {creating && (
         <AdPackWizard
+          purpose={purpose}
           onClose={() => setCreating(false)}
           onCreated={(id) => {
             setCreating(false);
@@ -809,7 +818,7 @@ function AdPackPicker({ value, onChange }: { value: string; onChange: (v: string
         />
       )}
       <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">
-        Single ads follow the pack: the AI picks the best layout for each request and swaps in your colours, fonts and product. On Auto it chooses the best pack for the request (your own packs first, if you made any). If you&apos;ve added your own reference images above, those are used instead.
+        {thumb ? "Thumbnails follow your reference thumbnails: the AI picks the best one for each request. Thumbnails have no text unless you ask for it, and use your character sheet or an attached photo as the subject. Ask for a size like 16:9, 1.91:1, 3:2, 4:3 or 1:1." : "Single ads follow the pack: the AI picks the best layout for each request and swaps in your colours, fonts and product. On Auto it chooses the best pack for the request (your own packs first, if you made any). If you've added your own reference images above, those are used instead."}
       </p>
     </div>
   );
