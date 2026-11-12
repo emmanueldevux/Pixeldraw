@@ -122,14 +122,6 @@ export default function DashboardPage() {
       iconColor: "text-gray-700",
     })),
     {
-      href: "/projects",
-      title: "Create a project",
-      hint: "Set up a brand and start creating",
-      icon: Plus,
-      tint: "bg-[#A3F76B]",
-      iconColor: "text-gray-900",
-    },
-    {
       href: "/calendar",
       title: "Schedule a job",
       hint: "Auto-make and send content on a schedule",
