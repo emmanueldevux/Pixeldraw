@@ -24,6 +24,8 @@ export const authOptions: NextAuthOptions = {
  GoogleProvider({
   clientId: process.env.GOOGLE_CLIENT_ID!,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+  // Google verifies emails, so an existing account with the same email (made with a password or earlier) is linked instead of blocked.
+  allowDangerousEmailAccountLinking: true,
   httpOptions: {
     timeout: 15000,
   },

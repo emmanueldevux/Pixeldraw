@@ -12,13 +12,14 @@ import { signIn } from "next-auth/react";
 interface LoginModalProps {
   open: boolean;
   onClose: () => void;
+  notice?: string;
 }
 
 type Mode = "signup" | "signin";
 
 const FEATURES = ["Image posts", "Carousels", "TikTok slideshows", "Brand kit"];
 
-export default function LoginModal({ open, onClose }: LoginModalProps) {
+export default function LoginModal({ open, onClose, notice }: LoginModalProps) {
   const [mode, setMode] = useState<Mode>("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -193,7 +194,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-gray-400 transition-colors"
               />
 
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {(error || notice) && <p className="text-sm text-red-500">{error || notice}</p>}
 
               <button
                 type="submit"

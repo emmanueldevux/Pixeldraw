@@ -51,6 +51,20 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
 
   const openLogin = useCallback(() => setOpen(true), []);
 
+  // /login redirects here with ?login=1 (and ?authError= after a failed sign-in): open the popup.
+  const [notice, setNotice] = useState("");
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("login") !== "1") return;
+    const e = q.get("authError");
+    if (e) setNotice(e === "OAuthAccountNotLinked" ? "This email already has an account. Sign in with your email and password, or try Google again." : "Sign-in failed. Please try again.");
+    setOpen(true);
+    q.delete("login");
+    q.delete("authError");
+    const rest = q.toString();
+    window.history.replaceState(null, "", window.location.pathname + (rest ? `?${rest}` : ""));
+  }, []);
+
   // The instant the session flips to authenticated while the popup is open,
   // close it and replay whatever the user was trying to do.
   useEffect(() => {
@@ -67,7 +81,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
       value={{ requireAuth, isAuthenticated: status === "authenticated", openLogin }}
     >
       {children}
-      <LoginModal open={open} onClose={() => setOpen(false)} />
+      <LoginModal open={open} notice={notice} onClose={() => { setOpen(false); setNotice(""); }} />
     </AuthGateContext.Provider>
   );
 }
