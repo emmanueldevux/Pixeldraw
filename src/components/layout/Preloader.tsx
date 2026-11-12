@@ -15,10 +15,14 @@ export const preloaderGuard = `try{if(/[?&]preloader\\b/.test(location.search))l
 
 const CSS = `
 html.mk-seen #mk-preloader{display:none}
-#mk-preloader{position:fixed;inset:0;z-index:99999;background:#fff;display:flex;align-items:center;justify-content:center;transition:opacity .5s ease,visibility .5s ease}
-#mk-preloader.mk-out{opacity:0;visibility:hidden}
+#mk-preloader{position:fixed;inset:0;z-index:99999;background:#fff;display:flex;align-items:center;justify-content:center;clip-path:circle(150% at 50% 50%)}
+/* exit: the logo swells then pops away, and the white closes like an iris onto the page */
+#mk-preloader.mk-out{pointer-events:none;animation:mk-iris .75s cubic-bezier(.76,0,.24,1) .3s forwards}
+#mk-preloader.mk-out .mk-beat{animation:mk-pop .45s cubic-bezier(.5,-0.4,.7,.2) forwards}
+@keyframes mk-pop{0%{transform:scale(1);opacity:1}35%{transform:scale(1.22);opacity:1}100%{transform:scale(0);opacity:0}}
+@keyframes mk-iris{0%{clip-path:circle(150% at 50% 50%)}100%{clip-path:circle(0% at 50% 50%)}}
 #mk-preloader .mk-beat{width:92px;height:92px;object-fit:contain;opacity:0;will-change:transform}
-#mk-preloader .mk-beat.mk-ready{opacity:1;animation:mk-heartbeat 1.1s ease-in-out infinite}
+#mk-preloader:not(.mk-out) .mk-beat.mk-ready{opacity:1;animation:mk-heartbeat 1.1s ease-in-out infinite}
 @keyframes mk-heartbeat{
   0%{transform:scale(1)}
   14%{transform:scale(1.18)}
@@ -26,7 +30,7 @@ html.mk-seen #mk-preloader{display:none}
   42%{transform:scale(1.12)}
   70%,100%{transform:scale(1)}
 }
-@media (prefers-reduced-motion:reduce){#mk-preloader .mk-beat.mk-ready{animation:none}}
+@media (prefers-reduced-motion:reduce){#mk-preloader .mk-beat.mk-ready{animation:none}#mk-preloader.mk-out,#mk-preloader.mk-out .mk-beat{animation-duration:.01s;animation-delay:0s}}
 `;
 
 export default function Preloader() {
@@ -52,7 +56,7 @@ export default function Preloader() {
       window.setTimeout(() => {
         setOut(true);
         try { localStorage.setItem(PRELOADER_KEY, new Date().toDateString()); } catch { /* private mode */ }
-        window.setTimeout(() => setGone(true), 600);
+        window.setTimeout(() => setGone(true), 1150);
       }, wait);
     };
     const img = imgRef.current;
@@ -88,5 +92,21 @@ export default function Preloader() {
         />
       </div>
     </>
+  );
+}
+
+/** Shown while the session is being checked (hard refresh etc.): white, logo beating. */
+export function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <style dangerouslySetInnerHTML={{ __html: "@keyframes mk-heartbeat{0%{transform:scale(1)}14%{transform:scale(1.18)}28%{transform:scale(1)}42%{transform:scale(1.12)}70%,100%{transform:scale(1)}}" }} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/templates/images/preloader%20logo.png"
+        alt=""
+        style={{ width: 92, height: 92, objectFit: "contain", animation: "mk-heartbeat 1.1s ease-in-out infinite" }}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+      />
+    </div>
   );
 }

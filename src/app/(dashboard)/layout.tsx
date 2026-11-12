@@ -7,6 +7,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { PageLoader } from "@/components/layout/Preloader";
 import { AuthGateProvider } from "@/components/auth/AuthGate";
 import { BillingProvider } from "@/components/billing/BillingProvider";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
@@ -26,13 +27,7 @@ export default function DashboardLayout({
   // Anonymous visitors can browse freely — gated actions (send a chat, create
   // a project or an automation) trigger the login popup via AuthGate instead.
   // Show loading while checking auth
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-50">
-        <div className="uxlly-spinner w-8 h-8" />
-      </div>
-    );
-  }
+  if (status === "loading") return <PageLoader />;
 
   return (
     <AuthGateProvider>
