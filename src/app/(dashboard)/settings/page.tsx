@@ -1,17 +1,20 @@
 // ============================================================
 // UXLLY — Settings Page
-// Brands & Style Guides + API Keys + Delivery Config
+// Projects (brand, colours, logo, references) + account
 // ============================================================
 
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import DashboardHeader from "@/components/layout/DashboardHeader";
-import Card from "@/components/ui/Card";
-import Input from "@/components/ui/Input";
-import Select from "@/components/ui/Select";
-import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { LCard as Card, LInput as Input, LSelect as Select, LButton as Button, LBadge, FIELD } from "@/components/ui/light";
+
+// Same API as the old Badge, light styling.
+function Badge({ variant = "neutral", children }: { variant?: string; children: React.ReactNode }) {
+  return <LBadge tone={variant === "success" ? "success" : variant === "warning" ? "warn" : variant === "info" ? "info" : "neutral"}>{children}</LBadge>;
+}
 import { FONT_OPTIONS } from "@/lib/fonts";
 import {
   Save, Key, Mail, Send, Globe, Palette, Upload,
@@ -49,6 +52,7 @@ interface BrandData {
 }
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
   const [brands, setBrands] = useState<BrandData[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
@@ -225,7 +229,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <DashboardHeader title="Settings" subtitle="Manage brands, style guides, and integrations" onMenuClick={() => {}} />
+      <DashboardHeader title="Settings" subtitle="Your projects, brand styles and account" onMenuClick={() => {}} />
 
       <div className="uxlly-content max-w-3xl">
         <div className="space-y-6">
@@ -234,18 +238,18 @@ export default function SettingsPage() {
              BRANDS & STYLE GUIDES
              ============================================================ */}
           <div>
-            <h2 className="text-lg font-semibold text-ink-900 mb-4 flex items-center gap-2">
-              <Palette size={20} className="text-brand-500" />
-              Brands & Style Guides
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Palette size={20} className="text-gray-900" />
+              Projects & brand styles
             </h2>
 
             {loading && (
-              <Card><div className="flex justify-center py-8"><div className="uxlly-spinner w-6 h-6" /></div></Card>
+              <Card><div className="flex justify-center py-8"><div className="w-6 h-6 rounded-full border-2 border-gray-300 border-t-gray-900 animate-spin" /></div></Card>
             )}
 
             {!loading && brands.length === 0 && (
               <Card>
-                <p className="text-sm text-ink-400 text-center py-4">
+                <p className="text-sm text-gray-400 text-center py-4">
                   No brands yet. Create a project to get started.
                 </p>
               </Card>
@@ -265,12 +269,12 @@ export default function SettingsPage() {
                     onClick={() => setExpandedBrand(isExpanded ? null : brand.id)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
-                        <Palette size={18} className="text-brand-500" />
+                      <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                        <Palette size={18} className="text-gray-900" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-ink-900">{brand.name}</p>
-                        <p className="text-xs text-ink-400">
+                        <p className="text-sm font-semibold text-gray-900">{brand.name}</p>
+                        <p className="text-xs text-gray-400">
                           {brand.channels.length} channel{brand.channels.length !== 1 ? "s" : ""} · {refs.length} reference{refs.length !== 1 ? "s" : ""}
                         </p>
                       </div>
@@ -279,7 +283,7 @@ export default function SettingsPage() {
                       {!isEditing && (
                         <button
                           onClick={(e) => { e.stopPropagation(); startEditing(brand); }}
-                          className="p-2 rounded-lg hover:bg-surface-100 text-ink-400 hover:text-ink-700 transition-colors"
+                          className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
                         >
                           <Pencil size={14} />
                         </button>
@@ -287,22 +291,22 @@ export default function SettingsPage() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteBrand(brand.id, brand.name); }}
                         disabled={deletingBrand === brand.id}
-                        className="p-2 rounded-lg hover:bg-red-50 text-ink-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                        className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
                         title="Delete brand"
                       >
                         <Trash2 size={14} />
                       </button>
-                      {isExpanded ? <ChevronUp size={16} className="text-ink-400" /> : <ChevronDown size={16} className="text-ink-400" />}
+                      {isExpanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
                     </div>
                   </div>
 
                   {/* ==================== Expanded Content ==================== */}
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-surface-200 space-y-4">
+                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
 
                       {/* Channels list */}
                       <div>
-                        <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">Channels</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Channels</p>
                         <div className="flex flex-wrap gap-2">
                           {brand.channels.map((ch) => (
                             <Badge key={ch.id} variant="brand">
@@ -314,13 +318,13 @@ export default function SettingsPage() {
 
                       {/* Reference Board */}
                       <div>
-                        <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                           Reference Board ({refs.length}/10)
                         </p>
                         {refs.length > 0 ? (
                           <div className="grid grid-cols-4 gap-2">
                             {refs.map((ref, i) => (
-                              <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-surface-200 group">
+                              <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group">
                                 <img src={ref} alt={`Ref ${i + 1}`} className="w-full h-full object-cover" />
                                 {isEditing && (
                                   <button
@@ -335,27 +339,27 @@ export default function SettingsPage() {
 
                             {/* Add more in edit mode */}
                             {isEditing && refs.length + newReferences.length < 10 && (
-                              <label className="aspect-square rounded-lg border-2 border-dashed border-surface-200 flex flex-col items-center justify-center cursor-pointer hover:border-brand-300 transition-colors">
-                                <Upload size={16} className="text-ink-400 mb-1" />
-                                <span className="text-[9px] text-ink-400">Add</span>
+                              <label className="aspect-square rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors">
+                                <Upload size={16} className="text-gray-400 mb-1" />
+                                <span className="text-[9px] text-gray-400">Add</span>
                                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddReferences} />
                               </label>
                             )}
                           </div>
                         ) : (
-                          <div className="flex items-center gap-3 p-4 bg-surface-50 rounded-xl">
-                            <ImageIcon size={20} className="text-ink-300" />
-                            <p className="text-xs text-ink-400">No reference images yet. Click edit to add some.</p>
+                          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                            <ImageIcon size={20} className="text-gray-300" />
+                            <p className="text-xs text-gray-400">No reference images yet. Click edit to add some.</p>
                           </div>
                         )}
 
                         {/* New references preview */}
                         {newReferences.length > 0 && (
                           <div className="mt-2">
-                            <p className="text-xs text-ink-400 mb-1">New (unsaved):</p>
+                            <p className="text-xs text-gray-400 mb-1">New (unsaved):</p>
                             <div className="grid grid-cols-4 gap-2">
                               {newReferences.map((ref, i) => (
-                                <div key={`new-${i}`} className="relative aspect-square rounded-lg overflow-hidden border-2 border-brand-200">
+                                <div key={`new-${i}`} className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-300">
                                   <img src={ref} alt={`New ${i + 1}`} className="w-full h-full object-cover" />
                                   <button
                                     onClick={() => setNewReferences((prev) => prev.filter((_, j) => j !== i))}
@@ -372,18 +376,18 @@ export default function SettingsPage() {
 
                       {/* Logo */}
                       <div>
-                        <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                           Logo
                         </p>
-                        <p className="text-xs text-ink-400 mb-2">
+                        <p className="text-xs text-gray-400 mb-2">
                           Placed exactly as uploaded on every generation — never redrawn or restyled by the AI.
                         </p>
                         <div className="flex items-start gap-4">
-                          <label className={`w-20 h-20 rounded-xl border-2 border-dashed border-surface-200 flex items-center justify-center overflow-hidden shrink-0 ${isEditing ? "cursor-pointer hover:border-brand-300" : ""}`}>
+                          <label className={`w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden shrink-0 ${isEditing ? "cursor-pointer hover:border-gray-400" : ""}`}>
                             {(newLogo || brand.logo) ? (
                               <img src={newLogo || brand.logo || ""} alt="Logo" className="w-full h-full object-contain p-2" />
                             ) : (
-                              <ImageIcon size={18} className="text-ink-300" />
+                              <ImageIcon size={18} className="text-gray-300" />
                             )}
                             {isEditing && (
                               <input type="file" accept="image/*" className="hidden" onChange={handleLogoFile} />
@@ -408,7 +412,7 @@ export default function SettingsPage() {
                                 ]}
                               />
                               <div className={editLogoPosition === "auto" ? "opacity-40 pointer-events-none" : ""}>
-                                <label className="text-xs text-ink-600 mb-1 block">
+                                <label className="text-xs text-gray-600 mb-1 block">
                                   Size — {Math.round(editLogoScale * 100)}% of canvas width
                                   {editLogoPosition === "auto" && " (auto-picked per position)"}
                                 </label>
@@ -434,7 +438,7 @@ export default function SettingsPage() {
                               </Button>
                             </div>
                           ) : (
-                            <div className="text-xs text-ink-400">
+                            <div className="text-xs text-gray-400">
                               {brand.logo ? (
                                 <>
                                   Position: {brand.logoPosition ? brand.logoPosition.replace("-", " ") : "Auto (varies)"}
@@ -450,33 +454,33 @@ export default function SettingsPage() {
 
                       {/* Style Details (view or edit) */}
                       {isEditing ? (
-                        <div className="space-y-3 p-4 bg-surface-50 rounded-xl">
-                          <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Style Details</p>
+                        <div className="space-y-3 p-4 bg-gray-50 rounded-xl">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Style Details</p>
 
                           <div className="grid grid-cols-3 gap-3">
                             <div>
-                              <label className="text-xs text-ink-600 mb-1 block">Primary</label>
+                              <label className="text-xs text-gray-600 mb-1 block">Primary</label>
                               <div className="flex items-center gap-2">
-                                <input type="color" value={editPrimary} onChange={(e) => setEditPrimary(e.target.value)} className="w-7 h-7 rounded border border-surface-200 cursor-pointer" />
-                                <span className="text-xs text-ink-500 font-mono">{editPrimary}</span>
+                                <input type="color" value={editPrimary} onChange={(e) => setEditPrimary(e.target.value)} className="w-7 h-7 rounded border border-gray-200 cursor-pointer" />
+                                <span className="text-xs text-gray-500 font-mono">{editPrimary}</span>
                               </div>
                             </div>
                             <div>
-                              <label className="text-xs text-ink-600 mb-1 block">Secondary</label>
+                              <label className="text-xs text-gray-600 mb-1 block" title="Used for body text — automatically swapped for a readable alternative if it would clash with the background">Text Color</label>
                               <div className="flex items-center gap-2">
-                                <input type="color" value={editSecondary} onChange={(e) => setEditSecondary(e.target.value)} className="w-7 h-7 rounded border border-surface-200 cursor-pointer" />
-                                <span className="text-xs text-ink-500 font-mono">{editSecondary}</span>
+                                <input type="color" value={editSecondary} onChange={(e) => setEditSecondary(e.target.value)} className="w-7 h-7 rounded border border-gray-200 cursor-pointer" />
+                                <span className="text-xs text-gray-500 font-mono">{editSecondary}</span>
                               </div>
                             </div>
                             <div>
-                              <label className="text-xs text-ink-600 mb-1 block">Accent</label>
+                              <label className="text-xs text-gray-600 mb-1 block">Accent</label>
                               <div className="flex items-center gap-2">
-                                <input type="color" value={editAccent} onChange={(e) => setEditAccent(e.target.value)} className="w-7 h-7 rounded border border-surface-200 cursor-pointer" />
-                                <span className="text-xs text-ink-500 font-mono">{editAccent}</span>
+                                <input type="color" value={editAccent} onChange={(e) => setEditAccent(e.target.value)} className="w-7 h-7 rounded border border-gray-200 cursor-pointer" />
+                                <span className="text-xs text-gray-500 font-mono">{editAccent}</span>
                               </div>
                             </div>
                             <div className="col-span-3">
-                              <label className="text-xs text-ink-600 mb-1 flex items-center gap-1.5">
+                              <label className="text-xs text-gray-600 mb-1 flex items-center gap-1.5">
                                 <input
                                   type="checkbox"
                                   checked={enforceBackground}
@@ -491,9 +495,9 @@ export default function SettingsPage() {
                                   value={editBackground}
                                   onChange={(e) => setEditBackground(e.target.value)}
                                   disabled={!enforceBackground}
-                                  className="w-7 h-7 rounded border border-surface-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                  className="w-7 h-7 rounded border border-gray-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                 />
-                                <span className="text-xs text-ink-500 font-mono">
+                                <span className="text-xs text-gray-500 font-mono">
                                   {enforceBackground ? editBackground : "AI decides"}
                                 </span>
                               </div>
@@ -501,7 +505,7 @@ export default function SettingsPage() {
                           </div>
 
                           <div>
-                            <label className="text-xs text-ink-600 mb-1 block">Heading Font</label>
+                            <label className="text-xs text-gray-600 mb-1 block">Heading Font</label>
                             <div className="grid grid-cols-3 gap-2">
                               {FONT_OPTIONS.map((f) => (
                                 <button
@@ -510,17 +514,17 @@ export default function SettingsPage() {
                                   onClick={() => setEditFont(f.name)}
                                   className={`px-3 py-2 rounded-lg border text-left transition-colors ${
                                     editFont === f.name
-                                      ? "border-brand-500 bg-brand-50"
-                                      : "border-surface-200 hover:border-surface-300"
+                                      ? "border-gray-900 bg-gray-100"
+                                      : "border-gray-200 hover:border-gray-300"
                                   }`}
                                 >
                                   <p
-                                    className="text-sm font-semibold text-ink-900 truncate"
+                                    className="text-sm font-semibold text-gray-900 truncate"
                                     style={{ fontFamily: `"${f.name}", sans-serif` }}
                                   >
                                     {f.sample}
                                   </p>
-                                  <p className="text-[10px] text-ink-400 truncate">{f.name}</p>
+                                  <p className="text-[10px] text-gray-400 truncate">{f.name}</p>
                                 </button>
                               ))}
                             </div>
@@ -535,12 +539,12 @@ export default function SettingsPage() {
                           ]} />
 
                           <div>
-                            <label className="text-sm font-medium text-ink-800 mb-1.5 block">Style Notes</label>
+                            <label className="text-sm font-medium text-gray-800 mb-1.5 block">Style Notes</label>
                             <textarea
                               value={editNotes}
                               onChange={(e) => setEditNotes(e.target.value)}
                               placeholder="Dark backgrounds, neon accents, bold sans-serif..."
-                              className="uxlly-input min-h-[60px] resize-y"
+                              className={`${FIELD} py-2.5 min-h-[60px] resize-y`}
                               rows={2}
                             />
                           </div>
@@ -552,36 +556,36 @@ export default function SettingsPage() {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Style Details</p>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Style Details</p>
                           <div className="flex flex-wrap gap-3">
                             {sg?.primaryColor && (
                               <div className="flex items-center gap-1.5">
-                                <div className="w-4 h-4 rounded-full border border-surface-200" style={{ background: sg.primaryColor }} />
-                                <span className="text-xs text-ink-500">{sg.primaryColor}</span>
+                                <div className="w-4 h-4 rounded-full border border-gray-200" style={{ background: sg.primaryColor }} />
+                                <span className="text-xs text-gray-500">{sg.primaryColor}</span>
                               </div>
                             )}
                             {sg?.secondaryColor && (
                               <div className="flex items-center gap-1.5">
-                                <div className="w-4 h-4 rounded-full border border-surface-200" style={{ background: sg.secondaryColor }} />
-                                <span className="text-xs text-ink-500">{sg.secondaryColor}</span>
+                                <div className="w-4 h-4 rounded-full border border-gray-200" style={{ background: sg.secondaryColor }} />
+                                <span className="text-xs text-gray-500">{sg.secondaryColor}</span>
                               </div>
                             )}
                             {sg?.accentColor && (
                               <div className="flex items-center gap-1.5">
-                                <div className="w-4 h-4 rounded-full border border-surface-200" style={{ background: sg.accentColor }} />
-                                <span className="text-xs text-ink-500">{sg.accentColor}</span>
+                                <div className="w-4 h-4 rounded-full border border-gray-200" style={{ background: sg.accentColor }} />
+                                <span className="text-xs text-gray-500">{sg.accentColor}</span>
                               </div>
                             )}
                             {sg?.backgroundColor && (
                               <div className="flex items-center gap-1.5">
-                                <div className="w-4 h-4 rounded-full border border-surface-200" style={{ background: sg.backgroundColor }} />
-                                <span className="text-xs text-ink-500">{sg.backgroundColor} (bg)</span>
+                                <div className="w-4 h-4 rounded-full border border-gray-200" style={{ background: sg.backgroundColor }} />
+                                <span className="text-xs text-gray-500">{sg.backgroundColor} (bg)</span>
                               </div>
                             )}
                             {sg?.headingFont && <Badge variant="neutral">{sg.headingFont}</Badge>}
                             {sg?.tone && <Badge variant="brand">{sg.tone}</Badge>}
                           </div>
-                          {sg?.extraNotes && <p className="text-xs text-ink-400 mt-2">{sg.extraNotes}</p>}
+                          {sg?.extraNotes && <p className="text-xs text-gray-400 mt-2">{sg.extraNotes}</p>}
                         </div>
                       )}
                     </div>
@@ -592,69 +596,24 @@ export default function SettingsPage() {
           </div>
 
           {/* ============================================================
-             API KEYS & INTEGRATIONS
+             ACCOUNT
              ============================================================ */}
-          <Card>
-            <div className="flex items-center gap-3 mb-4">
-              <Key size={18} className="text-brand-500" />
-              <h3 className="text-base font-semibold text-ink-900">AI Provider</h3>
-            </div>
-            <div className="space-y-4">
-              <Select label="Text AI Provider" options={[
-                { value: "deepseek", label: "DeepSeek V3 (cheapest)" },
-                { value: "openai", label: "OpenAI GPT-4o" },
-                { value: "anthropic", label: "Claude (Anthropic)" },
-              ]} defaultValue="deepseek" />
-              <Input label="DeepSeek API Key" type="password" placeholder="sk-..." />
-              <Input label="OpenAI API Key" type="password" placeholder="sk-..." hint="Required for image generation" />
-              <Input label="Anthropic API Key (optional)" type="password" placeholder="sk-ant-..." />
-              <Button variant="primary" size="sm" icon={<Save size={14} />}>Save API Keys</Button>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center gap-3 mb-4">
-              <Mail size={18} className="text-brand-500" />
-              <h3 className="text-base font-semibold text-ink-900">Email Delivery</h3>
-            </div>
-            <div className="space-y-4">
-              <Input label="SMTP Host" placeholder="smtp.gmail.com" />
-              <div className="grid grid-cols-2 gap-3">
-                <Input label="SMTP User" placeholder="you@gmail.com" />
-                <Input label="SMTP Password" type="password" placeholder="App password" />
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Mail size={20} className="text-gray-400" />
+              Account
+            </h2>
+            <Card>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{session?.user?.name || "Your account"}</p>
+                  <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
+                  <p className="text-xs text-gray-400 mt-1">Content plan reminders and automation posts are emailed here.</p>
+                </div>
+                <Link href="/billing" className="rounded-xl border border-gray-200 px-4 h-10 inline-flex items-center text-sm font-semibold text-gray-900 hover:border-gray-400">Plans & credits</Link>
               </div>
-              <Button variant="primary" size="sm" icon={<Save size={14} />}>Save Email Settings</Button>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center gap-3 mb-4">
-              <Send size={18} className="text-brand-500" />
-              <h3 className="text-base font-semibold text-ink-900">Telegram</h3>
-            </div>
-            <div className="space-y-4">
-              <Input label="Bot Token" type="password" placeholder="123456:ABC-..." />
-              <Input label="Default Chat ID" placeholder="-1001234567890" />
-              <Button variant="primary" size="sm" icon={<Save size={14} />}>Save Telegram Settings</Button>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center gap-3 mb-4">
-              <Globe size={18} className="text-brand-500" />
-              <h3 className="text-base font-semibold text-ink-900">Storage (Cloudflare R2)</h3>
-            </div>
-            <div className="space-y-4">
-              <Input label="R2 Account ID" placeholder="Your Cloudflare account ID" />
-              <div className="grid grid-cols-2 gap-3">
-                <Input label="Access Key ID" placeholder="..." />
-                <Input label="Secret Access Key" type="password" placeholder="..." />
-              </div>
-              <Input label="Bucket Name" placeholder="uxlly-assets" />
-              <Input label="Public URL" placeholder="https://assets.uxlly.com" />
-              <Button variant="primary" size="sm" icon={<Save size={14} />}>Save Storage Settings</Button>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
       </div>
     </>

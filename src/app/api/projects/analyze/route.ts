@@ -5,6 +5,8 @@
 // Saves the analysis to the StyleGuide.rawMarkdown field
 // ============================================================
 
+import { withUsage } from "@/lib/billing/usage";
+import { getClient } from "@/lib/ai/providers/openai";
 import { NextResponse } from "next/server";
 
 export const maxDuration = 120;
@@ -13,6 +15,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import OpenAI from "openai";
+import { randomUUID } from "crypto";
+import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
+import { insufficientResponse } from "@/lib/billing/http";
 import { Prisma } from "@prisma/client";
 import { detectAndSliceGrid } from "@/lib/ai/gridDetect";
 import type { LayoutArchetype } from "@/types";
@@ -49,7 +54,7 @@ Return ONLY valid JSON, no markdown, no backticks:
   ]
 }`;
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -64,6 +69,17 @@ export async function POST(request: Request) {
 
     if (!referenceImages || referenceImages.length === 0) {
       return NextResponse.json({ error: "No reference images provided" }, { status: 400 });
+    }
+
+    // ---- BILLING: brand/reference analysis is a vision-model call. Free-trial users pass
+    // without using up a free image; everyone else pays the "vision.analysis" price.
+    const billingRef = randomUUID();
+    let auth;
+    try {
+      auth = await authorize(session.user.id, [{ key: "vision.analysis" }], { trial: "pass" });
+    } catch (e) {
+      if (e instanceof InsufficientCreditsError) return insufficientResponse(e);
+      throw e;
     }
 
     // Verify brand belongs to user
@@ -87,7 +103,8 @@ export async function POST(request: Request) {
 
     console.log("[ANALYZE] 🔍 Analyzing", referenceImages.length, "reference images for brand:", brand.name);
 
-    const client = new OpenAI({ apiKey });
+    // Shared client: its calls report real usage to billing.
+    const client = getClient();
 
     // Slice any grid/moodboard references into individual cells first —
     // sending a whole 4x4 grid to the vision model as "one image" confuses
@@ -305,6 +322,12 @@ export async function POST(request: Request) {
       "| Layout archetypes:", mergedArchetypes?.length ?? 0
     );
 
+    try {
+      await commit(session.user.id, auth, [{ key: "vision.analysis" }], { ref: billingRef });
+    } catch (billErr) {
+      console.error("[ANALYZE] ⚠️ billing commit failed (result still returned):", billErr);
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -322,3 +345,6 @@ export async function POST(request: Request) {
     );
   }
 }
+
+// Every AI call in this request is measured for real-cost billing.
+export const POST = withUsage(handlePOST);

@@ -58,6 +58,9 @@ export interface ImageGenerationResponse {
 // ==================== Platform Types ====================
 
 export type PlatformKey =
+  | "instagram_portrait"
+  | "facebook_portrait"
+  | "linkedin_portrait"
   | "instagram_post"
   | "instagram_story"
   | "instagram_reel"
@@ -103,6 +106,20 @@ export interface StyleGuideData {
   generationPool?: string[];
   rawMarkdown?: string;
   layoutArchetypes?: LayoutArchetype[];
+  // Advanced project settings (saved in StyleGuide.advancedSettings). Fed into
+  // Image post + Carousel generation. TikTok is unaffected for now.
+  language?: string; // output language for on-image copy; "" or unset = English
+  ecommerce?: {
+    enabled: boolean;
+    productName?: string;
+    productDescription?: string;
+    price?: string;
+    salePrice?: string;
+    promoCode?: string;
+    productImage?: string | null;
+    shopCta?: string;
+    productUrl?: string;
+  };
 }
 
 // ==================== Channel / Project Types ====================
@@ -164,6 +181,18 @@ export interface CarouselSlideMessage {
   headline: string;
   body: string;
   imageUrl: string;
+  // Optional layout hints used by the TikTok slide editor's movable text/logo
+  // boxes. The carousel pipeline doesn't populate these, so the editor falls
+  // back to sensible defaults — only TikTok slideshows use this editor.
+  headlineBox?: { x: number; y: number; w: number; h: number };
+  bodyBox?: { x: number; y: number; w: number; h: number };
+  headlineAlign?: "left" | "center" | "right";
+  bodyAlign?: "left" | "center" | "right";
+  logo?: { src: string; box: { x: number; y: number; w: number; h: number } } | null;
+  // Lifestyle slideshows: caption look ("white" box, "dark" box or "plain" text) and whether the
+  // second text is a full-size caption (2-in-1 slides) instead of a small paragraph.
+  captionStyle?: "white" | "dark" | "plain";
+  bodyKind?: "h1" | "p";
 }
 
 export interface ChatMessage {

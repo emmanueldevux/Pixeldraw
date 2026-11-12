@@ -6,10 +6,39 @@
 import type { PlatformPreset, PlatformKey } from "@/types";
 
 export const PLATFORM_PRESETS: Record<PlatformKey, PlatformPreset> = {
+  // ==================== Portrait 4:5 (the best-performing feed size, 2026) ====================
+  instagram_portrait: {
+    key: "instagram_portrait",
+    name: "Instagram Post (Portrait)",
+    platform: "Instagram",
+    width: 1080,
+    height: 1350,
+    aspectRatio: "4:5",
+    icon: "instagram",
+  },
+  facebook_portrait: {
+    key: "facebook_portrait",
+    name: "Facebook Post (Portrait)",
+    platform: "Facebook",
+    width: 1080,
+    height: 1350,
+    aspectRatio: "4:5",
+    icon: "facebook",
+  },
+  linkedin_portrait: {
+    key: "linkedin_portrait",
+    name: "LinkedIn Post (Portrait)",
+    platform: "LinkedIn",
+    width: 1080,
+    height: 1350,
+    aspectRatio: "4:5",
+    icon: "linkedin",
+  },
+
   // ==================== Instagram ====================
   instagram_post: {
     key: "instagram_post",
-    name: "Instagram Post",
+    name: "Instagram Square",
     platform: "Instagram",
     width: 1080,
     height: 1080,

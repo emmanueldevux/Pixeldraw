@@ -4,6 +4,7 @@
 // Configure in vercel.json: "crons": [{ "path": "/api/cron", "schedule": "0 9,17 * * *" }]
 // ============================================================
 
+import { withUsage, applyProjectNegative } from "@/lib/billing/usage";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { aiComplete } from "@/lib/ai/provider";
@@ -14,8 +15,13 @@ import { sendTelegramContent } from "@/lib/delivery/telegram";
 import { extractImagePrompt } from "@/lib/utils";
 import type { AIMessage, ImageSize } from "@/types";
 import type { LogoPosition } from "@/lib/ai/logoComposite";
+import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
+import { resumeAbandonedTasks } from "@/lib/carousels/task";
+import { isJobDue } from "@/lib/jobs";
+import { trimToAspect } from "@/lib/designTemplates/crop";
+import { saveGeneration } from "@/lib/generations";
 
-export async function GET(request: Request) {
+async function handleGET(request: Request) {
   // Verify cron secret
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -34,8 +40,28 @@ export async function GET(request: Request) {
 
     const results = [];
 
+    // Finish any carousels a user left mid-way (browser closed during rendering).
+    await resumeAbandonedTasks(2).catch((e) => console.error("[CRON] resume tasks failed:", e));
+
+    const now = new Date();
     for (const job of jobs) {
+      // Only jobs whose time has come (and haven't run for it yet).
+      if (!isJobDue({ schedule: job.schedule, lastRunAt: job.lastRunAt ?? job.createdAt }, now)) continue;
       try {
+        // ---- BILLING: scheduled jobs bill the job owner. No credits = skip this run.
+        let cronAuth;
+        try {
+          cronAuth = await authorize(job.user.id, [{ key: "chat.text" }, { key: "image.openai" }], { trial: "none" });
+        } catch (e) {
+          if (e instanceof InsufficientCreditsError) {
+            results.push({ jobId: job.id, status: "skipped_no_credits" });
+            continue;
+          }
+          throw e;
+        }
+
+        applyProjectNegative((job.channel.brand.styleGuide as unknown as { advancedSettings?: unknown } | null)?.advancedSettings);
+
         // Build system prompt
         const systemPrompt = buildSystemPrompt(
           ["copywriting", "imagePrompt"],
@@ -91,9 +117,16 @@ export async function GET(request: Request) {
             logoScale: brand.logoScale ?? undefined,
           });
           imageUrl = img.url;
+          if (job.size === "1080x1350") imageUrl = await trimToAspect(imageUrl, "4:5").catch(() => imageUrl);
         }
 
-        // Save as post
+        // Keep the image (R2) and list it in the user's Files.
+        if (imageUrl) {
+          const saved = await saveGeneration({ userId: job.user.id, brandId: job.channel.brandId, kind: "image", title: job.name, imageUrls: [imageUrl], caption: aiResponse.content, prompt: imagePrompt || null, meta: { source: "job", jobId: job.id } });
+          imageUrl = saved.imageUrls[0];
+        }
+
+        // Save as post (shows on the calendar at the time it ran)
         await db.post.create({
           data: {
             channelId: job.channelId,
@@ -102,8 +135,19 @@ export async function GET(request: Request) {
             platform: job.platform,
             size: job.size,
             status: "draft",
+            scheduledAt: new Date(),
           },
         });
+
+        // ---- BILLING: charge for what ran.
+        try {
+          await commit(job.user.id, cronAuth, [{ key: "chat.text" }, ...(imageUrl ? [{ key: "image.openai" }] : [])], {
+            ref: `cron:${job.id}:${Date.now()}`,
+            note: `Scheduled job: ${job.name}`,
+          });
+        } catch (billErr) {
+          console.error("[CRON] billing commit failed:", billErr);
+        }
 
         // Deliver
         if (job.deliveryEmail && job.user.email) {
@@ -145,3 +189,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Cron failed" }, { status: 500 });
   }
 }
+
+// Every AI call in this request is measured for real-cost billing.
+export const GET = withUsage(handleGET);

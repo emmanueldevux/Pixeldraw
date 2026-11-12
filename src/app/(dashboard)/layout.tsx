@@ -7,22 +7,22 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import Sidebar from "@/components/layout/Sidebar";
+import { AuthGateProvider } from "@/components/auth/AuthGate";
+import { BillingProvider } from "@/components/billing/BillingProvider";
+import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
+// Import the Light Sidebar from your home components folder
+import { Sidebar } from "../home/components/Sidebar"; 
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Redirect to login if not authenticated
-  if (status === "unauthenticated") {
-    redirect("/login");
-  }
-
+  // Anonymous visitors can browse freely — gated actions (send a chat, create
+  // a project or an automation) trigger the login popup via AuthGate instead.
   // Show loading while checking auth
   if (status === "loading") {
     return (
@@ -33,19 +33,25 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-surface-50">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        user={session?.user}
-      />
-      <main className="uxlly-main-area">
-        {/* Pass sidebar toggle to children via context or props */}
-        <div className="flex flex-col min-h-screen">
-          {/* Mobile menu trigger is in DashboardHeader */}
-          {children}
-        </div>
-      </main>
-    </div>
+    <AuthGateProvider>
+      <BillingProvider>
+      <OnboardingProvider>
+      {/* Use flex so the sidebar and main content sit side-by-side */}
+      <div className="flex h-screen bg-[#FFFFFF] overflow-hidden">
+
+        {/* Render the sidebar globally */}
+        <Sidebar />
+
+        {/* Main Content Area - flex-1 makes it take up the remaining space */}
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            {children}
+          </div>
+        </main>
+
+      </div>
+      </OnboardingProvider>
+      </BillingProvider>
+    </AuthGateProvider>
   );
 }

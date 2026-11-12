@@ -3,6 +3,7 @@
 // Uses OpenAI-compatible API format
 // ============================================================
 
+import { recordUsage } from "@/lib/billing/usage";
 import type { AICompletionRequest, AICompletionResponse } from "@/types";
 
 const DEEPSEEK_BASE_URL =
@@ -36,6 +37,7 @@ export async function deepseekComplete(
 
   const data = await response.json();
   const choice = data.choices?.[0];
+  if (data.usage) recordUsage({ kind: "text", provider: "deepseek", model: data.model || DEEPSEEK_MODEL, inTokens: data.usage.prompt_tokens ?? 0, outTokens: data.usage.completion_tokens ?? 0 });
 
   return {
     content: choice?.message?.content || "",

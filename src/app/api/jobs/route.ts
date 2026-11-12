@@ -36,6 +36,10 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
+    // The project's channel must belong to this user.
+    const channel = await db.channel.findFirst({ where: { id: String(body.channelId || ""), brand: { userId: session.user.id } }, select: { id: true } });
+    if (!channel) return NextResponse.json({ error: "Pick one of your projects" }, { status: 400 });
+
     const job = await db.job.create({
       data: {
         userId: session.user.id,

@@ -1,19 +1,52 @@
-// ============================================================
-// UXLLY — Root Layout
-// ============================================================
-
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Inter_Tight } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import AuthProvider from "@/components/layout/AuthProvider";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const interTight = Inter_Tight({ subsets: ["latin"], variable: "--font-inter-tight" });
+
+// Loading Helvetica Now Display
+// The path starts with "./" because it's relative to src/app/layout.tsx
+const helveticaNow = localFont({
+  src: [
+    {
+      path: "./home/components/fonts/HelveticaNowDisplay-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "./home/components/fonts/HelveticaNowDisplay-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./home/components/fonts/HelveticaNowDisplay-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "./home/components/fonts/HelveticaNowDisplay-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-helvetica",
+});
 
 export const metadata: Metadata = {
   title: "Uxlly — AI Content Automation",
   description:
     "Generate stunning social media graphics, copy, and campaigns with AI. Automate your content pipeline.",
+  icons: {
+    icon: [
+      { url: "/templates/images/favicon%201.png", sizes: "32x32", type: "image/png" },
+      { url: "/templates/images/favicon%201.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/templates/images/favicon%201.png",
+  },
 };
 
 export default function RootLayout({
@@ -22,13 +55,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${inter.variable} ${interTight.variable} ${helveticaNow.variable}`}
+    >
       <head>
-        {/* Loads all fonts offered in the curated font picker (Settings +
-            onboarding) so the live preview actually shows each font
-            distinctly, instead of every option falling back to the same
-            system font. Inter itself is loaded separately via next/font
-            above for the app's own UI. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -36,7 +67,8 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={inter.className}>
+      {/* Setting the body className to helveticaNow.className applies it globally */}
+      <body className={`${helveticaNow.className} antialiased`}>
         <AuthProvider>
           {children}
           <Toaster
@@ -44,8 +76,9 @@ export default function RootLayout({
             toastOptions={{
               style: {
                 borderRadius: "12px",
-                background: "#18181B",
-                color: "#FAFAFA",
+                background: "#252525",
+                color: "#FCFCFC",
+                border: "1px solid #333333",
                 fontSize: "14px",
               },
             }}

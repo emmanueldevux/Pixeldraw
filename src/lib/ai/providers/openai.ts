@@ -8,6 +8,7 @@
 
 import OpenAI, { toFile } from "openai";
 import sharp from "sharp";
+import crypto from "crypto";
 import type {
   AICompletionRequest,
   AICompletionResponse,
@@ -20,11 +21,106 @@ import { pickCreativeDirection, pickVisualSubject } from "@/lib/ai/creativeDirec
 import { compositeLogo, pickLogoPlacementForComposition, type LogoPosition } from "@/lib/ai/logoComposite";
 import { getFontStyleDescriptor } from "@/lib/fonts";
 import type { LayoutArchetype } from "@/types";
+import { recordOpenAIImage, recordOpenAIText, currentNegative } from "@/lib/billing/usage";
+import { imageOutTokens } from "@/lib/billing/metered";
 
 export function getClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
-  return new OpenAI({ apiKey });
+  return instrument(new OpenAI({ apiKey }));
+}
+
+// Every chat/vision/image call made through getClient() reports its real
+// token usage to the billing recorder (lib/billing/usage.ts), so the user is
+// charged what the call actually cost × markup.
+function instrument(client: OpenAI): OpenAI {
+  const chat = client.chat.completions;
+  const origChat = chat.create.bind(chat) as (...a: unknown[]) => Promise<unknown>;
+  (chat as unknown as { create: unknown }).create = async (...args: unknown[]) => {
+    const res = await origChat(...args);
+    const body = args[0] as { model?: string; stream?: boolean };
+    if (!body?.stream) recordOpenAIText(body?.model || "openai", (res as { usage?: never }).usage);
+    return res;
+  };
+  for (const method of ["generate", "edit"] as const) {
+    const orig = (client.images[method] as (...a: unknown[]) => Promise<unknown>).bind(client.images);
+    (client.images as unknown as Record<string, unknown>)[method] = async (...args: unknown[]) => {
+      // The project's negative prompt rides along on every image this request makes.
+      const neg = currentNegative();
+      const req = args[0] as { prompt?: string } | undefined;
+      if (neg && req && typeof req.prompt === "string" && !req.prompt.includes("NEVER INCLUDE (brand rules)")) {
+        args[0] = { ...req, prompt: `${req.prompt}\n\nNEVER INCLUDE (brand rules): ${neg}` };
+      }
+      const res = await orig(...args);
+      const body = args[0] as { model?: string; size?: string; quality?: string; image?: unknown };
+      const n = Array.isArray(body?.image) ? body.image.length : body?.image ? 1 : 0;
+      recordOpenAIImage(body?.model || "gpt-image", (res as { usage?: never }).usage, {
+        textIn: 1200,
+        imageIn: n * 1500,
+        out: imageOutTokens(body?.size || "1024x1536", body?.quality || "medium"),
+      });
+      return res;
+    };
+  }
+  return client;
+}
+
+// ==================== Cost Controls (env-driven) ====================
+export type ImageQuality = "low" | "medium" | "high" | "auto";
+
+// Image render quality for FINAL generations (chat + carousel). gpt-image-2
+// cost scales steeply with this tier, so "medium" is the default and a large
+// saving over "high" with little visible difference for social graphics.
+// Override per environment with OPENAI_IMAGE_QUALITY=low|medium|high|auto.
+export function getImageQuality(): ImageQuality {
+  const q = (process.env.OPENAI_IMAGE_QUALITY || "medium").toLowerCase();
+  return (["low", "medium", "high", "auto"].includes(q) ? q : "medium") as ImageQuality;
+}
+
+// Vision model used to read a reference's "visual DNA". Defaults to the much
+// cheaper gpt-4o-mini; set OPENAI_VISION_MODEL=gpt-4o to restore full quality.
+export function getVisionModel(): string {
+  return process.env.OPENAI_VISION_MODEL || "gpt-4o-mini";
+}
+
+// Instruction appended when the user attaches a product image, so the model
+// treats it as the hero element and reproduces it faithfully rather than
+// reinterpreting it. The product image is passed to images.edit alongside the
+// style reference (it is NOT desaturated — its real colors must survive).
+const PRODUCT_RULE =
+  " A product image has been provided as an additional reference. Incorporate THIS EXACT product into the composition as the hero element — reproduce it faithfully (same shape, colors, label text, and proportions). Do NOT redraw, restyle, recolor, crop out, or replace it. Place it naturally in the scene with correct perspective, lighting, and a believable shadow, sized so it clearly reads as the focal point.";
+
+// Load a product image (data URL or http URL) into an OpenAI file WITHOUT
+// stripping its color — unlike the style reference, the product must keep its
+// real appearance.
+async function productToFile(productImage: string) {
+  let buf: Buffer;
+  if (productImage.startsWith("http")) {
+    const r = await fetch(productImage);
+    buf = Buffer.from(await r.arrayBuffer());
+  } else {
+    let u = productImage;
+    if (u.startsWith("data:") && !u.match(/^data:image\/(png|jpeg|gif|webp)/)) {
+      u = u.replace(/^data:[^;]+;/, "data:image/png;");
+    }
+    buf = Buffer.from(u.replace(/^data:image\/\w+;base64,/, ""), "base64");
+  }
+  return toFile(buf, "product.png", { type: "image/png" });
+}
+
+// In-memory cache of extracted visual DNA, keyed by the reference set. A
+// brand's reference DNA barely changes between generations, so re-running a
+// vision call every time is wasted spend. Cache lives per warm instance
+// (cleared on cold start); disable with OPENAI_DNA_CACHE=off.
+const _dnaCache = new Map<string, Record<string, unknown>>();
+const _DNA_CACHE_MAX = 200;
+function _dnaCacheEnabled(): boolean {
+  return (process.env.OPENAI_DNA_CACHE || "on").toLowerCase() !== "off";
+}
+function _dnaKey(referenceImages: string[]): string {
+  const h = crypto.createHash("sha1");
+  for (const r of referenceImages) h.update(`${r.length}:${r.slice(0, 160)}|`);
+  return h.digest("hex");
 }
 
 // ==================== Retry Helper ====================
@@ -92,6 +188,7 @@ export async function openaiGenerateImage(
     logoUrl?: string | null;
     logoPosition?: LogoPosition;
     logoScale?: number;
+    productImage?: string | null;
   }
 ): Promise<ImageGenerationResponse> {
   const client = getClient();
@@ -99,6 +196,8 @@ export async function openaiGenerateImage(
   const style = request.styleGuide;
   const platform = request.platform;
   const brandName = request.brandName;
+  const quality: ImageQuality = (request.quality as ImageQuality) || getImageQuality();
+  const productImage = request.productImage || null;
 
   console.log("[OPENAI] === STRUCTURED PROMPT PIPELINE ===");
   console.log("[OPENAI] References:", refs.length, "| Style guide:", style ? "YES" : "NO");
@@ -111,6 +210,7 @@ export async function openaiGenerateImage(
   // Parse size for the platform
   const sizeMap: Record<string, "1024x1024" | "1024x1536" | "1536x1024"> = {
     "1080x1080": "1024x1024",
+    "1080x1350": "1024x1536", // 4:5: rendered 2:3, trimmed to 4:5 by the caller
     "1080x1920": "1024x1536",
     "1920x1080": "1536x1024",
     "1200x627": "1536x1024",
@@ -125,13 +225,13 @@ export async function openaiGenerateImage(
 
   if (refs.length > 0) {
     try {
-      result = await structuredPipeline(client, request.prompt, refs, style, imageSize, platform, brandName);
+      result = await structuredPipeline(client, request.prompt, refs, style, imageSize, platform, brandName, quality, productImage);
     } catch (err) {
       console.error("[OPENAI] Pipeline failed:", err);
-      result = await standardGenerate(client, request.prompt, style, imageSize);
+      result = await standardGenerate(client, request.prompt, style, imageSize, quality, productImage);
     }
   } else {
-    result = await standardGenerate(client, request.prompt, style, imageSize);
+    result = await standardGenerate(client, request.prompt, style, imageSize, quality, productImage);
   }
 
   // ========== Logo Compositing (always last, always separate) ==========
@@ -172,6 +272,12 @@ export async function extractVisualDNA(
   client: OpenAI,
   referenceImages: string[]
 ): Promise<Record<string, unknown>> {
+  const _cacheKey = _dnaCacheEnabled() ? _dnaKey(referenceImages) : null;
+  if (_cacheKey && _dnaCache.has(_cacheKey)) {
+    console.log("[OPENAI] Visual DNA: cache hit — skipping vision call");
+    return _dnaCache.get(_cacheKey)!;
+  }
+
   const visionContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
 
   // Sample randomly from the reference pool for analysis — with a grid
@@ -211,7 +317,7 @@ CRITICAL: The brand's own colors will be applied separately and MUST override an
   });
 
   const visionResponse = await client.chat.completions.create({
-    model: "gpt-4o",
+    model: getVisionModel(),
     messages: [{ role: "user", content: visionContent }],
     max_tokens: 500,
     temperature: 0.1,
@@ -227,6 +333,11 @@ CRITICAL: The brand's own colors will be applied separately and MUST override an
   } catch {
     console.log("[OPENAI] Visual DNA: JSON parse failed, using raw text");
     basePromptJSON = { raw_description: rawJSON };
+  }
+
+  if (_cacheKey) {
+    if (_dnaCache.size >= _DNA_CACHE_MAX) _dnaCache.clear();
+    _dnaCache.set(_cacheKey, basePromptJSON);
   }
 
   return basePromptJSON;
@@ -259,6 +370,31 @@ export async function prepareDesaturatedReference(
   return { editRef, imageBuffer };
 }
 
+// Language + ecommerce instructions appended to image prompts. Drives both
+// the single Image post and (via the planner) the Carousel. Empty when neither
+// is set, so default behavior is unchanged.
+function advancedPromptAddon(style: Partial<StyleGuideData> | null | undefined): string {
+  if (!style) return "";
+  const parts: string[] = [];
+  if (style.language && style.language !== "English") {
+    parts.push(` All visible text in the image (headline, subtext, captions) MUST be written in ${style.language}, using correct, natural ${style.language}.`);
+  }
+  const e = style.ecommerce;
+  if (e && e.enabled) {
+    const bits: string[] = [];
+    if (e.productName) bits.push(`the product "${e.productName}"`);
+    if (e.productDescription) bits.push(`described as: ${e.productDescription}`);
+    if (e.salePrice) bits.push(`on sale at ${e.salePrice}${e.price ? ` (was ${e.price})` : ""}`);
+    else if (e.price) bits.push(`priced ${e.price}`);
+    if (e.promoCode) bits.push(`promo code ${e.promoCode}`);
+    if (e.shopCta) bits.push(`a clear "${e.shopCta}" call-to-action`);
+    if (bits.length) {
+      parts.push(` This is an ecommerce product promotion: feature ${bits.join(", ")}. Make the product the hero of the composition and keep any price and call-to-action legible.`);
+    }
+  }
+  return parts.join("");
+}
+
 async function structuredPipeline(
   client: OpenAI,
   userPrompt: string,
@@ -266,7 +402,9 @@ async function structuredPipeline(
   style: Partial<StyleGuideData> | null | undefined,
   size: "1024x1024" | "1024x1536" | "1536x1024",
   platform?: string,
-  brandName?: string | null
+  brandName?: string | null,
+  quality: ImageQuality = "medium",
+  productImage?: string | null
 ): Promise<ImageGenerationResponse> {
 
   // ========== STEP 1: Reference → Base Prompt JSON ==========
@@ -339,7 +477,8 @@ async function structuredPipeline(
   console.log("[OPENAI] 🎨 ================================================");
 
   // ========== STEP 3: Build Final Prompt ==========
-  const finalPrompt = buildFinalPrompt(basePromptJSON, brandLayer, size, borrowedTechnique, direction, visualSubject);
+  let finalPrompt = buildFinalPrompt(basePromptJSON, brandLayer, size, borrowedTechnique, direction, visualSubject) + advancedPromptAddon(style);
+  if (productImage) finalPrompt += PRODUCT_RULE;
   console.log("[OPENAI] Step 3: ===== FULL FINAL PROMPT SENT TO gpt-image-2 =====");
   console.log(finalPrompt);
   console.log("[OPENAI] Step 3: ===== END FULL FINAL PROMPT =====");
@@ -380,14 +519,22 @@ let refUrl = editRef;
 
   console.log("[OPENAI] Reference size:", Math.round(imageBuffer.length / 1024), "KB");
 
+  // When a product image is attached, pass BOTH the (desaturated) style
+  // reference and the (full-color) product to images.edit so the model keeps
+  // the brand's layout/technique while reproducing the real product.
+  const editImage = productImage
+    ? [imageFile, await productToFile(productImage)]
+    : imageFile;
+  if (productImage) console.log("[OPENAI] 🛍️ Product image attached — passing to images.edit as hero element");
+
   const response = await withRetry(() =>
     client.images.edit({
       model: "gpt-image-2",
-      image: imageFile,
+      image: editImage,
       prompt: finalPrompt,
       n: 1,
       size,
-      quality: "high",
+      quality,
     })
   );
 
@@ -409,6 +556,38 @@ let refUrl = editRef;
 }
 
 // ==================== Build Final Prompt from JSON + Brand ==========
+
+// ==================== Contrast-Aware Text Color ====================
+// Never blindly use the brand's "secondary" swatch as body/subtext color
+// — that only makes sense against a dark background (e.g. white text on
+// black). If the background this generation is actually using is light,
+// white text becomes nearly invisible against it. Computes real relative
+// luminance and picks a readable color instead of assuming.
+
+function relativeLuminance(hex: string): number {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) return 0.5; // unknown format, assume mid-tone
+  const r = parseInt(clean.slice(0, 2), 16) / 255;
+  const g = parseInt(clean.slice(2, 4), 16) / 255;
+  const b = parseInt(clean.slice(4, 6), 16) / 255;
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+function isLightColor(hex: string): boolean {
+  return relativeLuminance(hex) > 0.5;
+}
+
+// Picks a readable text color for a KNOWN background. Prefers the
+// brand's actual secondary color when it already has good contrast;
+// only overrides it (falling back to near-black or near-white) when the
+// secondary color would be unreadable against this specific background.
+function getReadableTextColor(secondary: string, backgroundHex: string): string {
+  const bgLight = isLightColor(backgroundHex);
+  const secondaryLight = isLightColor(secondary);
+  if (bgLight !== secondaryLight) return secondary; // good contrast already
+  return bgLight ? "#1A1A1A" : "#FFFFFF"; // secondary would clash — override
+}
 
 export function buildFinalPrompt(
   visualDNA: Record<string, unknown>,
@@ -448,8 +627,21 @@ export function buildFinalPrompt(
   const bgColorNote = brand.brand_colors.background
     ? `background ${brand.brand_colors.background}, `
     : "";
+
+  // When the background is explicitly enforced, we know its exact value
+  // ahead of time — compute a text color that will actually be readable
+  // against it, rather than blindly assuming the secondary swatch works.
+  // When the background is AI-decided, we can't know it in advance, so
+  // give an explicit contrast rule instead of a fixed color.
+  const textColorNote = brand.brand_colors.background
+    ? getReadableTextColor(brand.brand_colors.secondary, brand.brand_colors.background)
+    : brand.brand_colors.secondary;
+  const contrastInstruction = brand.brand_colors.background
+    ? ""
+    : ` Whatever background you choose, body/subtext text color MUST have strong contrast against it — never light text on a light background, never dark text on a dark background, even if that means departing from the ${brand.brand_colors.secondary} secondary swatch for body text specifically.`;
+
   parts.push(
-    `CRITICAL COLOR RULE: Use ONLY these exact brand colors — ${bgColorNote}primary ${brand.brand_colors.primary}, accent ${brand.brand_colors.accent}, text/secondary ${brand.brand_colors.secondary}. Completely IGNORE and DISREGARD any colors visible in the reference image provided — the reference is being used purely for its LAYOUT, COMPOSITION, and STYLISTIC TECHNIQUE, never for color. Do not let any reference-image color bleed into the output.`
+    `CRITICAL COLOR RULE: Use ONLY these exact brand colors — ${bgColorNote}primary ${brand.brand_colors.primary}, accent ${brand.brand_colors.accent}, text/secondary ${textColorNote}. These colors apply to the BACKGROUND, UI elements, glows, highlights, and text. They do NOT apply to human figures, characters, or naturalistic/photographic subjects — those must render in natural, realistic color (real skin tones, real material colors), never tinted or washed in the brand color. The scene should read as naturally colored with brand color as an accent, not as if the entire image were recolored a single hue. Completely IGNORE and DISREGARD any colors visible in the reference image provided — the reference is being used purely for its LAYOUT, COMPOSITION, and STYLISTIC TECHNIQUE, never for color. Do not let any reference-image color bleed into the output.${contrastInstruction}`
   );
 
   // CRITICAL — the real logo is composited on top pixel-exact AFTER
@@ -485,7 +677,7 @@ export function buildFinalPrompt(
 
   // Brand content layer
   parts.push(`Content: ${brand.content}`);
-  parts.push(`Reminder — brand colors: primary ${brand.brand_colors.primary}, accent ${brand.brand_colors.accent}, text ${brand.brand_colors.secondary}. The accent color MUST be visible as glows, highlights, or key elements. No other colors from the reference should appear.`);
+  parts.push(`Reminder — brand colors: primary ${brand.brand_colors.primary}, accent ${brand.brand_colors.accent}, text ${textColorNote}. The accent color MUST be visible as glows, highlights, or key elements. No other colors from the reference should appear.`);
 
   // Typography — stated assertively since the Content field above (drafted
   // separately) often defaults to generic "bold all-caps" phrasing that
@@ -536,7 +728,9 @@ async function standardGenerate(
   client: OpenAI,
   prompt: string,
   style: Partial<StyleGuideData> | null | undefined,
-  size: "1024x1024" | "1024x1536" | "1536x1024"
+  size: "1024x1024" | "1024x1536" | "1536x1024",
+  quality: ImageQuality = "medium",
+  productImage?: string | null
 ): Promise<ImageGenerationResponse> {
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
 
@@ -549,20 +743,40 @@ async function standardGenerate(
   const bgNote = style?.backgroundColor ? ` background ${style.backgroundColor},` : "";
   const tone = style?.tone || "bold";
 
+  // Same contrast-awareness as the main pipeline — don't blindly use the
+  // secondary swatch as text color if it would clash with a known background.
+  const textColor = style?.backgroundColor ? getReadableTextColor(secondary, style.backgroundColor) : secondary;
+  const contrastNote = style?.backgroundColor
+    ? ""
+    : ` Whatever background results, body text MUST have strong contrast against it — never light-on-light or dark-on-dark, even if that means departing from the ${secondary} secondary swatch for body text specifically.`;
+
   // Same emphatic treatment as the main pipeline — a single trailing
   // sentence was too weak for the model to reliably prioritize over its
   // own stylistic instincts (e.g. defaulting to a dark "coming soon" look).
-  const styledPrompt = `CRITICAL COLOR RULE: Use ONLY these exact brand colors —${bgNote} primary ${primary}, accent ${accent}, text/secondary ${secondary}. These MUST be followed exactly, especially the background color which MUST be the dominant background of the entire image. Tone: ${tone}. CRITICAL — DO NOT DRAW A LOGO: do not render any logo, brand icon, wordmark, or stylized brand lockup — that gets added separately after generation. Plain brand-name text is fine if it fits naturally, but not a designed logo mark. ${prompt}`;
+  const styledPrompt = `CRITICAL COLOR RULE: Use ONLY these exact brand colors —${bgNote} primary ${primary}, accent ${accent}, text/secondary ${textColor}. These MUST be followed exactly, especially the background color which MUST be the dominant background of the entire image. These colors apply to background, UI elements, glows, highlights, and text — NOT to human figures, characters, or naturalistic subjects, which must render in natural, realistic color rather than being tinted in the brand hue.${contrastNote} Tone: ${tone}. CRITICAL — DO NOT DRAW A LOGO: do not render any logo, brand icon, wordmark, or stylized brand lockup — that gets added separately after generation. Plain brand-name text is fine if it fits naturally, but not a designed logo mark. ${prompt}` + advancedPromptAddon(style);
 
-  console.log("[OPENAI] Standard generation with", model, "at high quality, size:", size);
+  console.log("[OPENAI] Standard generation with", model, "at", quality, "quality, size:", size, productImage ? "(with product image)" : "");
 
-  const response = await client.images.generate({
-    model,
-    prompt: styledPrompt,
-    n: 1,
-    size,
-    quality: "high",
-  });
+  // With a product image and no style reference, edit the product directly so
+  // it is preserved as the hero element instead of being described from text.
+  const response = productImage
+    ? await withRetry(async () =>
+        client.images.edit({
+          model,
+          image: await productToFile(productImage),
+          prompt: styledPrompt + PRODUCT_RULE,
+          n: 1,
+          size,
+          quality,
+        })
+      )
+    : await client.images.generate({
+        model,
+        prompt: styledPrompt,
+        n: 1,
+        size,
+        quality,
+      });
 
   const imageData = response.data?.[0] as Record<string, unknown> | undefined;
 
@@ -575,4 +789,45 @@ async function standardGenerate(
   }
 
   return { url, revisedPrompt: styledPrompt };
+}
+// ==================== Template (prompt-recipe) generation ====================
+export function templateQuality(q?: ImageQuality): ImageQuality {
+  return q || ((process.env.OPENAI_IMAGE_QUALITY_TEMPLATE || process.env.OPENAI_IMAGE_QUALITY_EDIT || "medium") as ImageQuality);
+}
+export function templateSize(size: string): "1024x1024" | "1024x1536" | "1536x1024" {
+  return size === "1080x1080" ? "1024x1024" : size === "1920x1080" ? "1536x1024" : "1024x1536";
+}
+// Design templates carry their own complete art direction, so the prompt goes
+// to the model as-is: no brand-colour wrapper, no style-reference pipeline.
+// With a product photo it's an edit of that photo (so the pack stays exact);
+// without one it's a plain generation.
+export async function openaiTemplateImage(opts: {
+  prompt: string;
+  size: string; // e.g. "1080x1920"
+  productImage?: string | null;
+  quality?: ImageQuality;
+}): Promise<ImageGenerationResponse & { usage: unknown; size: string; quality: string }> {
+  const client = getClient();
+  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+  const sizeMap: Record<string, "1024x1024" | "1024x1536" | "1536x1024"> = {
+    "1080x1080": "1024x1024",
+    "1080x1920": "1024x1536",
+    "1000x1500": "1024x1536",
+    "1920x1080": "1536x1024",
+  };
+  const size = sizeMap[opts.size] || "1024x1536";
+  const quality = templateQuality(opts.quality);
+
+  console.log("[OPENAI] Template generation", model, size, quality, opts.productImage ? "(with product)" : "");
+
+  const response = opts.productImage
+    ? await withRetry(async () =>
+        client.images.edit({ model, image: await productToFile(opts.productImage!), prompt: opts.prompt, n: 1, size, quality }),
+      )
+    : await withRetry(async () => client.images.generate({ model, prompt: opts.prompt, n: 1, size, quality }));
+
+  const d = response.data?.[0] as Record<string, unknown> | undefined;
+  const url = d?.url ? String(d.url) : d?.b64_json ? `data:image/png;base64,${d.b64_json}` : "";
+  if (!url) throw new Error("No image returned");
+  return { url, revisedPrompt: opts.prompt, usage: (response as { usage?: unknown }).usage ?? null, size, quality };
 }

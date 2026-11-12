@@ -1,631 +1,287 @@
 // ============================================================
-// UXLLY — Onboarding Modal
-// Multi-step: Brand → Channel → Style Guide → Done
+// UXLLY — New project wizard
+//   1. Business (name, what you sell, website, logo)
+//   2. Size (cards with the real proportions; one size per project)
+//   3. Style (optional references, brand colours, tone, font)
+// Same popup look as the sign-up business details. File name kept so the
+// Projects page keeps working unchanged.
 // ============================================================
-
 "use client";
 
-import { useState, useEffect } from "react";
-import Modal from "@/components/ui/Modal";
-import Input from "@/components/ui/Input";
-import Select from "@/components/ui/Select";
-import Button from "@/components/ui/Button";
+import { useEffect, useState } from "react";
+import { Globe, Loader2, Upload } from "lucide-react";
+import WizardShell, { type ShellStep } from "@/components/ui/WizardShell";
+import SizeCards from "@/components/ui/SizeCards";
+import { Chip, FIELD, LButton, LInput, LTextarea } from "@/components/ui/light";
 import { PLATFORM_PRESETS } from "@/lib/platforms";
 import { FONT_OPTIONS } from "@/lib/fonts";
 import type { TemplateReference } from "@/lib/templates";
 import type { PlatformKey } from "@/types";
-import {
-  Building2,
-  Palette,
-  Globe,
-  Check,
-  ArrowRight,
-  ArrowLeft,
-  Upload,
-  Loader2,
-} from "lucide-react";
 
-interface OnboardingModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-type Step = "brand" | "channel" | "style" | "analyzing" | "done";
-
-const STEPS: { key: Step; label: string; icon: React.ReactNode }[] = [
-  { key: "brand", label: "Brand", icon: <Building2 size={16} /> },
-  { key: "channel", label: "Channel", icon: <Globe size={16} /> },
-  { key: "style", label: "References", icon: <Palette size={16} /> },
-  { key: "done", label: "Done", icon: <Check size={16} /> },
+const STEPS: ShellStep[] = [
+  { id: "business", title: "Tell us about the business", sub: "This is what the AI writes from, so be specific. You can change it later in project settings." },
+  { id: "size", title: "What are you designing for?", sub: "Pick the size this project makes. 4:5 portrait is the best-performing feed size on Instagram, Facebook and LinkedIn." },
+  { id: "style", title: "Show us your style", sub: "All optional. Add examples you like and set your brand colours." },
 ];
 
-export default function OnboardingModal({
-  isOpen,
-  onClose,
-}: OnboardingModalProps) {
-  const [step, setStep] = useState<Step>("brand");
-  const [loading, setLoading] = useState(false);
+const TONES = ["bold", "professional", "minimal", "casual", "playful"];
 
-  // ==================== Form State ====================
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+
+function ColourBox({ label, value, onChange, disabled }: { label: string; value: string; onChange: (v: string) => void; disabled?: boolean }) {
+  return (
+    <label className="flex items-center gap-2.5 rounded-xl border border-gray-200 px-3 h-12">
+      <input type="color" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} className="w-7 h-7 rounded-md border-0 bg-transparent cursor-pointer disabled:opacity-40" />
+      <span className="min-w-0">
+        <span className="block text-[12px] font-semibold text-gray-800 leading-tight">{label}</span>
+        <span className="block text-[11px] text-gray-400 font-mono leading-tight">{disabled ? "AI decides" : value}</span>
+      </span>
+    </label>
+  );
+}
+
+export default function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null;
+  return <Wizard onClose={onClose} />;
+}
+
+function Wizard({ onClose }: { onClose: () => void }) {
+  const [i, setI] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [status, setStatus] = useState("");
+
   const [brandName, setBrandName] = useState("");
-  const [brandLogo, setBrandLogo] = useState<File | null>(null);
+  const [offering, setOffering] = useState("");
+  const [website, setWebsite] = useState("");
+  const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [channelName, setChannelName] = useState("");
-  const [platform, setPlatform] = useState<PlatformKey>("instagram_post");
-  const [channelDescription, setChannelDescription] = useState("");
-  const [referenceImages, setReferenceImages] = useState<File[]>([]);
+  const [platform, setPlatform] = useState<PlatformKey | null>("instagram_portrait");
+
+  const [refs, setRefs] = useState<File[]>([]);
+  const [refPreviews, setRefPreviews] = useState<string[]>([]);
   const [templates, setTemplates] = useState<TemplateReference[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
-  const [referencePreviews, setReferencePreviews] = useState<string[]>([]);
-  const [styleNotes, setStyleNotes] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#1A1A1A");
-  const [secondaryColor, setSecondaryColor] = useState("#FFFFFF");
-  const [accentColor, setAccentColor] = useState("#00A8E8");
-  const [backgroundColor, setBackgroundColor] = useState("#0A0A0A");
-  const [enforceBackground, setEnforceBackground] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [primary, setPrimary] = useState("#1A1A1A");
+  const [secondary, setSecondary] = useState("#FFFFFF");
+  const [accent, setAccent] = useState("#00A8E8");
+  const [background, setBackground] = useState("#0A0A0A");
+  const [enforceBg, setEnforceBg] = useState(false);
   const [tone, setTone] = useState("bold");
-  const [headingFont, setHeadingFont] = useState("Inter");
+  const [font, setFont] = useState("Inter");
 
-  const platformOptions = Object.values(PLATFORM_PRESETS).map((p) => ({
-    value: p.key,
-    label: `${p.name} (${p.width}×${p.height})`,
-  }));
-
-  // Fetch the template grid directly on mount — shown inline, no button
-  // or modal needed to reveal it.
   useEffect(() => {
     fetch("/api/templates")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setTemplates(data.templates);
-      })
-      .catch((err) => console.error("Failed to load templates:", err))
+      .then((r) => r.json())
+      .then((d) => d.success && setTemplates(d.templates))
+      .catch(() => {})
       .finally(() => setTemplatesLoading(false));
+    // Pre-fill from the sign-up answers.
+    fetch("/api/onboarding")
+      .then((r) => r.json())
+      .then((d) => {
+        const a = d?.answers;
+        if (!a) return;
+        setBrandName((v) => v || a.businessName || "");
+        setOffering((v) => v || a.offering || "");
+        setWebsite((v) => v || a.websiteUrl || "");
+      })
+      .catch(() => {});
   }, []);
 
-  // ==================== Step Navigation ====================
-  const currentIndex = STEPS.findIndex((s) => s.key === step);
-
-  const goNext = () => {
-    const next = STEPS[currentIndex + 1];
-    if (next) setStep(next.key);
+  const setRefFiles = (files: File[]) => {
+    const next = files.slice(0, 10);
+    refPreviews.forEach((u) => URL.revokeObjectURL(u));
+    setRefs(next);
+    setRefPreviews(next.map((f) => URL.createObjectURL(f)));
+  };
+  const pickTemplate = async (url: string) => {
+    const blob = await (await fetch(url)).blob();
+    setRefFiles([...refs, new File([blob], `template-${Date.now()}.png`, { type: blob.type || "image/png" })]);
   };
 
-  const goBack = () => {
-    const prev = STEPS[currentIndex - 1];
-    if (prev) setStep(prev.key);
-  };
+  const canContinue = i === 0 ? brandName.trim().length > 0 : i === 1 ? !!platform : true;
 
-  // ==================== Add Reference Images ====================
-  const handleAddReferences = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    const newFiles = [...referenceImages, ...files].slice(0, 10); // max 10
-    setReferenceImages(newFiles);
-
-    const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
-    referencePreviews.forEach((url) => URL.revokeObjectURL(url));
-    setReferencePreviews(newPreviews);
-  };
-
-  // Clicking a template thumbnail directly converts it to a File and
-  // merges it into the existing reference state — same handling an
-  // upload gets, just triggered from the grid instead of a file input.
-  const handlePickTemplate = async (publicUrl: string) => {
-    const imgRes = await fetch(publicUrl);
-    const blob = await imgRes.blob();
-    const file = new File([blob], `template-${Date.now()}.png`, { type: blob.type || "image/png" });
-
-    const newFiles = [...referenceImages, file].slice(0, 10);
-    setReferenceImages(newFiles);
-
-    const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
-    referencePreviews.forEach((url) => URL.revokeObjectURL(url));
-    setReferencePreviews(newPreviews);
-  };
-
-  const removeReference = (index: number) => {
-    URL.revokeObjectURL(referencePreviews[index]);
-    setReferenceImages((prev) => prev.filter((_, i) => i !== index));
-    setReferencePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // ==================== Convert file to base64 ====================
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // ==================== Submit ====================
-  const [analysisStatus, setAnalysisStatus] = useState("");
-
-  const handleSubmit = async () => {
-    setLoading(true);
+  async function create() {
+    if (!platform) return;
+    setBusy(true);
     try {
-      // Convert reference images to base64
-      const referenceBase64 = await Promise.all(
-        referenceImages.map((f) => fileToBase64(f))
-      );
-
-      // Convert logo to base64 if one was uploaded — sent separately
-      // from style references. The logo is never analyzed or edited,
-      // just stored and placed exactly as-is on generated images.
-      const logoBase64 = brandLogo ? await fileToBase64(brandLogo) : null;
-
-      // Step 1: Create the project
-      setAnalysisStatus("Creating project...");
-      const response = await fetch("/api/projects", {
+      const preset = PLATFORM_PRESETS[platform];
+      const referenceBase64 = await Promise.all(refs.map(fileToBase64));
+      const logoBase64 = logo ? await fileToBase64(logo) : null;
+      const description = [offering.trim(), website.trim() && `Website: ${website.trim()}`].filter(Boolean).join("\n");
+      setStatus("Creating your project…");
+      const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          brandName,
-          channelName,
+          brandName: brandName.trim(),
+          channelName: `${brandName.trim()} · ${preset.name}`,
           platform,
-          channelDescription,
+          channelDescription: description,
           referenceImages: referenceBase64,
           logoBase64,
-          styleNotes,
-          primaryColor,
-          secondaryColor,
-          accentColor,
-          backgroundColor: enforceBackground ? backgroundColor : null,
+          styleNotes: notes,
+          primaryColor: primary,
+          secondaryColor: secondary,
+          accentColor: accent,
+          backgroundColor: enforceBg ? background : null,
           tone,
-          headingFont,
+          headingFont: font,
         }),
       });
-
-      if (!response.ok) throw new Error("Failed to create project");
-
-      const projectData = await response.json();
-      const brandId = projectData.data?.brand?.id;
-
-      // Step 2: Analyze references with GPT-4o Vision
+      if (!res.ok) throw new Error("Failed to create project");
+      const brandId = (await res.json()).data?.brand?.id;
       if (brandId && referenceBase64.length > 0) {
-        setStep("analyzing");
-        setAnalysisStatus("AI is studying your references...");
-
-        try {
-          const analysisRes = await fetch("/api/projects/analyze", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              brandId,
-              referenceImages: referenceBase64,
-            }),
-          });
-
-          if (analysisRes.ok) {
-            const analysisData = await analysisRes.json();
-            setAnalysisStatus(
-              `Found ${Object.keys(analysisData.data?.extractedColors || {}).length} colors · ${analysisData.data?.detectedTone} tone · ${analysisData.data?.detectedFont} font`
-            );
-          } else {
-            setAnalysisStatus("Analysis complete (partial). You can refine in Settings.");
-          }
-        } catch {
-          setAnalysisStatus("Style saved. Analysis can be re-run from Settings.");
-        }
+        setStatus("The AI is studying your references…");
+        await fetch("/api/projects/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brandId, referenceImages: referenceBase64 }) }).catch(() => {});
       }
-
-      // Step 3: Done
-      setTimeout(() => setStep("done"), 1500);
-    } catch (err) {
-      console.error("Failed to create project:", err);
-      setAnalysisStatus("Something went wrong. Try again.");
+      setDone(true);
+    } catch (e) {
+      console.error(e);
+      setStatus("Something went wrong. Please try again.");
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
-  };
+  }
+
+  const next = () => (i === STEPS.length - 1 ? create() : setI(i + 1));
 
   return (
-    <Modal
-      isOpen={isOpen}
+    <WizardShell
+      heading="New project"
+      steps={STEPS}
+      index={i}
+      done={done}
+      doneTitle="Project created"
+      doneText={`"${brandName}" is ready. Open AI Studio to start making content. Your brand brain is being built in the background.`}
+      doneAction={<LButton variant="lime" size="lg" onClick={onClose}>Start creating</LButton>}
+      busy={busy}
+      continueDisabled={!canContinue}
+      finishLabel="Create project"
+      skippable={i === 2}
+      onBack={() => setI(Math.max(0, i - 1))}
+      onNext={next}
+      onSkip={create}
       onClose={onClose}
-      title="Create a Project"
-      size="lg"
+      wide={i === 1 || i === 2}
     >
-      {/* ==================== Step Indicators ==================== */}
-      <div className="flex items-center gap-2 mb-8">
-        {STEPS.map((s, i) => (
-          <div key={s.key} className="flex items-center gap-2 flex-1">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-colors ${
-                i <= currentIndex
-                  ? "bg-brand-500 text-white"
-                  : "bg-surface-100 text-ink-400"
-              }`}
-            >
-              {i < currentIndex ? <Check size={14} /> : i + 1}
-            </div>
-            <span
-              className={`text-xs font-medium hidden sm:block ${
-                i <= currentIndex ? "text-ink-900" : "text-ink-400"
-              }`}
-            >
-              {s.label}
+      {i === 0 && (
+        <div className="space-y-5">
+          <LInput label="Business or brand name" value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder="e.g. Bean & Brew Coffee" autoFocus />
+          <LTextarea label="What do you sell or offer?" value={offering} onChange={(e) => setOffering(e.target.value)} rows={3} placeholder="e.g. Specialty coffee, pastries and beans for home brewing, in Lagos" />
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-gray-800">Website <span className="font-normal text-gray-400">(optional)</span></span>
+            <span className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 h-12 focus-within:border-gray-900">
+              <Globe size={18} className="text-gray-400" />
+              <input className="flex-1 bg-transparent outline-none text-[15px] text-gray-900 placeholder:text-gray-400" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="yourbusiness.com" inputMode="url" />
             </span>
-            {i < STEPS.length - 1 && (
-              <div
-                className={`flex-1 h-px ${
-                  i < currentIndex ? "bg-brand-500" : "bg-surface-200"
-                }`}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* ==================== Step: Brand ==================== */}
-      {step === "brand" && (
-        <div className="space-y-4">
+          </label>
           <div>
-            <h3 className="text-base font-semibold text-ink-900 mb-1">
-              Tell us about your brand
-            </h3>
-            <p className="text-sm text-ink-400">
-              This creates a brand workspace. You can add multiple channels
-              later.
-            </p>
-          </div>
-          <Input
-            label="Brand Name"
-            placeholder="e.g. Acme Corp"
-            value={brandName}
-            onChange={(e) => setBrandName(e.target.value)}
-            required
-          />
-          <div>
-            <label className="text-sm font-medium text-ink-800 mb-1.5 block">
-              Brand Logo (optional)
-            </label>
-            <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-surface-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50/20 transition-colors overflow-hidden">
+            <span className="mb-1.5 block text-sm font-semibold text-gray-800">Logo <span className="font-normal text-gray-400">(optional)</span></span>
+            <label className="flex items-center justify-center h-24 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-gray-400 transition-colors overflow-hidden">
               {logoPreview ? (
-                <img src={logoPreview} alt="Logo preview" className="h-full object-contain p-2" />
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoPreview} alt="Logo" className="h-full object-contain p-2" />
               ) : (
-                <div className="flex flex-col items-center">
-                  <Upload size={20} className="text-ink-400 mb-1" />
-                  <span className="text-xs text-ink-400">
-                    Click to upload logo
-                  </span>
-                </div>
+                <span className="flex flex-col items-center text-gray-400"><Upload size={20} /><span className="text-xs mt-1">Click to upload</span></span>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setBrandLogo(file);
-                    setLogoPreview(URL.createObjectURL(file));
-                  }
-                }}
-              />
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setLogo(f); setLogoPreview(URL.createObjectURL(f)); } }} />
             </label>
-            {brandLogo && (
-              <p className="text-xs text-ink-400 mt-1">{brandLogo.name}</p>
-            )}
-            <p className="text-xs text-ink-400 mt-1">
-              Placed exactly as-is on every generation — never redrawn or restyled.
-            </p>
-          </div>
-          <div className="flex justify-end">
-            <Button
-              variant="primary"
-              onClick={goNext}
-              disabled={!brandName.trim()}
-              icon={<ArrowRight size={14} />}
-            >
-              Next
-            </Button>
+            <p className="mt-1 text-xs text-gray-500">Placed exactly as-is on every design. Never redrawn.</p>
           </div>
         </div>
       )}
 
-      {/* ==================== Step: Channel ==================== */}
-      {step === "channel" && (
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-base font-semibold text-ink-900 mb-1">
-              Set up your content channel
-            </h3>
-            <p className="text-sm text-ink-400">
-              A channel is a specific platform account you&apos;ll post to.
-            </p>
-          </div>
-          <Input
-            label="Channel Name"
-            placeholder="e.g. Main Instagram, TikTok Growth"
-            value={channelName}
-            onChange={(e) => setChannelName(e.target.value)}
-            required
-          />
-          <Select
-            label="Platform"
-            options={platformOptions}
-            value={platform}
-            onChange={(e) => setPlatform(e.target.value as PlatformKey)}
-          />
-          <Input
-            label="Description (optional)"
-            placeholder="What kind of content does this channel focus on?"
-            value={channelDescription}
-            onChange={(e) => setChannelDescription(e.target.value)}
-          />
-          <div className="flex justify-between">
-            <Button variant="ghost" onClick={goBack} icon={<ArrowLeft size={14} />}>
-              Back
-            </Button>
-            <Button
-              variant="primary"
-              onClick={goNext}
-              disabled={!channelName.trim()}
-              icon={<ArrowRight size={14} />}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      {i === 1 && <SizeCards value={platform} onChange={setPlatform} />}
 
-      {/* ==================== Step: Reference Board ==================== */}
-      {step === "style" && (
-        <div className="space-y-4">
+      {i === 2 && (
+        <div className="space-y-6">
           <div>
-            <h3 className="text-base font-semibold text-ink-900 mb-1">
-              Show us your style
-            </h3>
-            <p className="text-sm text-ink-400">
-              Upload examples of graphics you love. The AI will analyze the
-              colors, fonts, layout, and vibe to match your style when
-              generating new content.
-            </p>
-          </div>
-
-          {/* Pick a Style — templates shown directly, no button/modal */}
-          <div>
-            <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">Pick a style</p>
+            <p className="mb-2 text-sm font-semibold text-gray-800">Pick a style you like</p>
             {templatesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 size={20} className="text-ink-300 animate-spin" />
-              </div>
+              <div className="flex justify-center py-6"><Loader2 className="animate-spin text-gray-300" size={20} /></div>
             ) : templates.length === 0 ? (
-              <p className="text-xs text-ink-400 py-4">No templates available yet.</p>
+              <p className="text-xs text-gray-400">No templates available yet.</p>
             ) : (
-              <div className="grid grid-cols-4 gap-2">
-                {templates.map((template) => (
-                  <button
-                    key={template.id}
-                    type="button"
-                    onClick={() => handlePickTemplate(template.publicUrl)}
-                    className="relative aspect-square rounded-lg overflow-hidden border-2 border-surface-200 hover:border-brand-400 transition-colors bg-surface-100 group"
-                  >
-                    <img
-                      src={template.publicUrl}
-                      alt={template.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                    <span className="absolute bottom-1 left-1 right-1 text-[9px] font-medium text-white bg-black/50 rounded px-1 py-0.5 truncate">
-                      {template.name}
-                    </span>
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                {templates.map((t) => (
+                  <button key={t.id} type="button" onClick={() => pickTemplate(t.publicUrl)} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 hover:border-gray-900 transition-colors bg-gray-50" title={t.name}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={t.publicUrl} alt={t.name} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Reference Image Upload */}
           <div>
-            <label className="text-sm font-medium text-ink-800 mb-1.5 block">
-              Reference Images ({referenceImages.length}/10)
-            </label>
-
-            {/* Image Grid */}
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              {referencePreviews.map((preview, i) => (
-                <div
-                  key={i}
-                  className="relative aspect-square rounded-lg overflow-hidden border border-surface-200 group"
-                >
-                  <img
-                    src={preview}
-                    alt={`Reference ${i + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    onClick={() => removeReference(i)}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    ×
-                  </button>
+            <p className="mb-2 text-sm font-semibold text-gray-800">Reference images <span className="font-normal text-gray-400">({refs.length}/10)</span></p>
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+              {refPreviews.map((p, n) => (
+                <div key={p} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => setRefFiles(refs.filter((_, k) => k !== n))} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-xs opacity-0 group-hover:opacity-100">×</button>
                 </div>
               ))}
-
-              {/* Add more button */}
-              {referenceImages.length < 10 && (
-                <label className="aspect-square rounded-lg border-2 border-dashed border-surface-200 flex flex-col items-center justify-center cursor-pointer hover:border-brand-300 hover:bg-brand-50/20 transition-colors">
-                  <Upload size={20} className="text-ink-400 mb-1" />
-                  <span className="text-[10px] text-ink-400 text-center px-1">
-                    Add images
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleAddReferences}
-                  />
+              {refs.length < 10 && (
+                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 text-gray-400">
+                  <Upload size={18} />
+                  <span className="text-[10px] mt-1">Add</span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => setRefFiles([...refs, ...Array.from(e.target.files || [])])} />
                 </label>
               )}
             </div>
-
-            <p className="text-xs text-ink-400">
-              Screenshots of posts you like, brand mood boards, competitor
-              graphics — anything that shows the style you want.
-            </p>
+            <p className="mt-1.5 text-xs text-gray-500">Posts you like or competitor graphics. No references? No problem, the AI will use brand colours and the project's ad pack.</p>
           </div>
 
-          {/* Style Notes */}
           <div>
-            <label className="text-sm font-medium text-ink-800 mb-1.5 block">
-              Style Notes (optional)
-            </label>
-            <textarea
-              value={styleNotes}
-              onChange={(e) => setStyleNotes(e.target.value)}
-              placeholder="e.g. Dark backgrounds, bold sans-serif type, neon accents, minimal layout, tech/modern feel..."
-              className="uxlly-input min-h-[80px] resize-y"
-              rows={3}
-            />
-          </div>
-
-          {/* Brand Colors & Tone */}
-          <div>
-            <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">Brand Colors & Tone</p>
-            <div className="grid grid-cols-3 gap-3">
+            <p className="mb-2 text-sm font-semibold text-gray-800">Brand colours</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              <ColourBox label="Primary" value={primary} onChange={setPrimary} />
+              <ColourBox label="Accent" value={accent} onChange={setAccent} />
+              <ColourBox label="Text" value={secondary} onChange={setSecondary} />
               <div>
-                <label className="text-xs text-ink-600 mb-1 block">Primary</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-8 h-8 rounded border border-surface-200 cursor-pointer" />
-                  <span className="text-xs text-ink-500 font-mono">{primaryColor}</span>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-ink-600 mb-1 block">Secondary</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-8 h-8 rounded border border-surface-200 cursor-pointer" />
-                  <span className="text-xs text-ink-500 font-mono">{secondaryColor}</span>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-ink-600 mb-1 block">Accent</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="w-8 h-8 rounded border border-surface-200 cursor-pointer" />
-                  <span className="text-xs text-ink-500 font-mono">{accentColor}</span>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-ink-600 mb-1 flex items-center gap-1.5">
-                  <input
-                    type="checkbox"
-                    checked={enforceBackground}
-                    onChange={(e) => setEnforceBackground(e.target.checked)}
-                    className="cursor-pointer"
-                  />
-                  Background
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={backgroundColor}
-                    onChange={(e) => setBackgroundColor(e.target.value)}
-                    disabled={!enforceBackground}
-                    className="w-8 h-8 rounded border border-surface-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  />
-                  <span className="text-xs text-ink-500 font-mono">
-                    {enforceBackground ? backgroundColor : "AI decides"}
-                  </span>
-                </div>
-              </div>
-              <div className="col-span-2">
-                <label className="text-xs text-ink-600 mb-1 block">Tone</label>
-                <select value={tone} onChange={(e) => setTone(e.target.value)} className="uxlly-input text-xs">
-                  <option value="bold">Bold</option>
-                  <option value="professional">Professional</option>
-                  <option value="minimal">Minimal</option>
-                  <option value="casual">Casual</option>
-                  <option value="playful">Playful</option>
-                </select>
+                <ColourBox label="Background" value={background} onChange={setBackground} disabled={!enforceBg} />
+                <label className="mt-1.5 flex items-center gap-1.5 text-[11px] text-gray-500 cursor-pointer"><input type="checkbox" checked={enforceBg} onChange={(e) => setEnforceBg(e.target.checked)} /> Always use this background</label>
               </div>
             </div>
           </div>
 
-          {/* Font */}
           <div>
-            <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">Heading Font</p>
-            <div className="grid grid-cols-3 gap-2">
+            <p className="mb-2 text-sm font-semibold text-gray-800">Tone</p>
+            <div className="flex flex-wrap gap-2">{TONES.map((t) => <Chip key={t} on={tone === t} onClick={() => setTone(t)}><span className="capitalize">{t}</span></Chip>)}</div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm font-semibold text-gray-800">Heading font</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {FONT_OPTIONS.map((f) => (
-                <button
-                  key={f.name}
-                  type="button"
-                  onClick={() => setHeadingFont(f.name)}
-                  className={`px-3 py-2 rounded-lg border text-left transition-colors ${
-                    headingFont === f.name
-                      ? "border-brand-500 bg-brand-50"
-                      : "border-surface-200 hover:border-surface-300"
-                  }`}
-                >
-                  <p
-                    className="text-sm font-semibold text-ink-900 truncate"
-                    style={{ fontFamily: `"${f.name}", sans-serif` }}
-                  >
-                    {f.sample}
-                  </p>
-                  <p className="text-[10px] text-ink-400 truncate">{f.name}</p>
+                <button key={f.name} type="button" onClick={() => setFont(f.name)} className={`px-3 py-2 rounded-xl border text-left transition-colors ${font === f.name ? "border-gray-900 ring-1 ring-gray-900" : "border-gray-200 hover:border-gray-400"}`}>
+                  <p className="text-sm font-semibold text-gray-900 truncate" style={{ fontFamily: `"${f.name}", sans-serif` }}>{f.sample}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{f.name}</p>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex justify-between">
-            <Button variant="ghost" onClick={goBack} icon={<ArrowLeft size={14} />}>
-              Back
-            </Button>
-            <Button
-              variant="primary"
-              loading={loading}
-              onClick={handleSubmit}
-              disabled={referenceImages.length === 0}
-            >
-              Create Project
-            </Button>
-          </div>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-gray-800">Style notes <span className="font-normal text-gray-400">(optional)</span></span>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${FIELD} py-3 resize-none`} placeholder="e.g. Dark backgrounds, bold type, minimal layout" />
+          </label>
         </div>
       )}
 
-      {/* ==================== Step: Analyzing ==================== */}
-      {step === "analyzing" && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-4">
-            <div className="uxlly-spinner w-6 h-6" />
-          </div>
-          <h3 className="text-lg font-semibold text-ink-900 mb-2">
-            Analyzing your references
-          </h3>
-          <p className="text-sm text-ink-400 mb-4 max-w-xs mx-auto">
-            GPT-4o Vision is studying your images to extract colors, typography,
-            layout patterns, and visual style...
-          </p>
-          <p className="text-xs text-brand-500 font-medium animate-pulse">
-            {analysisStatus}
-          </p>
-        </div>
-      )}
-
-      {/* ==================== Step: Done ==================== */}
-      {step === "done" && (
-        <div className="text-center py-8">
-          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-            <Check size={28} className="text-green-500" />
-          </div>
-          <h3 className="text-lg font-semibold text-ink-900 mb-1">
-            Project created!
-          </h3>
-          <p className="text-sm text-ink-400 mb-6">
-            Your channel &quot;{channelName}&quot; is ready. Head to AI Studio
-            to start generating content.
-          </p>
-          <Button variant="primary" onClick={onClose}>
-            Start creating
-          </Button>
-        </div>
-      )}
-    </Modal>
+      {busy && <p className="mt-5 text-sm text-gray-500 animate-pulse">{status}</p>}
+      {!busy && status && !done && <p className="mt-5 text-sm text-red-600">{status}</p>}
+    </WizardShell>
   );
 }

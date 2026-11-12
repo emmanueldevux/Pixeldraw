@@ -135,7 +135,7 @@ export default function InspirationPage() {
         ) : images.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center mb-4">
-              <Sparkles size={28} className="text-ink-300" />
+<Sparkles className="mb-4 text-[#7C3AED]" size={40} strokeWidth={1.3} />
             </div>
             <h3 className="text-lg font-semibold text-ink-900 mb-1">
               Your inspiration library is empty
@@ -175,7 +175,7 @@ export default function InspirationPage() {
                   </div>
                   <button
                     onClick={() => handleDelete(img.id)}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/90 text-ink-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-surface-0/90 text-ink-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Remove"
                   >
                     <Trash2 size={14} />

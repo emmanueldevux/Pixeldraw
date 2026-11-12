@@ -6,3 +6,7 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 prisma/migrations/
+
+/*.zip
+/*.png
+prisma/schema.backup*.prisma

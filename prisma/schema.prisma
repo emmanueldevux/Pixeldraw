@@ -100,6 +100,7 @@ model StyleGuide {
   generationPool  Json?    // array of URLs used for generation: grid references get exploded into their individual panels here, plain uploads pass through as-is. This is what generation actually picks from at random — referenceImages stays as the clean original uploads for the UI.
   rawMarkdown     String?  @db.Text // uploaded .md style guide content
   layoutArchetypes Json?   // array of {name, composition} extracted from grid/moodboard references
+  advancedSettings Json?   // language + ecommerce settings
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -242,4 +243,192 @@ model Job {
 
   @@index([userId])
   @@index([isActive])
+}
+// ============================================================
+// ADD THESE MODELS to the bottom of your prisma/schema.prisma
+// then run:   npx prisma db push      (or: npx prisma migrate dev --name billing)
+// They don't touch your existing tables (no relations to User on purpose).
+// ============================================================
+
+model BillingAccount {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  stripeCustomerId      String?   @unique
+  defaultPaymentMethod  String?
+  // subscription (Starter / Pro)
+  stripeSubscriptionId  String?   @unique
+  planKey               String?
+  planStatus            String?
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean   @default(false)
+  // auto-reload
+  autoReloadEnabled     Boolean   @default(false)
+  autoReloadBelowMilli  Int       @default(0)
+  autoReloadAmountCents Int       @default(0)
+  // extra free-trial images granted by you in /admin
+  freeBonus             Int       @default(0)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+// Append-only ledger. Never update/delete rows. 1 credit = 1000 deltaMilli.
+model CreditEvent {
+  id         String    @id @default(cuid())
+  userId     String
+  deltaMilli Int
+  kind       String
+  ref        String?
+  note       String?
+  meta       Json?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([userId, ref])
+  @@index([userId, createdAt])
+  @@index([userId, kind])
+}
+
+model BillingPlan {
+  id              String  @id @default(cuid())
+  key             String  @unique
+  name            String
+  priceCents      Int
+  creditsMilli    Int
+  stripeProductId String?
+  active          Boolean @default(true)
+  sortOrder       Int     @default(0)
+}
+
+model PricingRule {
+  id           String  @id @default(cuid())
+  key          String  @unique
+  label        String
+  provider     String  @default("")
+  creditsMilli Int
+  costMicroUsd Int     @default(0)
+  active       Boolean @default(true)
+}
+
+model BillingSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model StripeEventLog {
+  id        String   @id
+  type      String
+  createdAt DateTime @default(now())
+}
+// Paste this model at the bottom of prisma/schema.prisma, then run:
+//   npx prisma db push
+//   npx prisma generate
+// (stop `npm run dev` first on Windows)
+
+model UserProfile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  businessName  String?
+  offering      String?
+  industry      String?
+  industryOther String?
+  hasWebsite    Boolean?
+  websiteUrl    String?
+  platforms     String[]  @default([])
+  postsPerDay   String?
+  goals         String[]  @default([])
+  styles        String[]  @default([])
+  role          String?
+  teamSize      String?
+  referral      String?
+  completedAt   DateTime?
+  skippedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([industry])
+}
+// Paste this model at the bottom of prisma/schema.prisma, then run:
+//   npx prisma db push
+//   npx prisma generate
+// (stop `npm run dev` first on Windows)
+
+model BrandBrain {
+  id          String    @id @default(cuid())
+  brandId     String    @unique
+  status      String    @default("empty") // empty | generating | ready | failed
+  data        Json
+  edited      String[]  @default([])      // sections the user changed by hand
+  generatedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+// Paste BOTH models at the bottom of prisma/schema.prisma (once), then:
+//   npx prisma db push
+//   npx prisma generate
+// If you already applied update 20, BrandBrain is already in your schema:
+// paste only DesignTemplate.
+
+model DesignTemplate {
+  id            String   @id @default(cuid())
+  number        Int      @unique
+  title         String
+  description   String   @default("")
+  category      String   @default("")
+  tags          String[] @default([])
+  aspect        String   @default("9:16")
+  coverImages   String[] @default([])
+  prompt        String   @db.Text
+  params        Json
+  styles        Json
+  needsProduct  Boolean  @default(true)
+  useBrandBrain Boolean  @default(true)
+  published     Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  usageCount    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  ownerId String?
+  @@index([ownerId])
+}
+// Paste this model at the bottom of prisma/schema.prisma (once), then:
+//   npx prisma db push
+//   npx prisma generate
+
+model CarouselStyle {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  published   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  introRefs   String[] @default([])
+  introDna    String   @default("") @db.Text
+  detailsRefs String[] @default([])
+  detailsDna  String   @default("") @db.Text
+  outroRefs   String[] @default([])
+  outroDna    String   @default("") @db.Text
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ownerId String?
+  @@index([ownerId])
+}
+
+// ===== Paste at the bottom of prisma/schema.prisma (TikTok / lifestyle slideshow styles) =====
+model SlideshowStyle {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  refs        String[] @default([])      // example slides (urls)
+  dna         String   @default("") @db.Text // studied: photo look, scenes, caption voice, pacing
+  textStyle   String   @default("white") // default caption look: "white" | "dark" | "plain"
+  formats     String[] @default([])      // "list" | "story" | "travel" | "split" (empty = all)
+  published   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  usageCount  Int      @default(0)
+  ownerId     String?                    // set = a user's own private style
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerId])
 }

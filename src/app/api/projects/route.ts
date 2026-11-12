@@ -72,6 +72,7 @@ export async function DELETE(request: Request) {
 
     // Cascades to StyleGuide, Channels, Posts, Conversations, Messages, Jobs
     await db.brand.delete({ where: { id: brandId } });
+    await db.brandBrain.deleteMany({ where: { brandId } }).catch(() => {});
 
     console.log("[PROJECTS] 🗑️ Deleted brand:", brand.name, `(${brandId})`);
 
@@ -133,6 +134,10 @@ export async function POST(request: Request) {
       "| Channel:", channelName,
       "| References:", (referenceImages || []).length, "images"
     );
+
+    // Build the brand brain in the background (audience, voice, positioning…).
+    // If this gets cut short, the first template run builds it instead.
+    import("@/lib/brain/generate").then((m) => m.generateBrain(brand.id)).catch((e) => console.warn("[BRAIN] background build failed:", e));
 
     return NextResponse.json({ success: true, data: { brand, channel } });
   } catch (error) {

@@ -2,50 +2,55 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+     "./src/**/*.{js,ts,jsx,tsx,mdx}",
+
   ],
   theme: {
     extend: {
       /* ============================================================
-         UXLLY DESIGN TOKENS
+         UXLLY DESIGN TOKENS — dark theme
+         Same token names as before (brand/surface/ink/status), so every
+         existing component using them re-themes automatically. Only the
+         actual color values changed — semantic meaning is preserved:
+         surface-0 is still "the most prominent panel background",
+         ink-900 is still "highest-emphasis text", etc. — just realized
+         as light-on-dark instead of dark-on-light.
          ============================================================ */
       colors: {
         brand: {
-          50: "#F0F7FF",
-          100: "#E0EFFF",
-          200: "#B8DBFF",
-          300: "#7ABFFF",
-          400: "#3DA2FF",
-          500: "#2563EB", /* Primary brand */
-          600: "#1D4ED8",
-          700: "#1E40AF",
-          800: "#1E3A8A",
-          900: "#172554",
+          50: "#EAF1FF",
+          100: "#D6E4FF",
+          200: "#AECBFF",
+          300: "#87A9FF", /* ms-icon-accent */
+          400: "#5E92FF",
+          500: "#4285F4", /* Primary accent */
+          600: "#346BF0", /* hover / pressed */
+          700: "#2A54C4",
+          800: "#1F3E93",
+          900: "#152A66",
         },
         surface: {
-          0: "#FFFFFF",
-          50: "#FAFAFA",
-          100: "#F4F4F5",
-          200: "#E4E4E7",
-          300: "#D4D4D8",
+          0: "#1F1F1F",   /* raised panels — cards, inputs, modals */
+          50: "#191919",  /* page background */
+          100: "#252525", /* secondary panels — chips, secondary buttons */
+          200: "#262626", /* borders / outlines */
+          300: "#2A2A2A", /* hover state */
         },
         ink: {
-          950: "#09090B",
-          900: "#18181B",
-          800: "#27272A",
-          700: "#3F3F46",
-          600: "#52525B",
-          500: "#71717A",
-          400: "#A1A1AA",
-          300: "#D4D4D8",
+          950: "#FCFCFC", /* headings — highest emphasis */
+          900: "#FFFFFF",
+          800: "#E2E2E5",
+          700: "#D4D4D4", /* default body text */
+          600: "#B5B5B5",
+          500: "#8C8C8C", /* secondary/variant text */
+          400: "#707070",
+          300: "#575757", /* dim/disabled/placeholder */
         },
         status: {
-          success: "#22C55E",
-          warning: "#EAB308",
-          error: "#EF4444",
-          info: "#3B82F6",
+          success: "#2FBF6E",
+          warning: "#FCBD00",
+          error: "#DB372D",
+          info: "#4285F4",
         },
       },
       fontFamily: {

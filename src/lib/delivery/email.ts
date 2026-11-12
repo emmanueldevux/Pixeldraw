@@ -44,3 +44,46 @@ export async function sendContentEmail(params: {
     html,
   });
 }
+
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** "Time to post" email for a planned item: every image, the caption + hashtags, and a one-click "mark as posted". */
+export async function sendPlanItemEmail(params: {
+  to: string;
+  brandName: string;
+  platform: string;
+  whenLabel: string; // e.g. "Tue 12 Nov, 10:00"
+  imageUrls: string[];
+  caption: string;
+  hashtags: string[];
+  postedUrl: string;
+  calendarUrl: string;
+}): Promise<void> {
+  const images = params.imageUrls
+    .map((u, i) => `<a href="${u}" style="display:block;margin:10px 0"><img src="${u}" alt="Slide ${i + 1}" style="width:100%;border-radius:12px;display:block" /></a>`)
+    .join("");
+  const text = [params.caption, params.hashtags.join(" ")].filter(Boolean).join("\n\n");
+  const html = `
+    <div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;color:#18181B">
+      <p style="font-size:13px;color:#71717A;margin:0 0 4px">${esc(params.brandName)} · ${esc(params.platform)} · ${esc(params.whenLabel)}</p>
+      <h2 style="margin:0 0 14px;font-size:20px">It's time to post 📣</h2>
+      ${images}
+      <p style="font-size:12px;color:#71717A;margin:14px 0 6px">${params.imageUrls.length > 1 ? "Tap each slide to save it, then post them in order." : "Tap the image to save it."} Caption (copy and paste):</p>
+      <div style="background:#F4F4F5;padding:14px 16px;border-radius:10px;white-space:pre-wrap;font-size:14px;line-height:1.5">${esc(text)}</div>
+      <p style="margin:20px 0 6px"><a href="${params.postedUrl}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">I've posted it ✓</a></p>
+      <p style="font-size:12px;color:#A1A1AA"><a href="${params.calendarUrl}" style="color:#A1A1AA">Open your calendar</a> · Sent by makesocial</p>
+    </div>`;
+  await transporter.sendMail({ from: process.env.EMAIL_FROM, to: params.to, subject: `Time to post on ${params.platform}: ${params.brandName}`, html });
+}
+
+/** Heads-up when a planned post could not be made (e.g. out of credits). */
+export async function sendPlanProblemEmail(params: { to: string; brandName: string; whenLabel: string; reason: string; calendarUrl: string }): Promise<void> {
+  const html = `
+    <div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;color:#18181B">
+      <h2 style="margin:0 0 10px;font-size:20px">A planned post couldn't be made</h2>
+      <p style="font-size:14px;line-height:1.5">${esc(params.brandName)} · ${esc(params.whenLabel)}</p>
+      <p style="font-size:14px;line-height:1.5;color:#52525B">${esc(params.reason)}</p>
+      <p><a href="${params.calendarUrl}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">Open your calendar</a></p>
+    </div>`;
+  await transporter.sendMail({ from: process.env.EMAIL_FROM, to: params.to, subject: `A planned post couldn't be made: ${params.brandName}`, html });
+}

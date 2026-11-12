@@ -4,6 +4,16 @@
 // Auto-generates images via Together AI (free) or OpenAI
 // ============================================================
 
+import { withUsage, applyProjectNegative } from "@/lib/billing/usage";
+import { resolvePack } from "@/lib/designTemplates/store";
+import { generatePackAd } from "@/lib/designTemplates/pack";
+import { adCraftNote, moodFromVoice } from "@/lib/ai/adCraft";
+import { brandColoursText } from "@/lib/designTemplates/types";
+import { getBrain, generateBrain } from "@/lib/brain/generate";
+import { brainImageNote, brainToPrompt } from "@/lib/brain/prompt";
+import { trimToAspect } from "@/lib/designTemplates/crop";
+import { saveGeneration } from "@/lib/generations";
+import { isEmptyBrain } from "@/lib/brain/types";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -22,6 +32,10 @@ import { togetherGenerateImage } from "@/lib/ai/providers/together";
 import type { AIMessage, ImageSize, StyleGuideData } from "@/types";
 import type { LogoPosition } from "@/lib/ai/logoComposite";
 import { getRandomTemplateAsBase64 } from "@/lib/templates";
+import { randomUUID } from "crypto";
+import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
+import { insufficientResponse } from "@/lib/billing/http";
+import { imageKey } from "@/lib/billing/pricing";
 
 // Pick the right image provider based on what's configured
 async function generateImage(
@@ -33,41 +47,63 @@ async function generateImage(
   brandName?: string | null,
   logoUrl?: string | null,
   logoPosition?: string | null,
-  logoScale?: number | null
+  logoScale?: number | null,
+  productImage?: string | null,
+  imageProvider?: string | null
 ) {
-  const provider = process.env.IMAGE_PROVIDER || "together";
+  // A per-request model pick (from the composer's Models dropdown) overrides
+  // the server default. A product image only works through OpenAI images.edit,
+  // so when one is attached we prefer OpenAI regardless of the dropdown/FLUX.
+  const provider = imageProvider || process.env.IMAGE_PROVIDER || "together";
+  const preferOpenAI = provider === "openai" || !!productImage;
   const logoOpts = {
     logoUrl,
     logoPosition: (logoPosition as unknown as LogoPosition) || undefined,
     logoScale: logoScale ?? undefined,
   };
 
-  if (provider === "openai" && process.env.OPENAI_API_KEY) {
-    return openaiGenerateImage({ prompt, size: size as ImageSize, referenceImages, styleGuide, platform, brandName, ...logoOpts });
+  // Logo is NOT composited here anymore — it's returned to the client and
+  // overlaid as a draggable layer on the generated post.
+  void logoOpts;
+
+  if (preferOpenAI && process.env.OPENAI_API_KEY) {
+    return openaiGenerateImage({ prompt, size: size as ImageSize, referenceImages, styleGuide, platform, brandName, productImage });
   }
 
-  if (process.env.TOGETHER_API_KEY) {
+  // FLUX can't take a product/reference image — only fall here when none attached.
+  if (process.env.TOGETHER_API_KEY && !productImage) {
     return togetherGenerateImage({ prompt, size: size as ImageSize });
   }
 
   if (process.env.OPENAI_API_KEY) {
-    return openaiGenerateImage({ prompt, size: size as ImageSize, referenceImages, styleGuide, platform, brandName, ...logoOpts });
+    return openaiGenerateImage({ prompt, size: size as ImageSize, referenceImages, styleGuide, platform, brandName, productImage });
   }
 
   throw new Error("No image provider configured.");
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { messages, platform, brandId, brandName, channelDescription, styleGuide, channelId } =
+    const { messages, platform, brandId, brandName, channelDescription, styleGuide, channelId, productImage, imageProvider, freeChat } =
       await request.json();
 
     console.log("[CHAT] 🔑 Received brandId:", brandId, "brandName:", brandName);
+
+    // ---- BILLING: check first. Worst case = chat reply + one image. Nothing runs if they can't afford it.
+    const billingRef = randomUUID();
+    const likelyImageKey = imageKey({ imageProvider, productImage });
+    let auth;
+    try {
+      auth = await authorize(session.user.id, [{ key: "chat.text" }, { key: likelyImageKey }], { trial: "consume" });
+    } catch (e) {
+      if (e instanceof InsufficientCreditsError) return insufficientResponse(e);
+      throw e;
+    }
 
     // Load full style guide from DB
     let fullStyleGuide = styleGuide || null;
@@ -103,6 +139,9 @@ export async function POST(request: Request) {
           console.log("[CHAT] 🎨 backgroundColor:", brand.styleGuide.backgroundColor ?? "(not set — AI will decide)");
           console.log("[CHAT] 🎨 ===================================");
 
+          const adv = ((brand.styleGuide as unknown as { advancedSettings?: Record<string, unknown> }).advancedSettings) || {};
+          // The project's negative prompt applies to every image in this request.
+          applyProjectNegative(adv);
           fullStyleGuide = {
             ...fullStyleGuide,
             primaryColor: brand.styleGuide.primaryColor,
@@ -114,6 +153,8 @@ export async function POST(request: Request) {
             extraNotes: brand.styleGuide.extraNotes,
             rawMarkdown: brand.styleGuide.rawMarkdown,
             layoutArchetypes: brand.styleGuide.layoutArchetypes as unknown as StyleGuideData["layoutArchetypes"],
+            language: (adv.language as string) || undefined,
+            ecommerce: adv.ecommerce as StyleGuideData["ecommerce"] | undefined,
           };
         } else {
           console.log("[CHAT] ⚠️ Brand found but no style guide");
@@ -136,9 +177,24 @@ export async function POST(request: Request) {
       }
     );
 
+    // Free Chat (/chat) is brandless and image-first: no greetings, no
+    // clarifying questions — always draft the image prompt right away.
+    const freeChatRule = freeChat
+      ? `\n\nFREE CHAT MODE: There is no brand and no project. The user wants an image NOW. Do NOT greet, do NOT ask questions, do NOT offer captions or menus. Reply with one short friendly sentence, then ONE \`\`\`prompt block that turns the user's request (and any attached reference/product image) into a detailed image-generation prompt. If the request is vague, make a confident creative choice. Always include the \`\`\`prompt block.`
+      : "";
+
+    // The project's Brand Brain: audience, voice, positioning, real offers.
+    // Every caption and headline the chat writes comes from this.
+    let brainBlock = "";
+    if (lookupId && !freeChat) {
+      const brain = await getBrain(lookupId).catch(() => null);
+      if (brain && !isEmptyBrain(brain.data)) brainBlock = `\n\n${brainToPrompt(brain.data)}`;
+      else if (brain && brain.status !== "generating") generateBrain(lookupId).catch(() => {}); // ready for next time
+    }
+
     // Prepend system message
     const fullMessages: AIMessage[] = [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: systemPrompt + brainBlock + freeChatRule },
       ...messages,
     ];
 
@@ -151,6 +207,8 @@ export async function POST(request: Request) {
 
     // Check if response contains an auto-extractable image prompt
     let imageUrl: string | undefined;
+    let packUsed: { id: string; refIndex: number } | null = null; // for the learning loop
+    let imageLogo: { url: string; position: string; scale: number } | null = null;
     const imagePrompt = extractImagePrompt(response.content);
     console.log("[CHAT] 🔍 Extracted image prompt:", imagePrompt ? "YES (" + imagePrompt.slice(0, 60) + "...)" : "NONE");
 
@@ -194,7 +252,41 @@ export async function POST(request: Request) {
             console.log("[CHAT] 📸 No generation pool yet, using raw reference board:", refs.length, "images");
           }
         }
-        if (refs.length === 0) {
+        // No references of the project's own → the project's ad pack (admin reference packs).
+        let packImage: string | null = null;
+        if (refs.length === 0 && lookupId && process.env.OPENAI_API_KEY) {
+          const adv = ((loadedBrand?.styleGuide as unknown as { advancedSettings?: { adPackId?: string } } | null)?.advancedSettings) || {};
+          const brain = await getBrain(lookupId).catch(() => null);
+          const lastUser = [...(messages as AIMessage[])].reverse().find((m) => m.role === "user");
+          const userAsk = typeof lastUser?.content === "string" ? lastUser.content : "";
+          const brainOk = !!brain && !isEmptyBrain(brain.data);
+          const matchHint = brainOk ? [brain!.data.business.industry, brain!.data.voice.oneLine, moodFromVoice(brain!.data)].filter(Boolean).join("; ") : "";
+          const pack = await resolvePack(adv.adPackId, { userId: session.user.id, brief: userAsk, hint: matchHint }).catch(() => null);
+          if (pack) {
+            const sgAny = loadedBrand?.styleGuide as unknown as Record<string, string | null> | null;
+            const sizeFor: Record<string, string> = { instagram_portrait: "1080x1350", facebook_portrait: "1080x1350", linkedin_portrait: "1080x1350", instagram_story: "1080x1920", instagram_reel: "1080x1920", tiktok: "1080x1920", snapchat: "1080x1920", pinterest: "1000x1500", twitter: "1600x900", linkedin_post: "1200x627", facebook: "1200x630", youtube_thumbnail: "1280x720" };
+            try {
+              const out = await generatePackAd({
+                pack,
+                packId: pack.id,
+                brief: `${typeof lastUser?.content === "string" ? lastUser.content : ""}\n\nDesign notes from the assistant: ${imagePrompt}`.slice(0, 2500),
+                size: sizeFor[platform] || "1080x1080",
+                aspect: (sizeFor[platform] === "1080x1350" ? "4:5" : undefined) as "4:5" | undefined,
+                colours: sgAny ? brandColoursText({ primary: sgAny.primaryColor, secondary: sgAny.secondaryColor, accent: sgAny.accentColor, background: sgAny.backgroundColor }) : null,
+                font: sgAny?.headingFont || null,
+                brandNote: [brainOk ? brainImageNote(brain!.data) : "", adCraftNote(userAsk, brainOk ? brain!.data : null)].filter(Boolean).join("\n\n"),
+                matchHint,
+                productImage: productImage || null,
+              });
+              packImage = out.url;
+              packUsed = { id: pack.id, refIndex: out.refIndex };
+              console.log("[CHAT] 📦 Used ad pack", pack.number, "reference", out.refIndex + 1);
+            } catch (packErr) {
+              console.error("[CHAT] ad pack generation failed, falling back:", packErr);
+            }
+          }
+        }
+        if (refs.length === 0 && !packImage) {
           const template = await getRandomTemplateAsBase64();
           if (template) {
             refs = [template];
@@ -206,6 +298,9 @@ export async function POST(request: Request) {
 
 // Map platform to image size
 const platformSizes: Record<string, string> = {
+  instagram_portrait: "1080x1350",
+  facebook_portrait: "1080x1350",
+  linkedin_portrait: "1080x1350",
   instagram_post: "1080x1080",
   instagram_story: "1080x1920",
   instagram_reel: "1080x1920",
@@ -220,7 +315,7 @@ const platformSizes: Record<string, string> = {
 };
 const imageSize = platformSizes[platform] || "1080x1080";
 console.log("[CHAT] 📐 Platform:", platform, "→ Size:", imageSize);
-const imageResponse = await generateImage(
+const imageResponse = packImage ? { url: packImage } : await generateImage(
   imagePrompt,
   imageSize,
   refs,
@@ -229,14 +324,54 @@ const imageResponse = await generateImage(
   loadedBrand?.name || null,
   loadedBrand?.logo || null,
   loadedBrand?.logoPosition || null,
-  loadedBrand?.logoScale || null
+  loadedBrand?.logoScale || null,
+  productImage || null,
+  imageProvider || null
 );
 
         imageUrl = imageResponse.url;
+        // 4:5 portrait: the model renders 2:3, so trim it to a true 4:5.
+        if (imageSize === "1080x1350" && !packImage) imageUrl = await trimToAspect(imageUrl, "4:5").catch(() => imageUrl);
+        if (loadedBrand?.logo) {
+          imageLogo = {
+            url: loadedBrand.logo,
+            position: (loadedBrand.logoPosition as string) || "bottom-right",
+            scale: loadedBrand.logoScale ?? 0.14,
+          };
+        }
         console.log("[CHAT] ✅ Image URL:", imageUrl?.slice(0, 80));
       } catch (err) {
         console.error("[CHAT] ❌ Auto image generation failed:", err);
       }
+    }
+
+    // ---- BILLING: charge only for what actually ran (a chat-only reply doesn't pay for an image).
+    try {
+      await commit(
+        session.user.id,
+        auth,
+        [{ key: "chat.text" }, ...(imageUrl ? [{ key: likelyImageKey }] : [])],
+        { ref: billingRef, producedImage: !!imageUrl }
+      );
+    } catch (billErr) {
+      console.error("[CHAT] ⚠️ billing commit failed (response still returned):", billErr);
+    }
+
+    // Save the design (storage + Files tab) so it survives a refresh.
+    let generationId: string | null = null;
+    if (imageUrl) {
+      const lastUser = [...(messages as AIMessage[])].reverse().find((m) => m.role === "user");
+      const saved = await saveGeneration({
+        userId: session.user.id,
+        brandId: lookupId || null,
+        kind: "image",
+        title: typeof lastUser?.content === "string" ? lastUser.content.slice(0, 120) : "Design",
+        imageUrls: [imageUrl],
+        prompt: imagePrompt || null,
+        meta: { platform, source: "chat", ...(packUsed ? { pack: packUsed } : {}) },
+      });
+      imageUrl = saved.imageUrls[0];
+      generationId = saved.id;
     }
 
     console.log("[CHAT] 📤 Returning response with imageUrl:", imageUrl ? "YES" : "NO");
@@ -245,6 +380,8 @@ const imageResponse = await generateImage(
       content: response.content,
       model: response.model,
       imageUrl,
+      generationId,
+      logo: imageLogo,
       usage: response.usage,
     });
   } catch (error) {
@@ -255,3 +392,6 @@ const imageResponse = await generateImage(
     );
   }
 }
+
+// Every AI call in this request is measured for real-cost billing.
+export const POST = withUsage(handlePOST);

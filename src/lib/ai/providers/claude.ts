@@ -3,6 +3,7 @@
 // Ready for future swap — same interface as other providers
 // ============================================================
 
+import { recordUsage } from "@/lib/billing/usage";
 import type { AICompletionRequest, AICompletionResponse } from "@/types";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
@@ -45,6 +46,7 @@ export async function claudeComplete(
   }
 
   const data = await response.json();
+  if (data.usage) recordUsage({ kind: "text", provider: "anthropic", model: data.model || ANTHROPIC_MODEL, inTokens: data.usage.input_tokens ?? 0, outTokens: data.usage.output_tokens ?? 0 });
   const textBlock = data.content?.find(
     (block: { type: string }) => block.type === "text"
   );

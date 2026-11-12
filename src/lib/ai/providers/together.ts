@@ -3,6 +3,7 @@
 // FREE unlimited image generation via FLUX.1 Schnell
 // ============================================================
 
+import { recordUsage, currentNegative } from "@/lib/billing/usage";
 import type {
   ImageGenerationRequest,
   ImageGenerationResponse,
@@ -41,7 +42,7 @@ export async function togetherGenerateImage(
     },
     body: JSON.stringify({
       model,
-      prompt: request.prompt,
+      prompt: currentNegative() ? `${request.prompt}\n\nNEVER INCLUDE (brand rules): ${currentNegative()}` : request.prompt,
       width: dims.width,
       height: dims.height,
       steps: 4,
@@ -56,6 +57,7 @@ export async function togetherGenerateImage(
   }
 
   const data = await response.json();
+  recordUsage({ kind: "flux", model, images: 1 });
 
   return {
     url: data.data?.[0]?.url || "",

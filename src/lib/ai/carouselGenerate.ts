@@ -25,6 +25,7 @@ import {
   extractVisualDNA,
   prepareDesaturatedReference,
   buildFinalPrompt,
+  getImageQuality,
 } from "@/lib/ai/providers/openai";
 import { pickCreativeDirection } from "@/lib/ai/creativeDirector";
 import { compositeLogo, pickLogoPlacement, type LogoPosition } from "@/lib/ai/logoComposite";
@@ -162,7 +163,7 @@ export async function generateCarouselSlides(params: {
             prompt: finalPrompt,
             n: 1,
             size: imageSize,
-            quality: "high",
+            quality: getImageQuality(),
           })
         );
         const imageData = response.data?.[0] as Record<string, unknown> | undefined;
@@ -175,7 +176,7 @@ export async function generateCarouselSlides(params: {
             prompt: finalPrompt,
             n: 1,
             size: imageSize,
-            quality: "high",
+            quality: getImageQuality(),
           })
         );
         const imageData = response.data?.[0] as Record<string, unknown> | undefined;

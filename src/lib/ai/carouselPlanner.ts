@@ -91,12 +91,23 @@ export async function planCarousel(params: {
       ? `Use EXACTLY ${slideCountHint} slides.`
       : `Decide the slide count yourself based on how much this topic genuinely needs to say well — most carousels land between 5 and 8 slides. Do not pad with filler slides just to hit a round number, and don't cram if the topic needs room.`;
 
+  // Project-level language + ecommerce settings shape the copy itself.
+  const languageInstruction =
+    styleGuide?.language && styleGuide.language !== "English"
+      ? `\nLANGUAGE: Write every headline and body line in ${styleGuide.language}, using natural ${styleGuide.language}. Keep the brand name as-is.`
+      : "";
+  const ecom = styleGuide?.ecommerce;
+  const ecommerceInstruction =
+    ecom && ecom.enabled
+      ? `\nECOMMERCE: This carousel promotes a product. Product: "${ecom.productName || "the product"}"${ecom.productDescription ? ` — ${ecom.productDescription}` : ""}.${ecom.salePrice ? ` On sale at ${ecom.salePrice}${ecom.price ? ` (was ${ecom.price})` : ""}.` : ecom.price ? ` Price ${ecom.price}.` : ""}${ecom.promoCode ? ` Promo code ${ecom.promoCode}.` : ""} The final CTA slide should drive to "${ecom.shopCta || "Shop now"}"${ecom.productUrl ? ` (${ecom.productUrl})` : ""}. Weave the product benefits through the value slides.`
+      : "";
+
   const prompt = `You are planning a social media carousel for the brand "${brandName}" on ${platform}, using retention-engineered structure — the same psychology that makes video scripts hold attention, translated to a swipe-through format.
 
 TOPIC: ${topic}
 ${ctaGoal ? `CTA GOAL: ${ctaGoal}` : "CTA GOAL: use your judgment based on the topic (follow, save, comment, share, or visit link)"}
 ${styleGuide?.tone ? `BRAND TONE: ${styleGuide.tone}` : ""}
-${styleGuide?.extraNotes ? `BRAND NOTES: ${styleGuide.extraNotes}` : ""}
+${styleGuide?.extraNotes ? `BRAND NOTES: ${styleGuide.extraNotes}` : ""}${languageInstruction}${ecommerceInstruction}
 
 ${slideCountInstruction}
 
@@ -107,6 +118,8 @@ STRUCTURE RULES:
 4. One content slide near the 25% mark should include a soft, low-friction engagement nudge (e.g. "save this for later") folded naturally into its content — never a hard sell, never its own dedicated slide.
 5. FINAL SLIDE (CTA) — one single, explicit, unambiguous ask. No filler like "thanks for reading." Tie the ask directly to the value just delivered.
 6. Headlines should be short and punchy — this is a visual medium, not an essay. Body text per slide should be brief enough to read in a couple seconds.
+7. VISUAL SUBJECT — for each slide's "visualSubjectHint," think about what a real human designer would actually choose to illustrate THIS specific point, the same way you'd pick an image for a real article. Do NOT default to the brand's mascot/character illustration unless it's genuinely the best fit for that specific slide (e.g. a launch announcement, a personality moment). Most slides are better served by something that actually depicts the point being made: network/globe imagery for reach or scale, real human figures for testimonials or community, data visualization for stats, a UI/product mockup for feature claims, a simple object metaphor, or an icon cluster. If a slide needs to depict people (customers, users, a team), depict ACTUAL HUMANS — never the brand's mascot dressed as or standing in for a person. Vary the subject type across slides the way a real designer would, not the same treatment every time.
+8. COLOR APPLICATION — brand colors (primary/accent) are for backgrounds, UI elements, glows, highlights, and text. They are NOT for tinting or recoloring human figures, characters, or naturalistic/photographic subjects — those should read as natural, realistic color, not painted in the brand's hue. A slide should never look like the entire scene was tinted a single brand color; the brand color should read as an accent within a naturally-colored scene, not a wash over everything.
 
 Return ONLY valid JSON, no markdown, no backticks, matching this exact shape:
 {
