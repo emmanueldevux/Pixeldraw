@@ -14,6 +14,7 @@ import { getStripeJs } from "@/components/billing/stripeClient";
 import { useBilling } from "@/components/billing/BillingProvider";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { CardLabel } from "@/components/billing/Shell";
+import type { BillingOverview } from "@/components/billing/types";
 import { formatCredits, fromMilli, milliToCents, usd } from "@/lib/billing/units";
 
 type Tab = "overview" | "plans" | "cards" | "history";
@@ -60,12 +61,21 @@ function Wrap({ children }: { children: React.ReactNode }) {
 function BillingInner() {
   const { status } = useSession();
   const { openLogin } = useAuthGate();
-  const { overview, refresh, openTopUp, openAutoReload, openAddCard } = useBilling();
+  const { overview: myOverview, refresh, openTopUp, openAutoReload, openAddCard } = useBilling();
+  const guest = status === "unauthenticated";
+  // Signed-out visitors see the public pricing (plans and what actions cost).
+  const [pub, setPub] = useState<BillingOverview | null>(null);
+  useEffect(() => {
+    if (!guest || pub) return;
+    fetch("/api/billing/public").then((r) => (r.ok ? r.json() : null)).then((d) => d && setPub(d)).catch(() => {});
+  }, [guest, pub]);
+  const overview = guest ? pub : myOverview;
   const qs = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
     const t = qs?.get("tab");
     return t === "plans" || t === "cards" || t === "history" ? t : "overview";
   });
+  const shownTab: Tab = guest ? "plans" : tab;
   useEffect(() => {
     const t = qs?.get("tab");
     if (t === "plans" || t === "cards" || t === "history") setTab(t);
@@ -83,17 +93,6 @@ function BillingInner() {
   useEffect(() => {
     if (tab === "history" && status === "authenticated") loadHistory();
   }, [tab, status, loadHistory]);
-
-  if (status === "unauthenticated") {
-    return (
-      <Wrap>
-        <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-          <p className="text-sm text-gray-500">Sign in to manage your credits and plan.</p>
-          <button className={btnDark} onClick={openLogin}>Sign in</button>
-        </div>
-      </Wrap>
-    );
-  }
 
   if (!overview) {
     return (
@@ -129,6 +128,7 @@ function BillingInner() {
 
   async function choosePlan(planKey: string) {
     if (!overview) return;
+    if (guest) return openLogin();
     if (overview.cards.length === 0) return openAddCard();
     setBusy(true);
     setMsg(null);
@@ -164,10 +164,11 @@ function BillingInner() {
     { id: "plans", label: "See plans" },
     { id: "cards", label: "Payment methods" },
     { id: "history", label: "Billing history" },
-  ];
+  ].filter((t) => !guest || t.id === "plans") as { id: Tab; label: string }[];
 
   const customCents = Math.round((Number(custom) || 0) * 100);
   function buyCustom() {
+    if (guest) return openLogin();
     if (customCents && (customCents < s.topupMinCents || customCents > s.topupMaxCents)) {
       setMsg(`Enter an amount between ${usd(s.topupMinCents)} and ${usd(s.topupMaxCents)}.`);
       return;
@@ -207,7 +208,7 @@ function BillingInner() {
           "All AI tools and models",
           "Cancel anytime",
         ],
-        cta: current ? "Current plan" : plan ? "Cancel current plan to switch" : overview.cards.length === 0 ? `Add card to get ${p.name}` : `Get ${p.name}`,
+        cta: guest ? `Sign in to get ${p.name}` : current ? "Current plan" : plan ? "Cancel current plan to switch" : overview.cards.length === 0 ? `Add card to get ${p.name}` : `Get ${p.name}`,
         current,
         disabled: current || !!plan || busy,
         best: overview.plans.length > 1 && p.creditsMilli / p.priceCents >= bestRate,
@@ -284,7 +285,7 @@ function BillingInner() {
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`pb-3 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors ${
-                tab === t.id ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-800"
+                shownTab === t.id ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-800"
               }`}
             >
               {t.label}
@@ -294,7 +295,7 @@ function BillingInner() {
 
         {msg && <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800">{msg}</div>}
 
-        {tab === "overview" && (
+        {shownTab === "overview" && (
           <div className="mt-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -385,7 +386,7 @@ function BillingInner() {
           </div>
         )}
 
-        {tab === "cards" && (
+        {shownTab === "cards" && (
           <div className="mt-8">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">Payment methods</h2>
@@ -425,7 +426,7 @@ function BillingInner() {
           </div>
         )}
 
-        {tab === "history" && (
+        {shownTab === "history" && (
           <div className="mt-8">
             <h2 className="text-lg font-semibold text-gray-900">Billing history</h2>
             <div className="mt-4 rounded-xl border border-gray-200 bg-white overflow-hidden">
@@ -456,7 +457,7 @@ function BillingInner() {
           </div>
         )}
 
-        {tab === "plans" && (
+        {shownTab === "plans" && (
           <div className="mt-8">
             <h2 className="text-lg font-semibold text-gray-900">Plans</h2>
             <p className="mt-1 text-sm text-gray-500">Pay as you go, or pick a monthly plan for bonus credits. All credits go into one balance.</p>
