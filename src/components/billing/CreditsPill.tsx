@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { Coins } from "lucide-react";
 import { useBilling } from "./BillingProvider";
 import { formatCredits } from "@/lib/billing/units";
@@ -6,7 +7,18 @@ import { formatCredits } from "@/lib/billing/units";
 /** Small "💰 120 credits" button. Click = open the Add credits popup. */
 export function CreditsPill({ className = "" }: { className?: string }) {
   const { overview, openTopUp } = useBilling();
-  if (!overview) return null;
+  if (!overview) {
+    // Signed out or still loading: always show the pill, linking to pricing.
+    return (
+      <Link
+        href="/billing?tab=plans"
+        className={`flex items-center gap-2 h-9 pl-3 pr-3.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold text-gray-900 transition-colors ${className}`}
+      >
+        <Coins size={15} className="text-gray-500" />
+        <span>Credits</span>
+      </Link>
+    );
+  }
   const freeLeft = overview.free.available ? Math.max(0, overview.free.cap - overview.free.usedTotal) : 0;
   return (
     <button

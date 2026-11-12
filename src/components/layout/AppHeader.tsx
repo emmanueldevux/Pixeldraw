@@ -30,12 +30,15 @@ function Menu({ open, onClose, children, className = "" }: { open: boolean; onCl
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className={`absolute left-0 top-full mt-2 z-50 rounded-2xl border border-gray-200 bg-white shadow-xl p-1.5 ${className}`}>{children}</div>
+      <div className={`absolute left-0 top-full mt-2 z-50 rounded-2xl border border-white/70 bg-white/80 backdrop-blur-2xl shadow-[0_16px_48px_rgba(15,23,42,0.14)] p-1.5 ${className}`}>{children}</div>
     </>
   );
 }
 
-const pill = "inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-semibold transition-colors";
+const tray = "flex items-center gap-1 bg-white/30 backdrop-blur-md p-1 rounded-xl border border-white/70 ring-1 ring-gray-900/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]";
+const tab = "inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm font-medium transition-all";
+const tabOn = `${tab} bg-white/90 text-gray-900 shadow-sm`;
+const tabOff = `${tab} text-gray-600 hover:text-gray-900 hover:bg-white/50`;
 
 export default function AppHeader() {
   const router = useRouter();
@@ -84,15 +87,15 @@ export default function AppHeader() {
 
   return (
     <>
-      <header className="absolute top-0 inset-x-0 z-40 h-14 flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-white/70 bg-white/55 backdrop-blur-xl supports-[backdrop-filter]:bg-white/45 shadow-[0_1px_0_rgba(15,23,42,0.05)]">
+      <header className="absolute top-0 inset-x-0 z-40 h-[67px] flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-white/60 bg-gradient-to-b from-white/70 to-white/35 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(31,38,135,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]">
         {/* ---------- left ---------- */}
-        <div className="flex items-center gap-2 min-w-0">
+        <div className={`${tray} min-w-0`}>
           <div className="relative">
             <button
               onClick={() => setMenu(menu === "create" ? null : "create")}
-              className={`${pill} bg-gray-900 text-white hover:bg-black`}
+              className={tabOn}
             >
-              <Plus size={15} /> <span className="hidden sm:inline">Create project</span> <ChevronDown size={14} className="opacity-70" />
+              <Plus size={15} /> <span className="hidden sm:inline">Create project</span> <ChevronDown size={14} className="text-gray-400" />
             </button>
             <Menu open={menu === "create"} onClose={() => setMenu(null)} className="w-72">
               <button
@@ -115,7 +118,7 @@ export default function AppHeader() {
           <div className="relative">
             <button
               onClick={() => setMenu(menu === "history" ? null : "history")}
-              className={`${pill} border border-gray-200 bg-white/70 hover:bg-white text-gray-800`}
+              className={tabOff}
             >
               <History size={15} /> <span className="hidden sm:inline">Chat history</span> <ChevronDown size={14} className="text-gray-400" />
             </button>
@@ -149,22 +152,24 @@ export default function AppHeader() {
 
         {/* ---------- right: search · credits · bell ---------- */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <label className="hidden md:flex items-center gap-2 h-9 w-56 lg:w-72 rounded-full border border-gray-200 bg-white/70 px-3.5 focus-within:border-gray-900 focus-within:bg-white">
-            <Search size={15} className="text-gray-400" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitSearch()}
-              placeholder="Search templates…"
-              className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
-            />
-            {q && <button type="button" onClick={() => setQ("")} className="text-gray-400 hover:text-gray-700"><X size={14} /></button>}
-          </label>
+          <div className={`${tray} hidden md:flex`}>
+            <label className="flex items-center gap-2 h-10 w-56 lg:w-72 rounded-lg bg-white shadow-sm px-3.5">
+              <Search size={15} className="text-gray-400" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitSearch()}
+                placeholder="Search templates…"
+                className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
+              />
+              {q && <button type="button" onClick={() => setQ("")} className="text-gray-400 hover:text-gray-700"><X size={14} /></button>}
+            </label>
+          </div>
 
-          <CreditsPill />
+          <div className={tray}><CreditsPill className="!h-10 !rounded-lg !border-0 !bg-white shadow-sm" /></div>
 
-          <div className="relative">
-            <button onClick={() => setMenu(menu === "bell" ? null : "bell")} aria-label="Notifications" className="relative w-9 h-9 rounded-full border border-gray-200 bg-white/70 hover:bg-white flex items-center justify-center text-gray-600">
+          <div className={`${tray} relative`}>
+            <button onClick={() => setMenu(menu === "bell" ? null : "bell")} aria-label="Notifications" className="relative w-10 h-10 rounded-lg bg-white shadow-sm hover:bg-gray-50 flex items-center justify-center text-gray-600">
               <Bell size={16} />
             </button>
             {menu === "bell" && (
