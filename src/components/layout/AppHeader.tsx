@@ -87,7 +87,7 @@ export default function AppHeader() {
 
   return (
     <>
-      <header className="absolute top-0 inset-x-0 z-40 h-[72px] flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-gray-300 bg-white/90 backdrop-blur-md">
+      <header className="absolute top-0 inset-x-0 z-40 h-[72px] flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-[rgb(209_213_219/48%)] bg-white/90 backdrop-blur-md">
         {/* ---------- left ---------- */}
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative">
