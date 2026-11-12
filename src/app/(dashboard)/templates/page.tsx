@@ -5,7 +5,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Search, Sparkles, X } from "lucide-react";
 import UseTemplateModal, { Placeholder } from "@/components/templates/UseTemplateModal";
 import type { PublicTemplate } from "@/lib/designTemplates/types";
 
@@ -15,7 +15,10 @@ const ASPECT_CLASS: Record<string, string> = { "9:16": "aspect-[9/16]", "4:5": "
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<T[] | null>(null);
-  const [activeTab, setActiveTab] = useState("All");
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const [format, setFormat] = useState("All");
+  const [sort, setSort] = useState<"popular" | "newest">("popular");
   const [open, setOpen] = useState<T | null>(null);
 
   useEffect(() => {
@@ -25,11 +28,37 @@ export default function TemplatesPage() {
       .catch(() => setTemplates([]));
   }, []);
 
-  const tabs = useMemo(
-    () => ["All", ...Array.from(new Set((templates || []).map((t) => t.category).filter(Boolean) as string[]))],
-    [templates]
-  );
-  const shown = (templates || []).filter((t) => activeTab === "All" || t.category === activeTab);
+  const isRec = (t: T) => t.tags.some((x) => x.toLowerCase() === "recommended");
+  const ORDER = ["Static ads", "Carousel", "Slideshows"];
+
+  const tabs = useMemo(() => {
+    const list = templates || [];
+    const cats = Array.from(new Set(list.map((t) => t.category).filter(Boolean) as string[]));
+    cats.sort((a, b) => {
+      const i = ORDER.indexOf(a), j = ORDER.indexOf(b);
+      return (i < 0 ? 99 : i) - (j < 0 ? 99 : j) || a.localeCompare(b);
+    });
+    return ["All", ...(list.some(isRec) ? ["Recommended"] : []), ...cats];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templates]);
+
+  // Open on Recommended when there is one, otherwise All.
+  const tab = activeTab ?? (tabs.includes("Recommended") ? "Recommended" : "All");
+  const formats = useMemo(() => ["All", ...Array.from(new Set((templates || []).map((t) => t.aspect)))], [templates]);
+
+  const shown = useMemo(() => {
+    const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+    return (templates || [])
+      .filter((t) => tab === "All" || (tab === "Recommended" ? isRec(t) : t.category === tab))
+      .filter((t) => format === "All" || t.aspect === format)
+      .filter((t) => {
+        if (!words.length) return true;
+        const hay = `${t.title} ${t.description} ${t.category} ${t.tags.join(" ")} ${t.aspect}`.toLowerCase();
+        return words.every((w) => hay.includes(w));
+      })
+      .sort((a, b) => (sort === "popular" ? (b.usageCount || 0) - (a.usageCount || 0) || a.sortOrder - b.sortOrder : b.number - a.number));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templates, tab, q, format, sort]);
 
   return (
     <div className="w-full">
@@ -49,26 +78,51 @@ export default function TemplatesPage() {
 
         <main className="flex-1">
           <div className="max-w-[1400px] mx-auto px-6 py-8">
-            <div className="flex justify-start mb-8">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
               <div className="flex flex-wrap items-center gap-2 bg-gray-200/50 p-1 rounded-xl border border-gray-200">
-                {tabs.map((tab) => (
+                {tabs.map((name) => (
                   <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
+                    key={name}
+                    onClick={() => setActiveTab(name)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      activeTab === tab ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900 hover:bg-white/50"
+                      tab === name ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900 hover:bg-white/50"
                     }`}
                   >
-                    {tab}
+                    {name === "Recommended" && <Sparkles size={14} />}
+                    {name}
                   </button>
                 ))}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 bg-gray-200/50 p-1 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm">
+                  <Search size={15} className="text-gray-400" />
+                  <input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search templates…"
+                    className="w-44 sm:w-56 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
+                  />
+                  {q && (
+                    <button onClick={() => setQ("")} className="text-gray-400 hover:text-gray-700"><X size={14} /></button>
+                  )}
+                </div>
+                {formats.length > 2 && (
+                  <select value={format} onChange={(e) => setFormat(e.target.value)} className="rounded-lg bg-transparent px-2 py-2 text-sm font-medium text-gray-700 outline-none cursor-pointer">
+                    {formats.map((f) => <option key={f} value={f}>{f === "All" ? "All formats" : f}</option>)}
+                  </select>
+                )}
+                <select value={sort} onChange={(e) => setSort(e.target.value as "popular" | "newest")} className="rounded-lg bg-transparent px-2 py-2 text-sm font-medium text-gray-700 outline-none cursor-pointer">
+                  <option value="popular">Most used</option>
+                  <option value="newest">Newest</option>
+                </select>
               </div>
             </div>
 
             {!templates ? (
               <div className="py-24 flex justify-center"><Loader2 className="animate-spin text-gray-400" /></div>
             ) : shown.length === 0 ? (
-              <div className="py-24 text-center text-sm text-gray-500">No templates yet.</div>
+              <div className="py-24 text-center text-sm text-gray-500">{q ? `No templates match “${q}”.` : "No templates here yet."}</div>
             ) : (
               <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
                 {shown.map((t) => (

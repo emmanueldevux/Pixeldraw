@@ -14,7 +14,41 @@ import { ASPECTS, missingParams, renderPrompt, type DesignTemplate, type Templat
 const label = "block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5";
 const box = "rounded-xl border border-gray-200 bg-white p-5";
 
+export const TYPE_CATEGORIES = ["Static ads", "Carousel", "Slideshows"];
+const isRec = (tags: string[]) => tags.some((t) => t.toLowerCase() === "recommended");
+const withRec = (tags: string[], on: boolean) => {
+  const rest = tags.filter((t) => t.toLowerCase() !== "recommended");
+  return on ? ["recommended", ...rest] : rest;
+};
+
 type Draft = Omit<DesignTemplate, "id" | "number" | "usageCount"> & { id?: string; number?: number; usageCount?: number };
+
+function TagInput({ tags, onChange }: { tags: string[]; onChange: (t: string[]) => void }) {
+  const [v, setV] = useState("");
+  const add = () => {
+    const x = v.trim().replace(/,$/, "");
+    if (x && !tags.some((t) => t.toLowerCase() === x.toLowerCase())) onChange([...tags, x]);
+    setV("");
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-gray-200 bg-white p-2">
+      {tags.map((t) => (
+        <span key={t} className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
+          {t}
+          <button type="button" onClick={() => onChange(tags.filter((x) => x !== t))}><X size={12} /></button>
+        </span>
+      ))}
+      <input
+        className="flex-1 min-w-[120px] bg-transparent text-sm outline-none px-1 py-1"
+        placeholder="e.g. skincare, sale, dark"
+        value={v}
+        onChange={(e) => setV(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); add(); } }}
+        onBlur={add}
+      />
+    </div>
+  );
+}
 
 const BLANK: Draft = {
   kind: "prompt",
@@ -47,6 +81,8 @@ const BLANK_PACK = (): Draft => ({
 
 export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) => void }) {
   const [list, setList] = useState<DesignTemplate[] | null>(null);
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState("All");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -83,6 +119,25 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
     [c[i], c[j]] = [c[j], c[i]];
     return c;
   };
+
+  async function quick(t: DesignTemplate, patch: Partial<DesignTemplate>) {
+    const next = { ...t, ...patch };
+    setList((cur) => (cur ? cur.map((x) => (x.id === t.id ? next : x)) : cur));
+    setDraft((cur) => (cur && cur.id === t.id ? { ...cur, ...patch } : cur));
+    const r = await fetch("/api/admin/templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save", id: t.id, template: next }) });
+    setMsg(r.ok ? `Saved "${t.title}".` : "Could not save that change.");
+  }
+
+  const allCats = Array.from(new Set([...TYPE_CATEGORIES, ...(list || []).map((t) => t.category).filter(Boolean)]));
+  const filtered = (list || []).filter((t) => {
+    const hay = `${t.title} ${t.category} ${t.tags.join(" ")}`.toLowerCase();
+    if (q && !hay.includes(q.toLowerCase())) return false;
+    if (filter === "All") return true;
+    if (filter === "Unclassified") return !t.category;
+    if (filter === "Recommended") return isRec(t.tags);
+    return t.category === filter;
+  });
+  const unclassified = (list || []).filter((t) => !t.category).length;
 
   async function save() {
     if (!draft) return;
@@ -138,18 +193,43 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
         <button className={`${btnSecondary} w-full inline-flex items-center justify-center gap-1.5`} onClick={() => setDraft(BLANK_PACK())}>
           <ImagePlus size={15} /> New reference pack
         </button>
-        {list.map((t) => (
-          <button
+        <input className={inputCls} placeholder="Search templates…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="flex flex-wrap gap-1.5">
+          {["All", "Unclassified", "Recommended", ...allCats].map((c) => (
+            <button key={c} onClick={() => setFilter(c)} className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${filter === c ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"}`}>
+              {c}{c === "Unclassified" && unclassified ? ` (${unclassified})` : ""}
+            </button>
+          ))}
+        </div>
+        {filtered.map((t) => (
+          <div
             key={t.id}
             onClick={() => setDraft(structuredClone(t))}
-            className={`w-full text-left rounded-xl border p-3 transition-colors ${draft.id === t.id ? "border-gray-900 bg-white" : "border-gray-200 bg-white/60 hover:bg-white"}`}
+            className={`cursor-pointer rounded-xl border p-3 transition-colors ${draft.id === t.id ? "border-gray-900 bg-white" : "border-gray-200 bg-white/60 hover:bg-white"}`}
           >
             <p className="text-xs font-semibold text-gray-500">Template {t.number}{t.kind === "pack" ? " · Reference pack" : ""}</p>
             <p className="text-sm font-semibold text-gray-900 truncate">{t.title}</p>
             <p className="text-xs text-gray-500">
               {t.published ? "Published" : "Draft"} · used {t.usageCount}×
             </p>
-          </button>
+            <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <select
+                className={`flex-1 min-w-0 rounded-lg border px-2 py-1 text-xs ${t.category ? "border-gray-200 text-gray-800" : "border-amber-300 bg-amber-50 text-amber-800"}`}
+                value={t.category}
+                onChange={(e) => quick(t, { category: e.target.value })}
+              >
+                <option value="">Pick a category…</option>
+                {allCats.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button
+                title="Recommended"
+                onClick={() => quick(t, { tags: withRec(t.tags, !isRec(t.tags)) })}
+                className={`px-2 py-1 rounded-lg border text-xs font-semibold ${isRec(t.tags) ? "bg-yellow-100 border-yellow-300 text-yellow-800" : "bg-white border-gray-200 text-gray-500"}`}
+              >
+                ★
+              </button>
+            </div>
+          </div>
         ))}
       </div>
 
@@ -171,14 +251,25 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2"><span className={label}>Title</span><input className={inputCls} value={draft.title} onChange={(e) => set("title", e.target.value)} /></div>
             <div className="sm:col-span-2"><span className={label}>Description (shown to users)</span><textarea className={`${inputCls} h-20`} value={draft.description} onChange={(e) => set("description", e.target.value)} /></div>
-            <div><span className={label}>Category</span><input className={inputCls} value={draft.category} onChange={(e) => set("category", e.target.value)} /></div>
+            <div className="sm:col-span-2">
+              <span className={label}>Category (the tab it appears under)</span>
+              <div className="flex flex-wrap items-center gap-2">
+                {allCats.map((c) => (
+                  <button key={c} type="button" onClick={() => set("category", c)} className={`px-3 py-1.5 rounded-lg border text-sm font-medium ${draft.category === c ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"}`}>{c}</button>
+                ))}
+                <input className={`${inputCls} !w-44`} placeholder="New category…" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const v = e.currentTarget.value.trim(); if (v) { set("category", v); e.currentTarget.value = ""; } } }} />
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-sm font-medium text-gray-800">
+                <input type="checkbox" checked={isRec(draft.tags)} onChange={(e) => set("tags", withRec(draft.tags, e.target.checked))} /> Recommended (also shows in the Recommended tab)
+              </label>
+            </div>
             <div>
               <span className={label}>Format</span>
               <select className={inputCls} value={draft.aspect} onChange={(e) => set("aspect", e.target.value as Draft["aspect"])}>
                 {ASPECTS.map((a) => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
-            <div className="sm:col-span-2"><span className={label}>Tags (comma separated)</span><input className={inputCls} value={draft.tags.join(", ")} onChange={(e) => set("tags", e.target.value.split(",").map((t) => t.trim()).filter(Boolean))} /></div>
+            <div className="sm:col-span-2"><span className={label}>Tags (help users find it in search; press Enter or comma)</span><TagInput tags={draft.tags.filter((t) => t.toLowerCase() !== "recommended")} onChange={(t) => set("tags", isRec(draft.tags) ? withRec(t, true) : t)} /></div>
             <div><span className={label}>Order on the templates page</span><input className={inputCls} type="number" value={draft.sortOrder} onChange={(e) => set("sortOrder", Number(e.target.value))} /></div>
             <div className="flex flex-col justify-end gap-2 text-sm text-gray-800">
               <label className="flex items-center gap-2"><input type="checkbox" checked={draft.needsProduct} onChange={(e) => set("needsProduct", e.target.checked)} /> Users must upload a product photo</label>
