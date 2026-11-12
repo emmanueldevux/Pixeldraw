@@ -289,7 +289,7 @@ export default function FreeChatPage() {
     return (
       <div className="flex flex-col h-full overflow-y-auto bg-[#FFFFFF]">
         {hiddenUpload}
-        <main className="flex flex-col items-center justify-center px-4 pt-14 pb-10 min-h-[calc(100%-40px)]">
+        <main className="flex flex-col items-center justify-center px-4 pt-14 min-h-[calc(100%-40px)]">
 <Sparkles className="text-[#7C3AED] mb-4" size={40} strokeWidth={1.3} />
           <h1
             aria-label="Make an ad for your brand"
