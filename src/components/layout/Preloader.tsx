@@ -95,17 +95,26 @@ export default function Preloader() {
   );
 }
 
-/** Shown while the session is being checked (hard refresh etc.): white, logo beating. */
+/** Shown while the session is being checked (hard refresh etc.): white, logo beating.
+ *  The logo is invisible until it has loaded; the beat only starts once it is on screen. */
 export function PageLoader() {
+  const [ready, setReady] = useState(false);
+  const ref = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const img = ref.current;
+    if (img && img.complete && img.naturalWidth > 0) setReady(true);
+  }, []);
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <style dangerouslySetInnerHTML={{ __html: "@keyframes mk-heartbeat{0%{transform:scale(1)}14%{transform:scale(1.18)}28%{transform:scale(1)}42%{transform:scale(1.12)}70%,100%{transform:scale(1)}}" }} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={ref}
         src="/templates/images/preloader%20logo.png"
         alt=""
-        style={{ width: 92, height: 92, objectFit: "contain", animation: "mk-heartbeat 1.1s ease-in-out infinite" }}
+        onLoad={() => setReady(true)}
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        style={{ width: 92, height: 92, objectFit: "contain", opacity: ready ? 1 : 0, animation: ready ? "mk-heartbeat 1.1s ease-in-out infinite" : "none" }}
       />
     </div>
   );
