@@ -34,7 +34,7 @@ function Menu({ open, onClose, children, className = "" }: { open: boolean; onCl
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className={`absolute left-0 top-full mt-2 z-50 rounded-2xl border border-white/70 bg-white/80 backdrop-blur-2xl shadow-[0_16px_48px_rgba(15,23,42,0.14)] p-1.5 ${className}`}>{children}</div>
+      <div className={`absolute left-0 top-full mt-2 z-50 rounded-2xl border-[6px] border-gray-200 bg-white shadow-[0_16px_48px_rgba(15,23,42,0.14)] p-1.5 ${className}`}>{children}</div>
     </>
   );
 }
@@ -207,7 +207,7 @@ export default function AppHeader() {
             {menu === "bell" && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} />
-                <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-2xl border border-gray-200 bg-white shadow-xl p-4">
+                <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-2xl border-[6px] border-gray-200 bg-white shadow-xl p-4">
                   <p className="text-sm font-semibold text-gray-900">Notifications</p>
                   <p className="mt-1 text-xs text-gray-500">You&apos;re all caught up.</p>
                 </div>
