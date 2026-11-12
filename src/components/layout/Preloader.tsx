@@ -7,7 +7,7 @@
 // ============================================================
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const PRELOADER_KEY = "mk_preloader_day";
 // ?preloader=1 in the address bar forces it to show (for testing).
@@ -17,7 +17,8 @@ const CSS = `
 html.mk-seen #mk-preloader{display:none}
 #mk-preloader{position:fixed;inset:0;z-index:99999;background:#fff;display:flex;align-items:center;justify-content:center;transition:opacity .5s ease,visibility .5s ease}
 #mk-preloader.mk-out{opacity:0;visibility:hidden}
-#mk-preloader .mk-beat{width:92px;height:92px;object-fit:contain;animation:mk-heartbeat 1.1s ease-in-out infinite;will-change:transform}
+#mk-preloader .mk-beat{width:92px;height:92px;object-fit:contain;opacity:0;will-change:transform}
+#mk-preloader .mk-beat.mk-ready{opacity:1;animation:mk-heartbeat 1.1s ease-in-out infinite}
 @keyframes mk-heartbeat{
   0%{transform:scale(1)}
   14%{transform:scale(1.18)}
@@ -25,20 +26,24 @@ html.mk-seen #mk-preloader{display:none}
   42%{transform:scale(1.12)}
   70%,100%{transform:scale(1)}
 }
-@media (prefers-reduced-motion:reduce){#mk-preloader .mk-beat{animation:none}}
+@media (prefers-reduced-motion:reduce){#mk-preloader .mk-beat.mk-ready{animation:none}}
 `;
 
 export default function Preloader() {
   const [out, setOut] = useState(false);
   const [gone, setGone] = useState(false);
+  const [ready, setReady] = useState(false); // logo has loaded: only then start the beat
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (document.documentElement.classList.contains("mk-seen")) {
       setGone(true);
       return;
     }
-    const started = Date.now();
+    let started = Date.now();
     let done = false;
+    let logoOk = false;
+    const maybe = () => { if (logoOk && (document.readyState === "complete")) finish(); };
     const finish = () => {
       if (done) return;
       done = true;
@@ -50,9 +55,21 @@ export default function Preloader() {
         window.setTimeout(() => setGone(true), 600);
       }, wait);
     };
-    if (document.readyState === "complete") finish();
-    else window.addEventListener("load", finish, { once: true });
-    const cap = window.setTimeout(finish, 5000); // never trap the visitor
+    const img = imgRef.current;
+    const onLogo = () => {
+      logoOk = true;
+      started = Date.now(); // count the beats from when the logo is actually visible
+      setReady(true);
+      if (document.readyState === "complete") finish();
+      else window.addEventListener("load", maybe, { once: true });
+    };
+    if (!img || img.complete) {
+      // cached, or already decoded (or broken: onError handles that)
+      if (img && img.naturalWidth > 0) onLogo();
+    }
+    img?.addEventListener("load", onLogo, { once: true });
+    img?.addEventListener("error", () => { logoOk = true; finish(); }, { once: true });
+    const cap = window.setTimeout(finish, 6000); // never trap the visitor
     return () => window.clearTimeout(cap);
   }, []);
 
@@ -63,7 +80,8 @@ export default function Preloader() {
       <div id="mk-preloader" className={out ? "mk-out" : ""} aria-hidden="true">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          className="mk-beat"
+          ref={imgRef}
+          className={`mk-beat${ready ? " mk-ready" : ""}`}
           src="/templates/images/preloader%20logo.png"
           alt=""
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
