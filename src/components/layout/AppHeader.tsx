@@ -35,7 +35,7 @@ function Menu({ open, onClose, children, className = "" }: { open: boolean; onCl
   );
 }
 
-const soft = "bg-[rgb(229_231_235/9%)] border border-gray-200 text-gray-800 hover:bg-gray-100/60";
+const soft = "bg-gray-100 border border-gray-200 text-gray-800 hover:bg-gray-200/70";
 const btn = "inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-medium transition-colors";
 const tabOn = `${btn} bg-gray-900 text-white hover:bg-black border border-gray-900`;
 const tabOff = `${btn} ${soft}`;
@@ -87,7 +87,7 @@ export default function AppHeader() {
 
   return (
     <>
-      <header className="absolute top-0 inset-x-0 z-40 h-[67px] flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-gray-300 bg-gradient-to-b from-white/70 to-white/35 backdrop-blur-2xl backdrop-saturate-150">
+      <header className="absolute top-0 inset-x-0 z-40 h-20 flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-gray-300 bg-white/90 backdrop-blur-md">
         {/* ---------- left ---------- */}
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative">
@@ -152,7 +152,7 @@ export default function AppHeader() {
 
         {/* ---------- right: search · credits · bell ---------- */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <label className="hidden md:flex items-center gap-2 h-10 w-56 lg:w-72 rounded-xl border-2 border-gray-300 bg-[rgb(229_231_235/9%)] px-3.5 focus-within:border-gray-900">
+          <label className="hidden md:flex items-center gap-2 h-10 w-56 lg:w-72 rounded-xl border-2 border-gray-300 bg-gray-50 px-3.5 focus-within:border-gray-900">
             <Search size={15} className="text-gray-400" />
             <input
               value={q}
@@ -164,7 +164,7 @@ export default function AppHeader() {
             {q && <button type="button" onClick={() => setQ("")} className="text-gray-400 hover:text-gray-700"><X size={14} /></button>}
           </label>
 
-          <CreditsPill className="!h-10 !rounded-xl !px-4 !bg-[rgb(229_231_235/9%)] hover:!bg-gray-100/60" />
+          <CreditsPill className="!h-10 !rounded-xl !px-4 !bg-gray-100 hover:!bg-gray-200/70" />
 
           <div className="relative">
             <button onClick={() => setMenu(menu === "bell" ? null : "bell")} aria-label="Notifications" className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-gray-600 ${soft}`}>

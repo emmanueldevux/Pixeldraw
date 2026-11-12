@@ -47,7 +47,7 @@ export default function DashboardLayout({
         {/* Main Content Area - flex-1 makes it take up the remaining space */}
         <main className="relative flex-1 min-w-0 overflow-hidden">
           <Suspense fallback={null}><AppHeader /></Suspense>
-          <div className="h-full overflow-y-auto pt-[67px]">
+          <div className="h-full overflow-y-auto pt-20">
             {children}
           </div>
         </main>
