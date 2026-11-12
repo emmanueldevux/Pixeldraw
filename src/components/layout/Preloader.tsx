@@ -10,7 +10,8 @@
 import { useEffect, useState } from "react";
 
 export const PRELOADER_KEY = "mk_preloader_day";
-export const preloaderGuard = `try{if(localStorage.getItem("${PRELOADER_KEY}")===new Date().toDateString())document.documentElement.classList.add("mk-seen")}catch(e){}`;
+// ?preloader=1 in the address bar forces it to show (for testing).
+export const preloaderGuard = `try{if(/[?&]preloader\\b/.test(location.search))localStorage.removeItem("${PRELOADER_KEY}");if(localStorage.getItem("${PRELOADER_KEY}")===new Date().toDateString())document.documentElement.classList.add("mk-seen")}catch(e){}`;
 
 const CSS = `
 html.mk-seen #mk-preloader{display:none}
