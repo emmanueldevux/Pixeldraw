@@ -35,10 +35,10 @@ function Menu({ open, onClose, children, className = "" }: { open: boolean; onCl
   );
 }
 
-const tray = "flex items-center gap-1 bg-white/30 backdrop-blur-md p-1 rounded-xl border border-white/70 ring-1 ring-gray-900/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]";
-const tab = "inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm font-medium transition-all";
-const tabOn = `${tab} bg-white/90 text-gray-900 shadow-sm`;
-const tabOff = `${tab} text-gray-600 hover:text-gray-900 hover:bg-white/50`;
+const soft = "bg-[rgb(229_231_235/9%)] border border-gray-200 text-gray-800 hover:bg-gray-100/60";
+const btn = "inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-medium transition-colors";
+const tabOn = `${btn} bg-gray-900 text-white hover:bg-black border border-gray-900`;
+const tabOff = `${btn} ${soft}`;
 
 export default function AppHeader() {
   const router = useRouter();
@@ -89,13 +89,13 @@ export default function AppHeader() {
     <>
       <header className="absolute top-0 inset-x-0 z-40 h-[67px] flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-white/60 bg-gradient-to-b from-white/70 to-white/35 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(31,38,135,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]">
         {/* ---------- left ---------- */}
-        <div className={`${tray} min-w-0`}>
+        <div className="flex items-center gap-2 min-w-0">
           <div className="relative">
             <button
               onClick={() => setMenu(menu === "create" ? null : "create")}
               className={tabOn}
             >
-              <Plus size={15} /> <span className="hidden sm:inline">Create project</span> <ChevronDown size={14} className="text-gray-400" />
+              <Plus size={15} /> <span className="hidden sm:inline">Create project</span> <ChevronDown size={14} className="opacity-70" />
             </button>
             <Menu open={menu === "create"} onClose={() => setMenu(null)} className="w-72">
               <button
@@ -152,24 +152,22 @@ export default function AppHeader() {
 
         {/* ---------- right: search · credits · bell ---------- */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className={`${tray} hidden md:flex`}>
-            <label className="flex items-center gap-2 h-10 w-56 lg:w-72 rounded-lg bg-white shadow-sm px-3.5">
-              <Search size={15} className="text-gray-400" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitSearch()}
-                placeholder="Search templates…"
-                className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
-              />
-              {q && <button type="button" onClick={() => setQ("")} className="text-gray-400 hover:text-gray-700"><X size={14} /></button>}
-            </label>
-          </div>
+          <label className="hidden md:flex items-center gap-2 h-10 w-56 lg:w-72 rounded-xl border-2 border-gray-300 bg-[rgb(229_231_235/9%)] px-3.5 focus-within:border-gray-900">
+            <Search size={15} className="text-gray-400" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitSearch()}
+              placeholder="Search templates…"
+              className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
+            />
+            {q && <button type="button" onClick={() => setQ("")} className="text-gray-400 hover:text-gray-700"><X size={14} /></button>}
+          </label>
 
-          <div className={tray}><CreditsPill className="!h-10 !rounded-lg !border-0 !bg-white shadow-sm" /></div>
+          <CreditsPill className="!h-10 !rounded-xl !px-4 !bg-[rgb(229_231_235/9%)] hover:!bg-gray-100/60" />
 
-          <div className={`${tray} relative`}>
-            <button onClick={() => setMenu(menu === "bell" ? null : "bell")} aria-label="Notifications" className="relative w-10 h-10 rounded-lg bg-white shadow-sm hover:bg-gray-50 flex items-center justify-center text-gray-600">
+          <div className="relative">
+            <button onClick={() => setMenu(menu === "bell" ? null : "bell")} aria-label="Notifications" className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-gray-600 ${soft}`}>
               <Bell size={16} />
             </button>
             {menu === "bell" && (
