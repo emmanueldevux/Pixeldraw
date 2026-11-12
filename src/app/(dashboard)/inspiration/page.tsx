@@ -8,7 +8,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import DashboardHeader from "@/components/layout/DashboardHeader";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
@@ -111,23 +110,16 @@ export default function InspirationPage() {
 
   return (
     <>
-      <DashboardHeader
-        title="Inspiration Library"
-        subtitle="A curated pool the AI borrows one technique from — style stays locked to each brand's own references"
-        onMenuClick={() => {}}
-        actions={
-          <Button
-            variant="primary"
-            size="sm"
-            icon={<Plus size={14} />}
-            onClick={() => setShowAddModal(true)}
-          >
-            Add Reference
-          </Button>
-        }
-      />
-
       <div className="uxlly-content">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h1 className="text-lg font-semibold text-ink-900">Inspiration Library</h1>
+            <p className="text-xs text-ink-400">A curated pool the AI borrows one technique from</p>
+          </div>
+          {images.length > 0 && (
+            <Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => setShowAddModal(true)}>Add reference</Button>
+          )}
+        </div>
         {loading ? (
           <div className="flex items-center justify-center py-20 text-ink-400 text-sm">
             Loading library...

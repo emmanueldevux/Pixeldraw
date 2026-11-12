@@ -12,7 +12,6 @@ import {
   startOfMonth, startOfWeek, subMonths,
 } from "date-fns";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Megaphone, Plus, Search, Sparkles, Zap } from "lucide-react";
-import DashboardHeader from "@/components/layout/DashboardHeader";
 import PlanWizard from "@/components/plan/PlanWizard";
 import JobWizard from "@/components/plan/JobWizard";
 import PlanItemModal, { STATUS_STYLE, type CalendarPlanItem } from "@/components/plan/PlanItemModal";
@@ -73,7 +72,7 @@ function TimeGrid({ days, events, onOpen }: { days: Date[]; events: Ev[]; onOpen
   });
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden flex flex-col h-[calc(100vh-215px)] min-h-[420px]">
+    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[420px]">
       <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: `56px repeat(${days.length}, minmax(0, 1fr))` }}>
         <div className="px-2 py-3 text-[10px] text-gray-400 text-center">{format(now, "xxx").replace("+", "GMT+")}</div>
         {days.map((d) => (
@@ -287,13 +286,7 @@ function CalendarInner() {
 
   return (
     <>
-      <DashboardHeader
-        title="Calendar"
-        subtitle="Posts, plans and automations"
-        onMenuClick={() => {}}
-        actions={<AddMenu onPlan={startPlan} onJob={startJob} />}
-      />
-
+      
       <div className="px-4 sm:px-6 py-5 max-w-[1500px] mx-auto w-full">
         {params.get("posted") === "1" && <p className="mb-4 rounded-xl bg-emerald-50 text-emerald-700 text-sm px-4 py-2.5">Nice, marked as posted.</p>}
         {draftCount > 0 && (
@@ -375,10 +368,13 @@ function CalendarInner() {
                 <button onClick={() => step(1)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"><ChevronRight size={18} /></button>
               </div>
               <p className="text-[15px] font-semibold text-gray-900">{title}</p>
-              <label className="ml-auto flex items-center gap-2 h-10 w-64 rounded-xl border border-gray-200 bg-white px-3 focus-within:border-gray-900">
+              <div className="ml-auto flex items-center gap-2">
+              <AddMenu onPlan={startPlan} onJob={startJob} />
+              <label className="flex items-center gap-2 h-10 w-64 rounded-xl border border-gray-200 bg-white px-3 focus-within:border-gray-900">
                 <Search size={15} className="text-gray-400" />
                 <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search posts, automations…" className="flex-1 bg-transparent outline-none text-[13px] text-gray-900 placeholder:text-gray-400" />
               </label>
+              </div>
             </div>
             {view === "month" ? (
               <MonthGrid cursor={cursor} events={visible} onOpen={openEv} onDay={(d) => { setCursor(d); setView("day"); }} />
@@ -415,10 +411,13 @@ function CalendarInner() {
                 <button onClick={() => setCursor(addDays(cursor, 5))} className="w-8 h-8 shrink-0 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500"><ChevronRight size={15} /></button>
               </div>
 
-              <label className="flex items-center gap-2 h-11 rounded-xl border border-gray-200 bg-white px-3 focus-within:border-gray-900">
+              <div className="flex items-center gap-2">
+              <AddMenu onPlan={startPlan} onJob={startJob} />
+              <label className="flex-1 flex items-center gap-2 h-11 rounded-xl border border-gray-200 bg-white px-3 focus-within:border-gray-900">
                 <Search size={16} className="text-gray-400" />
                 <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="flex-1 bg-transparent outline-none text-[14px] text-gray-900 placeholder:text-gray-400" />
               </label>
+              </div>
             </div>
 
             <div className="flex border-y border-gray-100">

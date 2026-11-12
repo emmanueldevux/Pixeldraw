@@ -9,7 +9,6 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Crown, Zap, Rocket, ShieldCheck, XCircle, CheckCircle2, Plus, Check } from "lucide-react";
-import DashboardHeader from "@/components/layout/DashboardHeader";
 import { getStripeJs } from "@/components/billing/stripeClient";
 import { useBilling } from "@/components/billing/BillingProvider";
 import { useAuthGate } from "@/components/auth/AuthGate";
@@ -52,7 +51,6 @@ const blueBtn = "w-full h-10 rounded-full text-sm font-semibold text-white bg-[#
 function Wrap({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <DashboardHeader title="Billing" subtitle="Credits, plans and payments" onMenuClick={() => {}} />
       <div className="uxlly-content !max-w-none">{children}</div>
     </>
   );

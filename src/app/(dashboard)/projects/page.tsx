@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import DashboardHeader from "@/components/layout/DashboardHeader";
 import Button from "@/components/ui/Button";
 import OnboardingModal from "@/components/projects/OnboardingModal";
 import { useAuthGate } from "@/components/auth/AuthGate";
@@ -81,23 +80,8 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <DashboardHeader
-        title="Projects"
-        subtitle="Your content channels"
-        onMenuClick={() => {}}
-        actions={
-          <Button
-            variant="primary"
-            size="sm"
-            icon={<Plus size={14} />}
-            onClick={() => requireAuth(() => setShowOnboarding(true))}
-          >
-            New Project
-          </Button>
-        }
-      />
-
-      <div className="flex-1 flex flex-col min-h-[calc(100vh-64px)] bg-[#F6F6F7]">
+      
+      <div className="flex-1 flex flex-col min-h-[calc(100vh-56px)] bg-[#F6F6F7]">
         {/* ==================== Loading ==================== */}
         {loading && (
           <div className="flex-1 flex items-center justify-center py-20">

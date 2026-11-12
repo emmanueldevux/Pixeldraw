@@ -13,7 +13,7 @@ import { useSearchParams } from "next/navigation";
 import { TIKTOK_SETUP_KEY, type TikTokSetup } from "@/components/ai/TikTokWizard";
 import ProjectSettings from "@/components/ai/ProjectSettings";
 import CanvasLogo, { type CanvasLogoData } from "@/components/ai/CanvasLogo";
-import { ChevronDown, FolderKanban, Share2, Download, Pencil, MessageCircle, Loader2, Sparkles, X, Send } from "lucide-react";
+import { ChevronDown, FolderKanban, Download, Pencil, MessageCircle, Loader2, Sparkles, X, Send } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import TikTokSlideEditor, { type TikTokDisclosure } from "@/components/ai/TikTokSlideEditor";
 import SlideshowWizard, { type SlideshowResult } from "@/components/ai/SlideshowWizard";
@@ -321,7 +321,7 @@ function AIStudioPageInner() {
     const prefill = searchParams.get("prompt");
     if (prefill) setInput(prefill);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams.get("prompt")]);
 
   const [loading, setLoading] = useState(false);
   const [tiktokSet, setTiktokSet] = useState<{
@@ -894,7 +894,7 @@ function AIStudioPageInner() {
   ];
 
   return (
-    <div className="flex h-screen w-full bg-[#FAFAFA] overflow-hidden font-sans flex-col">
+    <div className="flex h-full w-full bg-[#FAFAFA] overflow-hidden font-sans flex-col">
       {slideshowAsk !== null && selectedChannel && (
         <SlideshowWizard
           brandId={selectedChannel.brand.id}
@@ -917,12 +917,9 @@ function AIStudioPageInner() {
       )}
       {clarify && <ClarifyModal questions={clarify.questions} onSubmit={clarify.onSubmit} onCancel={() => setClarify(null)} />}
 
-      <header className="h-16 flex items-center justify-between px-6 border-b border-gray-200/50 bg-white shrink-0 z-30">
+      <header className="h-11 flex items-center px-6 border-b border-gray-200/50 bg-white shrink-0 z-30">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 font-semibold text-gray-800">
-            Generation Canvas
-          </div>
-          <div className="relative border-l border-gray-200 pl-4">
+          <div className="relative">
             <button
               onClick={() => setShowProjectPicker(!showProjectPicker)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors max-w-[220px]"
@@ -968,11 +965,6 @@ function AIStudioPageInner() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="px-4 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-sm">
-            <Share2 size={14} /> Share
-          </button>
-        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">

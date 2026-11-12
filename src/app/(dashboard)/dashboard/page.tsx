@@ -6,7 +6,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import DashboardHeader from "@/components/layout/DashboardHeader";
 import { OnboardingReminder } from "@/components/onboarding/OnboardingProvider";
 import LightCard from "@/components/ui/LightCard";
 import Badge from "@/components/ui/Badge";
@@ -177,12 +176,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <DashboardHeader
-        title="Dashboard"
-        subtitle="Welcome to Uxlly"
-        onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-      />
-
+      
       <OnboardingReminder />
       <div className="uxlly-content">
         {/* ==================== Stat cards ==================== */}

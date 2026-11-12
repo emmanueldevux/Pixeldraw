@@ -6,7 +6,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import DashboardHeader from "@/components/layout/DashboardHeader";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { LCard as Card, LInput as Input, LSelect as Select, LButton as Button, LBadge, FIELD } from "@/components/ui/light";
@@ -229,8 +228,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <DashboardHeader title="Settings" subtitle="Your projects, brand styles and account" onMenuClick={() => {}} />
-
+      
       <div className="uxlly-content max-w-3xl">
         <div className="space-y-6">
 

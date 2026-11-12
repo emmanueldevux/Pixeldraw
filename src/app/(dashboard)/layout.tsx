@@ -11,7 +11,9 @@ import { AuthGateProvider } from "@/components/auth/AuthGate";
 import { BillingProvider } from "@/components/billing/BillingProvider";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 // Import the Light Sidebar from your home components folder
-import { Sidebar } from "../home/components/Sidebar"; 
+import { Sidebar } from "../home/components/Sidebar";
+import { Suspense } from "react";
+import AppHeader from "@/components/layout/AppHeader";
 
 export default function DashboardLayout({
   children,
@@ -43,8 +45,9 @@ export default function DashboardLayout({
         <Sidebar />
 
         {/* Main Content Area - flex-1 makes it take up the remaining space */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+        <main className="relative flex-1 min-w-0 overflow-hidden">
+          <Suspense fallback={null}><AppHeader /></Suspense>
+          <div className="h-full overflow-y-auto pt-14">
             {children}
           </div>
         </main>
