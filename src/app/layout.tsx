@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import AuthProvider from "@/components/layout/AuthProvider";
+import Preloader, { preloaderGuard } from "@/components/layout/Preloader";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const interTight = Inter_Tight({ subsets: ["latin"], variable: "--font-inter-tight" });
@@ -57,9 +58,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${interTight.variable} ${helveticaNow.variable}`}
     >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: preloaderGuard }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -69,6 +72,7 @@ export default function RootLayout({
       </head>
       {/* Setting the body className to helveticaNow.className applies it globally */}
       <body className={`${helveticaNow.className} antialiased`}>
+        <Preloader />
         <AuthProvider>
           {children}
           <Toaster
