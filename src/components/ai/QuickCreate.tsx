@@ -12,6 +12,7 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import WizardShell from "@/components/ui/WizardShell";
+import OnboardingModal from "@/components/projects/OnboardingModal";
 import LModal from "@/components/ui/LModal";
 import { Chip, Field, LButton, LInput, LSelect, LTextarea } from "@/components/ui/light";
 import TikTokSlideEditor, { type TikTokDisclosure } from "@/components/ai/TikTokSlideEditor";
@@ -89,6 +90,8 @@ export function CarouselQuickModal({ isOpen, onClose }: { isOpen: boolean; onClo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slides, setSlides] = useState<CarouselSlideMessage[] | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -96,7 +99,7 @@ export function CarouselQuickModal({ isOpen, onClose }: { isOpen: boolean; onClo
       setProjects(opts);
       setProjectId((cur) => cur || opts[0]?.id || "");
     });
-  }, [isOpen]);
+  }, [isOpen, reload]);
 
   if (!isOpen) return null;
   const project = (projects || []).find((p) => p.id === projectId);
@@ -183,7 +186,10 @@ export function CarouselQuickModal({ isOpen, onClose }: { isOpen: boolean; onClo
       {i === 0 && (
         <div className="space-y-5">
           {noProjects ? (
-            <p className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">You need a project first. Use Create project at the top to set one up.</p>
+            <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-4">
+              <p className="text-sm text-gray-700">Carousels use your brand's colours, fonts and style, so they live in a project. It takes a minute to set one up.</p>
+              <div className="mt-3"><LButton onClick={() => setCreating(true)}>Create a project</LButton></div>
+            </div>
           ) : (
             <LSelect
               label="Project"
@@ -213,6 +219,7 @@ export function CarouselQuickModal({ isOpen, onClose }: { isOpen: boolean; onClo
         </div>
       )}
       {error && <p className="text-sm text-red-600 mt-4">{error}</p>}
+      <OnboardingModal isOpen={creating} onClose={() => { setCreating(false); setReload((n) => n + 1); }} />
     </WizardShell>
   );
 }

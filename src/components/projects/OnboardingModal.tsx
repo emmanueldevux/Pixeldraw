@@ -9,7 +9,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, Loader2, Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Globe, Loader2, Plus, Upload } from "lucide-react";
+import { AdPackPicker, CarouselSettings, CharacterSheet } from "@/components/ai/ProjectSettings";
+import SlideshowStyleWizard from "@/components/ai/SlideshowStyleWizard";
+import { EMPTY_PROJECT_CAROUSEL, type ProjectCarouselSettings } from "@/lib/carousels/types";
+import type { Character } from "@/lib/slideshow/types";
 import WizardShell, { type ShellStep } from "@/components/ui/WizardShell";
 import SizeCards from "@/components/ui/SizeCards";
 import { Chip, FIELD, LButton, LInput, LTextarea } from "@/components/ui/light";
@@ -18,11 +23,84 @@ import { FONT_OPTIONS } from "@/lib/fonts";
 import type { TemplateReference } from "@/lib/templates";
 import type { PlatformKey } from "@/types";
 
-const STEPS: ShellStep[] = [
-  { id: "business", title: "Tell us about the business", sub: "This is what the AI writes from, so be specific. You can change it later in project settings." },
+export type ProjectKind = "ads" | "carousels" | "slideshows" | "thumbnails";
+
+const BUSINESS: ShellStep = { id: "business", title: "Tell us about the business", sub: "This is what the AI writes from, so be specific. You can change it later in project settings." };
+const STYLE: ShellStep = { id: "style", title: "Show us your style", sub: "All optional. Add examples you like and set your brand colours." };
+
+const KINDS: Record<ProjectKind, { heading: string; sizeKeys?: string[]; size: ShellStep; extra?: ShellStep; style: boolean; firstPlatform: PlatformKey }> = {
+  ads: {
+    heading: "New ads project",
+    sizeKeys: ["instagram_portrait", "instagram_post", "instagram_story", "facebook_portrait", "facebook", "linkedin_portrait", "linkedin_post", "pinterest", "twitter"],
+    size: { id: "size", title: "Default ad size", sub: "Pick the size this project makes by default. You can still ask for another size in chat." },
+    extra: { id: "type", title: "Reference ads", sub: "Pick a ready-made pack or add your own ads. The AI copies the layout and swaps in your brand." },
+    style: true,
+    firstPlatform: "instagram_portrait",
+  },
+  carousels: {
+    heading: "New carousels project",
+    sizeKeys: ["instagram_portrait", "instagram_post", "linkedin_portrait", "linkedin_carousel", "facebook_portrait"],
+    size: { id: "size", title: "Default carousel size", sub: "Pick the slide size this project makes by default." },
+    extra: { id: "type", title: "Carousel style", sub: "Pick a style or create your own. Every carousel in this project follows it." },
+    style: true,
+    firstPlatform: "instagram_portrait",
+  },
+  slideshows: {
+    heading: "New slideshows project",
+    sizeKeys: ["tiktok", "instagram_story", "instagram_portrait", "instagram_post"],
+    size: { id: "size", title: "Default slideshow size", sub: "9:16 is full-screen TikTok. Pick the size this project makes by default." },
+    extra: { id: "type", title: "Character and slideshow style", sub: "Add a character so the same person appears in every slide, and pick a look. Both optional." },
+    style: false,
+    firstPlatform: "tiktok",
+  },
+  thumbnails: {
+    heading: "New thumbnails project",
+    sizeKeys: ["youtube_thumbnail", "twitter", "facebook", "linkedin_post", "instagram_post", "instagram_portrait"],
+    size: { id: "size", title: "Default thumbnail size", sub: "Most thumbnails are landscape. Pick the size this project makes by default." },
+    extra: { id: "type", title: "Reference thumbnails", sub: "Pick a ready-made style or add your own thumbnails. The AI studies composition, emotion and colour." },
+    style: false,
+    firstPlatform: "youtube_thumbnail",
+  },
+};
+
+const DEFAULT_STEPS: ShellStep[] = [
+  BUSINESS,
   { id: "size", title: "What are you designing for?", sub: "Pick the size this project makes. 4:5 portrait is the best-performing feed size on Instagram, Facebook and LinkedIn." },
-  { id: "style", title: "Show us your style", sub: "All optional. Add examples you like and set your brand colours." },
+  STYLE,
 ];
+
+function SlideshowStylePick({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [styles, setStyles] = useState<{ id: string; name: string; cover?: string; mine?: boolean }[] | null>(null);
+  const [creating, setCreating] = useState(false);
+  const load = () => fetch("/api/slideshow/styles").then((r) => r.json()).then((d) => setStyles(d.styles || [])).catch(() => setStyles([]));
+  useEffect(() => { load(); }, []);
+  return (
+    <div>
+      <p className="mb-2 text-sm font-semibold text-gray-800">Slideshow style</p>
+      {styles === null ? (
+        <Loader2 className="animate-spin text-gray-300" size={18} />
+      ) : (
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          <button type="button" onClick={() => onChange("")} className={`rounded-xl border p-2 text-left ${!value ? "border-gray-900 bg-gray-50" : "border-gray-200 hover:border-gray-300"}`}>
+            <div className="aspect-[3/4] rounded-lg bg-gray-100" />
+            <p className="text-xs font-medium text-gray-800 mt-1.5">Default</p>
+          </button>
+          {styles.map((st) => (
+            <button key={st.id} type="button" onClick={() => onChange(st.id)} className={`rounded-xl border p-2 text-left ${value === st.id ? "border-gray-900 bg-gray-50" : "border-gray-200 hover:border-gray-300"}`}>
+              <div className="aspect-[3/4] rounded-lg bg-gray-100 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {st.cover && <img src={st.cover} alt="" className="w-full h-full object-cover" />}
+              </div>
+              <p className="text-xs font-medium text-gray-800 mt-1.5 truncate">{st.name}{st.mine ? " (yours)" : ""}</p>
+            </button>
+          ))}
+          <button type="button" onClick={() => setCreating(true)} className="rounded-xl border border-dashed border-gray-300 p-2 text-gray-500 hover:border-gray-400 flex flex-col items-center justify-center gap-1 aspect-[3/4] self-start"><Plus className="w-5 h-5" /><span className="text-xs">My style</span></button>
+        </div>
+      )}
+      {creating && <SlideshowStyleWizard onClose={() => setCreating(false)} onCreated={(id) => { setCreating(false); onChange(id); load(); }} />}
+    </div>
+  );
+}
 
 const TONES = ["bold", "professional", "minimal", "casual", "playful"];
 
@@ -46,12 +124,20 @@ function ColourBox({ label, value, onChange, disabled }: { label: string; value:
   );
 }
 
-export default function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export default function OnboardingModal({ isOpen, onClose, kind, openChat }: { isOpen: boolean; onClose: () => void; kind?: ProjectKind; openChat?: boolean }) {
   if (!isOpen) return null;
-  return <Wizard onClose={onClose} />;
+  return <Wizard onClose={onClose} kind={kind} openChat={openChat ?? !!kind} />;
 }
 
-function Wizard({ onClose }: { onClose: () => void }) {
+function Wizard({ onClose, kind, openChat }: { onClose: () => void; kind?: ProjectKind; openChat: boolean }) {
+  const router = useRouter();
+  const K = kind ? KINDS[kind] : null;
+  const STEPS: ShellStep[] = K ? [BUSINESS, K.size, K.extra!, ...(K.style ? [STYLE] : [])] : DEFAULT_STEPS;
+  const [adPackId, setAdPackId] = useState("");
+  const [thumbPackId, setThumbPackId] = useState("");
+  const [carouselS, setCarouselS] = useState<ProjectCarouselSettings>(EMPTY_PROJECT_CAROUSEL);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [slideshowStyleId, setSlideshowStyleId] = useState("");
   const [i, setI] = useState(0);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -62,7 +148,7 @@ function Wizard({ onClose }: { onClose: () => void }) {
   const [website, setWebsite] = useState("");
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [platform, setPlatform] = useState<PlatformKey | null>("instagram_portrait");
+  const [platform, setPlatform] = useState<PlatformKey | null>(K ? K.firstPlatform : "instagram_portrait");
 
   const [refs, setRefs] = useState<File[]>([]);
   const [refPreviews, setRefPreviews] = useState<string[]>([]);
@@ -107,7 +193,9 @@ function Wizard({ onClose }: { onClose: () => void }) {
     setRefFiles([...refs, new File([blob], `template-${Date.now()}.png`, { type: blob.type || "image/png" })]);
   };
 
-  const canContinue = i === 0 ? brandName.trim().length > 0 : i === 1 ? !!platform : true;
+  const sid = STEPS[i].id;
+  const lastStep = i === STEPS.length - 1;
+  const canContinue = sid === "business" ? brandName.trim().length > 0 : sid === "size" ? !!platform : true;
 
   async function create() {
     if (!platform) return;
@@ -138,10 +226,33 @@ function Wizard({ onClose }: { onClose: () => void }) {
         }),
       });
       if (!res.ok) throw new Error("Failed to create project");
-      const brandId = (await res.json()).data?.brand?.id;
+      const created = (await res.json()).data;
+      const brandId = created?.brand?.id;
+      const channelId = created?.channel?.id;
+      if (brandId && kind) {
+        setStatus("Saving your settings…");
+        await fetch("/api/projects/style", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            brandId,
+            advancedSettings: {
+              ...(kind === "ads" ? { adPackId } : {}),
+              ...(kind === "thumbnails" ? { thumbPackId } : {}),
+              ...(kind === "carousels" ? { carousel: carouselS } : {}),
+              ...(kind === "slideshows" ? { characters, slideshowStyleId } : {}),
+            },
+          }),
+        }).catch(() => {});
+      }
       if (brandId && referenceBase64.length > 0) {
         setStatus("The AI is studying your references…");
         await fetch("/api/projects/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brandId, referenceImages: referenceBase64 }) }).catch(() => {});
+      }
+      if (openChat && channelId) {
+        router.push(`/ai?channel=${channelId}`);
+        onClose();
+        return;
       }
       setDone(true);
     } catch (e) {
@@ -152,11 +263,11 @@ function Wizard({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const next = () => (i === STEPS.length - 1 ? create() : setI(i + 1));
+  const next = () => (lastStep ? create() : setI(i + 1));
 
   return (
     <WizardShell
-      heading="New project"
+      heading={K ? K.heading : "New project"}
       steps={STEPS}
       index={i}
       done={done}
@@ -166,14 +277,14 @@ function Wizard({ onClose }: { onClose: () => void }) {
       busy={busy}
       continueDisabled={!canContinue}
       finishLabel="Create project"
-      skippable={i === 2}
+      skippable={sid === "style" || sid === "type"}
       onBack={() => setI(Math.max(0, i - 1))}
       onNext={next}
-      onSkip={create}
+      onSkip={() => (lastStep ? create() : setI(i + 1))}
       onClose={onClose}
-      wide={i === 1 || i === 2}
+      wide={sid !== "business"}
     >
-      {i === 0 && (
+      {sid === "business" && (
         <div className="space-y-5">
           <LInput label="Business or brand name" value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder="e.g. Bean & Brew Coffee" autoFocus />
           <LTextarea label="What do you sell or offer?" value={offering} onChange={(e) => setOffering(e.target.value)} rows={3} placeholder="e.g. Specialty coffee, pastries and beans for home brewing, in Lagos" />
@@ -200,9 +311,19 @@ function Wizard({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
-      {i === 1 && <SizeCards value={platform} onChange={setPlatform} />}
+      {sid === "size" && <SizeCards value={platform} onChange={setPlatform} keys={K?.sizeKeys} />}
 
-      {i === 2 && (
+      {sid === "type" && kind === "ads" && <AdPackPicker value={adPackId} onChange={setAdPackId} />}
+      {sid === "type" && kind === "thumbnails" && <AdPackPicker purpose="thumbnail" value={thumbPackId} onChange={setThumbPackId} />}
+      {sid === "type" && kind === "carousels" && <CarouselSettings value={carouselS} onChange={setCarouselS} />}
+      {sid === "type" && kind === "slideshows" && (
+        <div className="space-y-6">
+          <CharacterSheet characters={characters} onChange={setCharacters} />
+          <SlideshowStylePick value={slideshowStyleId} onChange={setSlideshowStyleId} />
+        </div>
+      )}
+
+      {sid === "style" && (
         <div className="space-y-6">
           <div>
             <p className="mb-2 text-sm font-semibold text-gray-800">Pick a style you like</p>

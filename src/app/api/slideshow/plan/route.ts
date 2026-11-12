@@ -19,9 +19,10 @@ async function handlePOST(request: Request) {
   if (!user) return unauthorized();
   const b = await request.json().catch(() => ({}));
   const topic = typeof b.topic === "string" ? b.topic.trim().slice(0, 600) : "";
-  if (!topic || typeof b.brandId !== "string") return NextResponse.json({ error: "Tell me what the slideshow is about." }, { status: 400 });
+  if (!topic) return NextResponse.json({ error: "Tell me what the slideshow is about." }, { status: 400 });
   const format: SlideshowFormat = ["list", "story", "travel", "split"].includes(b.format) ? b.format : "list";
-  const ctx = await loadContext(user.id, b.brandId);
+  // No project = a quick slideshow: no saved characters, no brand voice.
+  const ctx = typeof b.brandId === "string" && b.brandId ? await loadContext(user.id, b.brandId) : { voice: "", characters: [] };
   if (!ctx) return NextResponse.json({ error: "Project not found" }, { status: 404 });
   const character = ctx.characters.find((c) => c.id === b.characterId) || null;
   const style = await resolveStyle(typeof b.styleId === "string" ? b.styleId : null, user.id);

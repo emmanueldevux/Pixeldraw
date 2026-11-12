@@ -61,6 +61,7 @@ interface State {
   carousel: ProjectCarouselSettings;
   adPackId: string;
   thumbPackId: string;
+  slideshowStyleId: string;
   negativePrompt: string;
   characters: Character[];
 }
@@ -302,6 +303,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
         carousel: readProjectCarousel(adv) || EMPTY_PROJECT_CAROUSEL,
         adPackId: typeof adv.adPackId === "string" ? adv.adPackId : "",
         thumbPackId: typeof adv.thumbPackId === "string" ? adv.thumbPackId : "",
+        slideshowStyleId: typeof adv.slideshowStyleId === "string" ? adv.slideshowStyleId : "",
         negativePrompt: typeof adv.negativePrompt === "string" ? adv.negativePrompt : "",
         characters: cleanCharacters(adv.characters),
       });
@@ -369,7 +371,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
           headingFont: state.headingFont,
           tone: state.tone,
           referenceImages: state.referenceImages,
-          advancedSettings: { bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, negativePrompt: state.negativePrompt, characters: state.characters },
+          advancedSettings: { bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, slideshowStyleId: state.slideshowStyleId, negativePrompt: state.negativePrompt, characters: state.characters },
         }),
       });
       const logoPut = fetch("/api/projects/logo", {
@@ -681,7 +683,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
 
 
 // ==================== Carousel style + author ====================
-function CarouselSettings({ value, onChange }: { value: ProjectCarouselSettings; onChange: (v: ProjectCarouselSettings) => void }) {
+export function CarouselSettings({ value, onChange }: { value: ProjectCarouselSettings; onChange: (v: ProjectCarouselSettings) => void }) {
   const [styles, setStyles] = useState<{ id: string; name: string; description: string; preview: string[]; mine?: boolean }[] | null>(null);
   const [creating, setCreating] = useState(false);
   const load = useCallback(() => {
@@ -760,7 +762,7 @@ function CarouselSettings({ value, onChange }: { value: ProjectCarouselSettings;
 
 
 // ==================== Default reference pack for single ads ====================
-function AdPackPicker({ value, onChange, purpose = "ad" }: { value: string; onChange: (v: string) => void; purpose?: "ad" | "thumbnail" }) {
+export function AdPackPicker({ value, onChange, purpose = "ad" }: { value: string; onChange: (v: string) => void; purpose?: "ad" | "thumbnail" }) {
   const thumb = purpose === "thumbnail";
   const [packs, setPacks] = useState<{ id: string; title: string; description: string; coverImages: string[]; mine?: boolean }[] | null>(null);
   const [creating, setCreating] = useState(false);
@@ -824,7 +826,7 @@ function AdPackPicker({ value, onChange, purpose = "ad" }: { value: string; onCh
   );
 }
 
-function CharacterSheet({ characters, onChange }: { characters: Character[]; onChange: (c: Character[]) => void }) {
+export function CharacterSheet({ characters, onChange }: { characters: Character[]; onChange: (c: Character[]) => void }) {
   const [adding, setAdding] = useState(false);
   return (
     <div>

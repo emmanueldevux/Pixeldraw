@@ -91,7 +91,7 @@ async function handlePOST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { messages, platform, brandId, brandName, channelDescription, styleGuide, channelId, productImage, imageProvider, freeChat } =
+    const { messages, platform, brandId, brandName, channelDescription, styleGuide, channelId, productImage, imageProvider, freeChat, characterId } =
       await request.json();
 
     console.log("[CHAT] 🔑 Received brandId:", brandId, "brandName:", brandName);
@@ -282,7 +282,8 @@ async function handlePOST(request: Request) {
               const ctx = await loadContext(session.user.id, lookupId).catch(() => null);
               const chars = ctx?.characters || [];
               const named = chars.find((c) => c.name && askText.toLowerCase().includes(c.name.toLowerCase()));
-              const ch = named || chars[0];
+              // The popup can pick a character (by id) or say "none"; chat falls back to a named one, then the first.
+              const ch = characterId === "none" ? null : (typeof characterId === "string" ? chars.find((c) => c.id === characterId) : undefined) || named || chars[0];
               if (ch) {
                 ch.photos.slice(0, 2).forEach((u) => subjects.push({ url: u, kind: "person" }));
                 characterNote = [ch.name, ch.description].filter(Boolean).join(": ");
@@ -309,9 +310,9 @@ async function handlePOST(request: Request) {
           }
         }
         // No references of the project's own → the project's ad pack (admin reference packs).
-        if (!thumbReq && refs.length === 0 && lookupId && process.env.OPENAI_API_KEY) {
+        if (!thumbReq && refs.length === 0 && (lookupId || freeChat) && process.env.OPENAI_API_KEY) {
           const adv = ((loadedBrand?.styleGuide as unknown as { advancedSettings?: { adPackId?: string } } | null)?.advancedSettings) || {};
-          const brain = await getBrain(lookupId).catch(() => null);
+          const brain = lookupId ? await getBrain(lookupId).catch(() => null) : null;
           const lastUser = [...(messages as AIMessage[])].reverse().find((m) => m.role === "user");
           const userAsk = typeof lastUser?.content === "string" ? lastUser.content : "";
           const brainOk = !!brain && !isEmptyBrain(brain.data);

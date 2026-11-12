@@ -24,8 +24,8 @@ async function handlePOST(request: Request) {
   if (!user) return unauthorized();
   const b = await request.json().catch(() => ({}));
   const scene = typeof b.scene === "string" ? b.scene.trim().slice(0, 900) : "";
-  if (!scene || typeof b.brandId !== "string") return NextResponse.json({ error: "Missing scene" }, { status: 400 });
-  const ctx = await loadContext(user.id, b.brandId);
+  if (!scene) return NextResponse.json({ error: "Missing scene" }, { status: 400 });
+  const ctx = typeof b.brandId === "string" && b.brandId ? await loadContext(user.id, b.brandId) : { voice: "", characters: [] };
   if (!ctx) return NextResponse.json({ error: "Project not found" }, { status: 404 });
   const person = b.person === "character" || b.person === "none" ? b.person : "anonymous";
   const character = ctx.characters.find((c) => c.id === b.characterId) || null;

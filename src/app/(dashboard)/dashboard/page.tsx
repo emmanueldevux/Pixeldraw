@@ -21,8 +21,12 @@ import {
   FolderKanban,
 } from "lucide-react";
 import Link from "next/link";
+import OnboardingModal, { type ProjectKind } from "@/components/projects/OnboardingModal";
 import { MAKE } from "@/components/layout/AppHeader";
 import { CarouselQuickModal } from "@/components/ai/QuickCreate";
+import ThumbnailWizard from "@/components/ai/ThumbnailWizard";
+import SlideshowQuickModal from "@/components/ai/SlideshowQuickModal";
+import AdWizard from "@/components/ai/AdWizard";
 import TikTokWizard from "@/components/ai/TikTokWizard";
 import { formatRelative } from "@/lib/utils";
 
@@ -53,11 +57,16 @@ interface QuickAction {
   iconColor: string;
   href?: string;
   onClick?: () => void;
+  quick?: () => void;
 }
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [projKind, setProjKind] = useState<ProjectKind | null>(null);
   const [showCarousel, setShowCarousel] = useState(false);
+  const [showThumbs, setShowThumbs] = useState(false);
+  const [showShows, setShowShows] = useState(false);
+  const [showAds, setShowAds] = useState(false);
   const [showTikTok, setShowTikTok] = useState(false);
   const [tab, setTab] = useState<DashboardTab>("projects");
   const [channels, setChannels] = useState<DashboardChannel[]>([]);
@@ -114,9 +123,10 @@ export default function DashboardPage() {
   // Same quick actions as the header's "Create project" menu, plus the calendar.
   const quickActions: QuickAction[] = [
     ...MAKE.map((m) => ({
-      ...(/carousel/i.test(m.prompt) ? { onClick: () => setShowCarousel(true) } : { href: `/ai?prompt=${encodeURIComponent(m.prompt)}` }),
+      onClick: () => setProjKind(m.kind),
+      quick: m.kind === "carousels" ? () => setShowCarousel(true) : m.kind === "thumbnails" ? () => setShowThumbs(true) : m.kind === "slideshows" ? () => setShowShows(true) : () => setShowAds(true),
       title: m.label,
-      hint: m.hint,
+      hint: "Set up a project",
       icon: m.icon as typeof Sparkles,
       tint: "bg-gray-100",
       iconColor: "text-gray-700",
@@ -274,16 +284,25 @@ export default function DashboardPage() {
                   {quickCard(a)}
                 </Link>
               ) : (
-                <button key={a.title} type="button" onClick={a.onClick} className="w-full text-left">
-                  {quickCard(a)}
-                </button>
+                <div key={a.title} className="relative">
+                  <button type="button" onClick={a.onClick} className="w-full text-left">
+                    {quickCard(a)}
+                  </button>
+                  {a.quick && (
+                    <button type="button" onClick={a.quick} title="Make one now, without a project" className="absolute right-10 top-1/2 -translate-y-1/2 h-7 px-2.5 rounded-lg border border-gray-200 bg-white text-[11px] font-medium text-gray-600 hover:border-gray-900 hover:text-gray-900">Quick</button>
+                  )}
+                </div>
               )
             )}
           </div>
         </div>
       </div>
 
+      <OnboardingModal isOpen={!!projKind} kind={projKind || undefined} onClose={() => setProjKind(null)} />
       <CarouselQuickModal isOpen={showCarousel} onClose={() => setShowCarousel(false)} />
+      <ThumbnailWizard isOpen={showThumbs} onClose={() => setShowThumbs(false)} />
+      <SlideshowQuickModal isOpen={showShows} onClose={() => setShowShows(false)} />
+      <AdWizard isOpen={showAds} onClose={() => setShowAds(false)} />
       <TikTokWizard isOpen={showTikTok} onClose={() => setShowTikTok(false)} />
     </>
   );

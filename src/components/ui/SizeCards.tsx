@@ -56,15 +56,15 @@ function Card({ c, on, onPick }: { c: FormatCard; on: boolean; onPick: () => voi
   );
 }
 
-export default function SizeCards({ value, onChange, only }: { value: PlatformKey | null; onChange: (k: PlatformKey) => void; only?: string[] }) {
-  const groups = FORMAT_PLATFORMS.filter((p) => !only || only.includes(p));
+export default function SizeCards({ value, onChange, only, keys }: { value: PlatformKey | null; onChange: (k: PlatformKey) => void; only?: string[]; keys?: string[] }) {
+  const groups = FORMAT_PLATFORMS.filter((p) => (!only || only.includes(p)) && (!keys || FORMAT_CARDS.some((c) => c.platform === p && keys.includes(c.key))));
   return (
     <div className="space-y-5">
       {groups.map((platform) => (
         <div key={platform}>
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{platform}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {FORMAT_CARDS.filter((c) => c.platform === platform).map((c) => (
+            {FORMAT_CARDS.filter((c) => c.platform === platform && (!keys || keys.includes(c.key))).map((c) => (
               <Card key={c.key} c={c} on={value === c.key} onPick={() => onChange(c.key)} />
             ))}
           </div>

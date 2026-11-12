@@ -67,13 +67,13 @@ async function pool<T>(items: T[], n: number, fn: (x: T) => Promise<void>, stop:
 }
 
 export default function SlideshowWizard({
-  brandId,
+  brandId = "",
   initialTopic,
   onClose,
   onDone,
   onInsufficient,
 }: {
-  brandId: string;
+  brandId?: string; // empty = a quick slideshow with no project
   initialTopic?: string;
   onClose: () => void;
   onDone: (r: SlideshowResult) => void;
@@ -101,7 +101,7 @@ export default function SlideshowWizard({
   const loadStyles = () =>
     fetch("/api/slideshow/styles").then((r) => r.json()).then((d) => setStyles(d.styles || [])).catch(() => setStyles([]));
   useEffect(() => {
-    fetch(`/api/slideshow/character?brandId=${encodeURIComponent(brandId)}`).then((r) => r.json()).then((d) => setCharacters(d.characters || [])).catch(() => {});
+    if (brandId) fetch(`/api/slideshow/character?brandId=${encodeURIComponent(brandId)}`).then((r) => r.json()).then((d) => setCharacters(d.characters || [])).catch(() => {});
     loadStyles();
   }, [brandId]);
 
@@ -120,6 +120,7 @@ export default function SlideshowWizard({
   async function addCharacter(c: Character) {
     const next = [...characters, c];
     setModal("");
+    if (!brandId) { setCharacters(next); setCharacterId(c.id); return; } // quick slideshow: kept for this run only
     const r = await fetch("/api/slideshow/character", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brandId, characters: next }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok) {
