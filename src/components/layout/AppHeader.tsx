@@ -87,7 +87,7 @@ export default function AppHeader() {
 
   return (
     <>
-      <header className="absolute top-0 inset-x-0 z-40 h-[67px] flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-white/60 bg-gradient-to-b from-white/70 to-white/35 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(31,38,135,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]">
+      <header className="absolute top-0 inset-x-0 z-40 h-[67px] flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-gray-300 bg-gradient-to-b from-white/70 to-white/35 backdrop-blur-2xl backdrop-saturate-150">
         {/* ---------- left ---------- */}
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative">
