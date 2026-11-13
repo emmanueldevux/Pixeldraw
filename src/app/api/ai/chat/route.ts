@@ -35,6 +35,7 @@ import type { AIMessage, ImageSize, StyleGuideData } from "@/types";
 import type { LogoPosition } from "@/lib/ai/logoComposite";
 import { getRandomTemplateAsBase64 } from "@/lib/templates";
 import { randomUUID } from "crypto";
+import { isAdRequest, wantsNewFormat, previousConcepts, adDirectorRule } from "@/lib/ai/adDirector";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
 import { insufficientResponse } from "@/lib/billing/http";
 import { imageKey } from "@/lib/billing/pricing";
@@ -212,6 +213,11 @@ async function handlePOST(request: Request) {
       ? `\n\nTHUMBNAIL MODE: The user wants a thumbnail (${thumbSpecNow.aspect}). Reply with one short friendly sentence, then ONE \`\`\`prompt block that describes the SCENE only: the subject, their expression and pose, the setting, the mood and the colours. ${thumbTextNow.mode === "none" ? "Put NO text, words or letters in the image; the user did not ask for any." : "Include only the text the user asked for."} Do not ask questions; make confident choices.`
       : "";
 
+    // Ad director: persona + angle + hook + (when no reference steers it) an invented format.
+    const adReq = !thumbReq && isAdRequest(askText, platform);
+    const explicitPack = !!(((loadedBrand?.styleGuide as unknown as { advancedSettings?: { adPackId?: string } } | null)?.advancedSettings)?.adPackId);
+    const inventFormat = adReq && !explicitPack && wantsNewFormat(askText);
+
     // The project's Brand Brain: audience, voice, positioning, real offers.
     // Every caption and headline the chat writes comes from this.
     let brainBlock = "";
@@ -221,9 +227,13 @@ async function handlePOST(request: Request) {
       else if (brain && brain.status !== "generating") generateBrain(lookupId).catch(() => {}); // ready for next time
     }
 
+    const adRule = adReq
+      ? adDirectorRule({ inventFormat, previous: previousConcepts(messages as AIMessage[]), hasBrain: !!brainBlock, hasProductPhoto: !!productImage, platform })
+      : "";
+
     // Prepend system message
     const fullMessages: AIMessage[] = [
-      { role: "system", content: systemPrompt + brainBlock + freeChatRule + thumbRule },
+      { role: "system", content: systemPrompt + brainBlock + freeChatRule + thumbRule + adRule },
       ...messages,
     ];
 
@@ -327,7 +337,7 @@ async function handlePOST(request: Request) {
           }
         }
         // No references of the project's own → the project's ad pack (admin reference packs).
-        if (!thumbReq && refs.length === 0 && (lookupId || freeChat) && process.env.OPENAI_API_KEY) {
+        if (!thumbReq && !inventFormat && refs.length === 0 && (lookupId || freeChat) && process.env.OPENAI_API_KEY) {
           const adv = ((loadedBrand?.styleGuide as unknown as { advancedSettings?: { adPackId?: string } } | null)?.advancedSettings) || {};
           const brain = lookupId ? await getBrain(lookupId).catch(() => null) : null;
           const lastUser = [...(messages as AIMessage[])].reverse().find((m) => m.role === "user");
@@ -359,7 +369,7 @@ async function handlePOST(request: Request) {
             }
           }
         }
-        if (refs.length === 0 && !packImage) {
+        if (refs.length === 0 && !packImage && !inventFormat) {
           const template = await getRandomTemplateAsBase64();
           if (template) {
             refs = [template];
