@@ -84,15 +84,32 @@ async function generateImage(
   throw new Error("No image provider configured.");
 }
 
+// Visitor limit: 6 chats per IP per 24h (in memory; resets on restart, which is fine for a soft cap).
+const guestHits = new Map<string, number[]>();
+function guestAllowed(ip: string): boolean {
+  const now = Date.now();
+  const hits = (guestHits.get(ip) || []).filter((t) => now - t < 86_400_000);
+  if (hits.length >= 6) { guestHits.set(ip, hits); return false; }
+  hits.push(now);
+  guestHits.set(ip, hits);
+  if (guestHits.size > 5000) guestHits.clear();
+  return true;
+}
+
 async function handlePOST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const guest = !session?.user;
+    const uid = session?.user?.id ?? "guest";
+    if (guest) {
+      // Visitors can try the free chat (no project, no saving); a daily cap per IP keeps it from being abused.
+      const ip = (request.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
+      if (!guestAllowed(ip)) return NextResponse.json({ error: "guest_limit" }, { status: 429 });
     }
 
     const { messages, platform, brandId, brandName, channelDescription, styleGuide, channelId, productImage, imageProvider, freeChat, characterId } =
       await request.json();
+    if (guest && !freeChat) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     console.log("[CHAT] 🔑 Received brandId:", brandId, "brandName:", brandName);
 
@@ -101,7 +118,7 @@ async function handlePOST(request: Request) {
     const likelyImageKey = imageKey({ imageProvider, productImage });
     let auth;
     try {
-      auth = await authorize(session.user.id, [{ key: "chat.text" }, { key: likelyImageKey }], { trial: "consume" });
+      if (!guest) auth = await authorize(uid, [{ key: "chat.text" }, { key: likelyImageKey }], { trial: "consume" });
     } catch (e) {
       if (e instanceof InsufficientCreditsError) return insufficientResponse(e);
       throw e;
@@ -117,11 +134,11 @@ async function handlePOST(request: Request) {
       styleGuide: { referenceImages: unknown; generationPool: unknown } | null;
     } | null = null;
 
-    const lookupId = brandId;
+    const lookupId = guest ? null : brandId;
     if (lookupId) {
       try {
         const brand = await db.brand.findFirst({
-          where: { id: lookupId, userId: session.user.id },
+          where: { id: lookupId, userId: uid },
           include: { styleGuide: true },
         });
 
@@ -272,14 +289,14 @@ async function handlePOST(request: Request) {
             const brain = lookupId ? await getBrain(lookupId).catch(() => null) : null;
             const brainOk = !!brain && !isEmptyBrain(brain.data);
             const matchHint = brainOk ? [brain!.data.business.industry, brain!.data.voice.oneLine].filter(Boolean).join("; ") : "";
-            const pack = await resolvePack(adv.thumbPackId, { userId: session.user.id, brief: askText, hint: matchHint, purpose: "thumbnail" }).catch(() => null);
+            const pack = await resolvePack(adv.thumbPackId, { userId: uid, brief: askText, hint: matchHint, purpose: "thumbnail" }).catch(() => null);
             // Subject: an attached photo wins; otherwise the project's character sheet (by name if mentioned).
             const subjects: { url: string; kind: "person" | "product" }[] = [];
             let characterNote = "";
             if (productImage) {
               subjects.push({ url: productImage, kind: await classifySubject(productImage) });
             } else if (lookupId) {
-              const ctx = await loadContext(session.user.id, lookupId).catch(() => null);
+              const ctx = await loadContext(uid, lookupId).catch(() => null);
               const chars = ctx?.characters || [];
               const named = chars.find((c) => c.name && askText.toLowerCase().includes(c.name.toLowerCase()));
               // The popup can pick a character (by id) or say "none"; chat falls back to a named one, then the first.
@@ -317,7 +334,7 @@ async function handlePOST(request: Request) {
           const userAsk = typeof lastUser?.content === "string" ? lastUser.content : "";
           const brainOk = !!brain && !isEmptyBrain(brain.data);
           const matchHint = brainOk ? [brain!.data.business.industry, brain!.data.voice.oneLine, moodFromVoice(brain!.data)].filter(Boolean).join("; ") : "";
-          const pack = await resolvePack(adv.adPackId, { userId: session.user.id, brief: userAsk, hint: matchHint }).catch(() => null);
+          const pack = await resolvePack(adv.adPackId, { userId: uid, brief: userAsk, hint: matchHint }).catch(() => null);
           if (pack) {
             const sgAny = loadedBrand?.styleGuide as unknown as Record<string, string | null> | null;
             const sizeFor: Record<string, string> = { instagram_portrait: "1080x1350", facebook_portrait: "1080x1350", linkedin_portrait: "1080x1350", instagram_story: "1080x1920", instagram_reel: "1080x1920", tiktok: "1080x1920", snapchat: "1080x1920", pinterest: "1000x1500", twitter: "1600x900", linkedin_post: "1200x627", facebook: "1200x630", youtube_thumbnail: "1280x720" };
@@ -403,9 +420,9 @@ const imageResponse = packImage ? { url: packImage } : await generateImage(
 
     // ---- BILLING: charge only for what actually ran (a chat-only reply doesn't pay for an image).
     try {
-      await commit(
-        session.user.id,
-        auth,
+      if (!guest) await commit(
+        uid,
+        auth!,
         [{ key: "chat.text" }, ...(imageUrl ? [{ key: likelyImageKey }] : [])],
         { ref: billingRef, producedImage: !!imageUrl }
       );
@@ -415,10 +432,10 @@ const imageResponse = packImage ? { url: packImage } : await generateImage(
 
     // Save the design (storage + Files tab) so it survives a refresh.
     let generationId: string | null = null;
-    if (imageUrl) {
+    if (imageUrl && !guest) {
       const lastUser = [...(messages as AIMessage[])].reverse().find((m) => m.role === "user");
       const saved = await saveGeneration({
-        userId: session.user.id,
+        userId: uid,
         brandId: lookupId || null,
         kind: "image",
         title: typeof lastUser?.content === "string" ? lastUser.content.slice(0, 120) : "Design",

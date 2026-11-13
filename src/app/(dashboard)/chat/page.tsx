@@ -190,12 +190,7 @@ export default function FreeChatPage() {
 
   const handleSend = async (override?: { text: string; ref?: string | null }) => {
     if (!(override?.text ?? input).trim() || loading || sendingRef.current) return;
-    // Anonymous: open the login popup and replay after sign-in. (Don't pass the
-    // action when already signed in — requireAuth would run it AND we'd run again.)
-    if (!isAuthenticated) {
-      requireAuth(() => handleSend(override));
-      return;
-    }
+    // Visitors can chat freely; login is asked for when they download (or hit the visitor limit).
     sendingRef.current = true;
 
     const userText = (override?.text ?? input).trim();
@@ -218,6 +213,12 @@ export default function FreeChatPage() {
           imageProvider: imageModel,
         }),
       });
+      if (res.status === 429 || (res.status === 401 && !isAuthenticated)) {
+        setMessages((p) => p.filter((m) => m.id !== "loading" && m.id !== userMsg.id));
+        setInput(userText);
+        requireAuth(() => handleSend(override));
+        return;
+      }
       if (res.status === 402) {
         // Out of credits: undo this send, put the text back, open the top-up popup.
         const d402 = await res.json().catch(() => ({}));
@@ -391,7 +392,7 @@ export default function FreeChatPage() {
                             })()}
                             <button
                               type="button"
-                              onClick={() => download(m.imageUrl!, "uxlly-free.png")}
+                              onClick={() => (isAuthenticated ? download(m.imageUrl!, "uxlly-free.png") : requireAuth(() => download(m.imageUrl!, "uxlly-free.png")))}
                               className="flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px] font-medium text-zinc-700 hover:bg-[#F4F4F5]"
                             >
                               <Download size={14} /> Download
