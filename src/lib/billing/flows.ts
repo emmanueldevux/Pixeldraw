@@ -1,27 +1,88 @@
 // ============================================================
-// UXLLY Billing — Stripe money flows
+// UXLLY Billing — Paystack money flows
 //
-// MONEY IN has exactly one door per kind, and every door is idempotent:
-//   top-up / auto-reload  -> grantFromPaymentIntent()  ref "pi:<id>"
-//   subscription cycles   -> grantFromInvoice()        ref "inv:<id>"
-// Both are called from the webhook AND from the client "sync" call right
-// after a payment, so local dev works without the Stripe CLI and a slow
-// webhook never leaves a paying customer waiting. The (userId, ref) unique
-// index guarantees whichever arrives second does nothing.
+// MONEY IN has one door, and it is idempotent:
+//   grantFromTransaction()  ref "ps:<transaction id>"
+// It is called from the webhook (charge.success) AND from the browser "sync"
+// call right after Paystack sends the customer back, so a slow webhook never
+// leaves a paying customer waiting. The (userId, ref) unique index guarantees
+// whichever arrives second does nothing.
 //
-// Prices come from OUR database (never the browser): amount limits and the
-// credits-per-dollar rate are read server-side on every request.
+// Storage (no database change): paystack customer code -> BillingAccount.stripeCustomerId,
+// subscription code -> stripeSubscriptionId, default card authorization -> defaultPaymentMethod.
+// Saved cards and the subscription email token live in BillingSetting (key "ps:...").
 // ============================================================
-
 import { db } from "@/lib/db";
-import { getStripe, ensureCustomer, getOrCreateAccount, stripeMessage } from "./stripe";
+import { ps, toSubunit, payCurrency, getOrCreateAccount, paystackMessage, kvGet, kvSet } from "./paystack";
 import { getSettings } from "./settings";
 import { getPlans } from "./pricing";
 import { grantCredits, getBalanceMilli, writeNote } from "./ledger";
 import { centsToMilli, usd, formatCredits } from "./units";
 
-// Stripe objects are read through `any`: some field names differ between API versions.
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+export interface SavedCard {
+  id: string; // Paystack authorization_code
+  brand: string;
+  last4: string;
+  expMonth: number;
+  expYear: number;
+  isDefault: boolean;
+}
+
+const cardsKey = (userId: string) => `ps:cards:${userId}`;
+const tokenKey = (userId: string) => `ps:subtoken:${userId}`;
+
+async function userEmail(userId: string): Promise<string> {
+  const u = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (!u?.email) throw new Error("Your account needs an email address to pay");
+  return u.email;
+}
+
+function newRef(kind: string, userId: string) {
+  return `uxlly_${kind}_${userId.slice(-6)}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function returnUrl(origin?: string) {
+  const base = (process.env.NEXTAUTH_URL || origin || "").replace(/\/$/, "");
+  return `${base}/billing?ps=1`;
+}
+
+// ------------------------------------------------------------------
+// Checkout (Paystack hosted page) — used for first payments and plans
+// ------------------------------------------------------------------
+async function initCheckout(opts: {
+  userId: string;
+  amountCents: number;
+  type: "topup" | "plan";
+  creditsMilli: number;
+  planKey?: string;
+  planCode?: string;
+  origin?: string;
+}) {
+  const email = await userEmail(opts.userId);
+  const amount = toSubunit(opts.amountCents);
+  const data = await ps<{ authorization_url: string; reference: string }>("/transaction/initialize", {
+    method: "POST",
+    body: {
+      email,
+      amount,
+      currency: payCurrency(),
+      reference: newRef(opts.type, opts.userId),
+      callback_url: returnUrl(opts.origin),
+      ...(opts.planCode ? { plan: opts.planCode } : {}),
+      metadata: {
+        userId: opts.userId,
+        type: opts.type,
+        creditsMilli: opts.creditsMilli,
+        amountCents: opts.amountCents,
+        amountSubunit: amount,
+        planKey: opts.planKey || null,
+      },
+    },
+  });
+  return { status: "redirect" as const, url: data.authorization_url, reference: data.reference };
+}
 
 // ------------------------------------------------------------------
 // Top-up (pay as you go) and auto-reload
@@ -29,9 +90,9 @@ import { centsToMilli, usd, formatCredits } from "./units";
 export async function createTopUp(opts: {
   userId: string;
   amountCents: number;
-  paymentMethodId?: string;
-  idempotencyKey?: string;
+  paymentMethodId?: string; // a saved card (Paystack authorization code)
   kind?: "topup" | "autoreload";
+  origin?: string;
 }) {
   const kind = opts.kind ?? "topup";
   const settings = await getSettings();
@@ -41,90 +102,152 @@ export async function createTopUp(opts: {
   if (!Number.isFinite(amountCents) || amountCents < min || amountCents > max) {
     throw new Error(`Amount must be between ${usd(min)} and ${usd(max)}`);
   }
-
-  const { customerId, account } = await ensureCustomer(opts.userId);
-  const pm = opts.paymentMethodId || account.defaultPaymentMethod;
-  if (!pm) throw new Error("Add a payment method first");
-
   const creditsMilli = centsToMilli(amountCents, settings.creditValueCents);
-  const stripe = getStripe();
-  const params: any = {
-    amount: amountCents,
-    currency: settings.currency,
-    customer: customerId,
-    payment_method: pm,
-    confirm: true,
-    description: `${formatCredits(creditsMilli)} UXLLY credits`,
-    metadata: {
-      userId: opts.userId,
-      type: kind,
-      creditsMilli: String(creditsMilli),
-      amountCents: String(amountCents),
-    },
-  };
-  if (kind === "autoreload") params.off_session = true;
-  else params.automatic_payment_methods = { enabled: true, allow_redirects: "never" };
 
-  let pi: any;
+  const account = await getOrCreateAccount(opts.userId);
+  const cards = await listCards(opts.userId);
+  const card = cards.find((c) => c.id === (opts.paymentMethodId || account.defaultPaymentMethod));
+
+  // No saved card chosen: send them to Paystack checkout (card, bank transfer, USSD…).
+  if (!card) {
+    if (kind === "autoreload") throw new Error("No saved card");
+    return { ...(await initCheckout({ userId: opts.userId, amountCents, type: "topup", creditsMilli, origin: opts.origin })), creditsMilli };
+  }
+
+  const email = await userEmail(opts.userId);
+  const amount = toSubunit(amountCents);
+  let tx: any;
   try {
-    pi = await stripe.paymentIntents.create(params, opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : undefined);
+    tx = await ps("/transaction/charge_authorization", {
+      method: "POST",
+      body: {
+        email,
+        amount,
+        currency: payCurrency(),
+        authorization_code: card.id,
+        reference: newRef(kind, opts.userId),
+        metadata: { userId: opts.userId, type: kind, creditsMilli, amountCents, amountSubunit: amount },
+      },
+    });
   } catch (e) {
-    throw new Error(stripeMessage(e));
+    throw new Error(paystackMessage(e));
   }
-
-  if (pi.status === "succeeded") {
-    await grantFromPaymentIntent(pi);
-    return { status: "succeeded" as const, paymentIntentId: pi.id as string, creditsMilli };
+  if (tx.status === "success") {
+    await grantFromTransaction(tx);
+    return { status: "succeeded" as const, creditsMilli };
   }
-  if (pi.status === "requires_action") {
-    return { status: "requires_action" as const, paymentIntentId: pi.id as string, clientSecret: pi.client_secret as string, creditsMilli };
-  }
-  throw new Error("Payment could not be completed");
+  throw new Error(tx.gateway_response || "The card was declined");
 }
 
-export async function grantFromPaymentIntent(pi: any) {
-  const meta = pi?.metadata || {};
-  if (!meta.userId || (meta.type !== "topup" && meta.type !== "autoreload")) return null;
-  if (pi.status !== "succeeded") return null;
-  const creditsMilli = Number(meta.creditsMilli);
-  const amountCents = Number(meta.amountCents);
-  if (!creditsMilli || !amountCents) return null;
-  if (pi.amount_received != null && Number(pi.amount_received) !== amountCents) {
-    console.error("[BILLING] amount mismatch on", pi.id, pi.amount_received, amountCents);
+/** Credits (or a plan's monthly credits) for a successful Paystack transaction. Safe to call twice. */
+export async function grantFromTransaction(tx: any) {
+  if (!tx || tx.status !== "success") return null;
+  const meta = tx.metadata && typeof tx.metadata === "object" ? tx.metadata : {};
+  const customerCode: string | undefined = tx.customer?.customer_code;
+
+  // Save the card for next time (card payments only, and only when Paystack says it can be charged again).
+  const userIdFromMeta: string | undefined = meta.userId;
+  if (userIdFromMeta) await rememberCustomerAndCard(userIdFromMeta, customerCode, tx.authorization);
+
+  // ---- one-off credits ----
+  if (meta.userId && (meta.type === "topup" || meta.type === "autoreload")) {
+    const creditsMilli = Number(meta.creditsMilli);
+    const amountCents = Number(meta.amountCents);
+    if (!creditsMilli || !amountCents) return null;
+    if (meta.amountSubunit != null && Number(tx.amount) !== Number(meta.amountSubunit)) {
+      console.error("[BILLING] amount mismatch on", tx.id, tx.amount, meta.amountSubunit);
+      return null;
+    }
+    return grantCredits({
+      userId: meta.userId,
+      amountMilli: creditsMilli,
+      kind: meta.type === "autoreload" ? "autoreload" : "purchase",
+      ref: `ps:${tx.id}`,
+      note: `${meta.type === "autoreload" ? "Auto-reload" : "Credit purchase"} — ${usd(amountCents)}`,
+      meta: { transaction: tx.id, amountCents },
+    });
+  }
+
+  // ---- plan: first payment (our metadata) or a monthly renewal (Paystack's plan object) ----
+  const plans = await getPlans(false);
+  let userId: string | undefined = meta.userId;
+  let plan = meta.planKey ? plans.find((p) => p.key === meta.planKey) : undefined;
+
+  if (!userId && customerCode && tx.plan?.plan_code) {
+    const account = await db.billingAccount.findFirst({ where: { stripeCustomerId: customerCode } });
+    userId = account?.userId;
+    if (account?.planKey) plan = plans.find((p) => p.key === account.planKey);
+  }
+  if (!userId || !plan) return null;
+  if (meta.type === "plan" && meta.amountSubunit != null && Number(tx.amount) !== Number(meta.amountSubunit)) {
+    console.error("[BILLING] plan amount mismatch on", tx.id);
     return null;
   }
+
+  await db.billingAccount.update({
+    where: { userId },
+    data: {
+      planKey: plan.key,
+      planStatus: "active",
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: new Date(Date.now() + 31 * 86_400_000),
+    },
+  });
   return grantCredits({
-    userId: meta.userId,
-    amountMilli: creditsMilli,
-    kind: meta.type === "autoreload" ? "autoreload" : "purchase",
-    ref: `pi:${pi.id}`,
-    note: `${meta.type === "autoreload" ? "Auto-reload" : "Credit purchase"} — ${usd(amountCents)}`,
-    meta: { paymentIntent: pi.id, amountCents },
+    userId,
+    amountMilli: plan.creditsMilli,
+    kind: "plan",
+    ref: `ps:${tx.id}`,
+    note: `${plan.name} plan — monthly credits`,
+    meta: { transaction: tx.id, plan: plan.key },
   });
 }
 
-/** Pull a PaymentIntent from Stripe and grant if it succeeded (used after the client confirms 3-D Secure). */
-export async function syncPaymentIntent(paymentIntentId: string, userId: string) {
-  const pi: any = await getStripe().paymentIntents.retrieve(paymentIntentId);
-  if (pi.metadata?.userId !== userId) throw new Error("Not your payment");
-  await grantFromPaymentIntent(pi);
-  return pi.status as string;
+async function rememberCustomerAndCard(userId: string, customerCode: string | undefined, auth: any) {
+  const account = await getOrCreateAccount(userId);
+  const data: Record<string, unknown> = {};
+  if (customerCode && account.stripeCustomerId !== customerCode) data.stripeCustomerId = customerCode;
+
+  if (auth?.reusable && auth.authorization_code && (auth.channel === "card" || !auth.channel)) {
+    const cards = await kvGet<SavedCard[]>(cardsKey(userId), []);
+    // A returning customer paying with the same physical card gets a new code each time: dedupe on last4 + expiry.
+    const exists = cards.some((c) => c.last4 === String(auth.last4 || "") && c.expMonth === Number(auth.exp_month) && c.expYear === Number(auth.exp_year));
+    if (!exists) {
+      cards.push({
+        id: auth.authorization_code,
+        brand: String(auth.card_type || auth.brand || "card").trim().toLowerCase(),
+        last4: String(auth.last4 || ""),
+        expMonth: Number(auth.exp_month) || 0,
+        expYear: Number(auth.exp_year) || 0,
+        isDefault: false,
+      });
+      await kvSet(cardsKey(userId), cards);
+    }
+    if (!account.defaultPaymentMethod) data.defaultPaymentMethod = cards[cards.length - 1].id;
+  }
+  if (Object.keys(data).length) await db.billingAccount.update({ where: { userId }, data: data as never });
+}
+
+/** Ask Paystack about a reference and grant if it succeeded (called when the customer returns from checkout). */
+export async function verifyReference(reference: string, userId: string) {
+  const tx: any = await ps(`/transaction/verify/${encodeURIComponent(reference)}`);
+  if (tx.metadata?.userId !== userId) throw new Error("Not your payment");
+  await grantFromTransaction(tx);
+  if (tx.metadata?.type === "plan") await linkSubscription(userId, tx.customer?.customer_code);
+  return tx.status as string;
 }
 
 export async function maybeAutoReload(userId: string) {
   const account = await db.billingAccount.findUnique({ where: { userId } });
-  if (!account?.autoReloadEnabled || !account.defaultPaymentMethod || !process.env.STRIPE_SECRET_KEY) return;
+  if (!account?.autoReloadEnabled || !account.defaultPaymentMethod || !process.env.PAYSTACK_SECRET_KEY) return;
   const balance = await getBalanceMilli(userId);
   if (balance >= account.autoReloadBelowMilli) return;
   // One attempt per 10-minute window, no matter how many generations finish at once.
   const windowKey = Math.floor(Date.now() / 600_000);
+  if ((await kvGet<number>(`ps:arwin:${userId}`, -1)) === windowKey) return;
+  await kvSet(`ps:arwin:${userId}`, windowKey);
   try {
-    await createTopUp({
-      userId,
-      amountCents: account.autoReloadAmountCents,
-      kind: "autoreload",
-      idempotencyKey: `ar:${userId}:${windowKey}`,
-    });
+    await createTopUp({ userId, amountCents: account.autoReloadAmountCents, kind: "autoreload" });
   } catch (e) {
     await db.billingAccount.update({ where: { userId }, data: { autoReloadEnabled: false } });
     await writeNote(userId, `Auto-reload turned off — payment failed: ${(e as Error).message}`, `arfail:${userId}:${windowKey}`);
@@ -132,211 +255,97 @@ export async function maybeAutoReload(userId: string) {
 }
 
 // ------------------------------------------------------------------
-// Subscriptions
+// Subscriptions (Paystack plans, monthly)
 // ------------------------------------------------------------------
-export async function subscribe(userId: string, planKey: string) {
+async function ensurePlanCode(plan: { key: string; name: string; priceCents: number }): Promise<string> {
+  const amount = toSubunit(plan.priceCents);
+  const key = `ps:plan:${plan.key}:${payCurrency()}:${amount}`;
+  const cached = await kvGet<string | null>(key, null);
+  if (cached) return cached;
+  const created = await ps<{ plan_code: string }>("/plan", {
+    method: "POST",
+    body: { name: `UXLLY ${plan.name} (${payCurrency()} ${amount / 100})`, amount, interval: "monthly", currency: payCurrency() },
+  });
+  await kvSet(key, created.plan_code);
+  return created.plan_code;
+}
+
+export async function subscribe(userId: string, planKey: string, origin?: string) {
   const plans = await getPlans(true);
   const plan = plans.find((p) => p.key === planKey);
   if (!plan) throw new Error("Plan not found");
-
-  const { customerId, account } = await ensureCustomer(userId);
-  if (account.stripeSubscriptionId && account.planStatus && ["active", "trialing", "past_due"].includes(account.planStatus)) {
+  const account = await getOrCreateAccount(userId);
+  if (account.planKey && account.planStatus && ["active", "past_due"].includes(account.planStatus) && !account.cancelAtPeriodEnd) {
     throw new Error("You already have a plan. Cancel it first to switch.");
   }
-  if (!account.defaultPaymentMethod) throw new Error("Add a payment method first");
+  const planCode = await ensurePlanCode(plan);
+  return initCheckout({ userId, amountCents: plan.priceCents, type: "plan", creditsMilli: plan.creditsMilli, planKey: plan.key, planCode, origin });
+}
 
-  const stripe = getStripe();
-  const settings = await getSettings();
-
-  let productId = plan.stripeProductId;
-  if (!productId) {
-    const product = await stripe.products.create({ name: `UXLLY ${plan.name}`, metadata: { planKey: plan.key } });
-    productId = product.id;
-    await db.billingPlan.update({ where: { id: plan.id }, data: { stripeProductId: productId } });
-  }
-
-  let sub: any;
-  try {
-    sub = await stripe.subscriptions.create(
-      {
-        customer: customerId,
-        items: [
-          {
-            price_data: {
-              currency: settings.currency,
-              product: productId,
-              unit_amount: plan.priceCents,
-              recurring: { interval: "month" },
-            },
-          },
-        ],
-        default_payment_method: account.defaultPaymentMethod,
-        payment_behavior: "allow_incomplete",
-        metadata: { userId, planKey: plan.key },
-        expand: ["latest_invoice.payment_intent"],
-      } as any,
-      { idempotencyKey: `sub:${userId}:${plan.key}:${Math.floor(Date.now() / 60_000)}` }
-    );
-  } catch (e) {
-    throw new Error(stripeMessage(e));
-  }
-
+/** After the first plan payment, find the subscription Paystack created and remember its code + email token. */
+export async function linkSubscription(userId: string, customerCode?: string) {
+  const account = await getOrCreateAccount(userId);
+  const customer = customerCode || account.stripeCustomerId;
+  if (!customer) return;
+  const subs: any[] = await ps(`/subscription?customer=${encodeURIComponent(customer)}&perPage=10`).catch(() => []);
+  const live = subs.find((s) => s.status === "active" || s.status === "non-renewing") || null;
+  if (!live) return;
+  await kvSet(tokenKey(userId), live.email_token);
   await db.billingAccount.update({
     where: { userId },
     data: {
-      stripeSubscriptionId: sub.id,
-      planKey: plan.key,
-      planStatus: sub.status,
-      currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
-      cancelAtPeriodEnd: !!sub.cancel_at_period_end,
+      stripeSubscriptionId: live.subscription_code,
+      currentPeriodEnd: live.next_payment_date ? new Date(live.next_payment_date) : account.currentPeriodEnd,
+      cancelAtPeriodEnd: live.status === "non-renewing",
     },
   });
-
-  const invoice = sub.latest_invoice;
-  const pi = invoice?.payment_intent;
-  if (sub.status === "active") {
-    if (invoice?.id) await grantFromInvoice(invoice.id);
-    return { status: "active" as const };
-  }
-  if (pi?.status === "requires_action") {
-    return { status: "requires_action" as const, clientSecret: pi.client_secret as string, subscriptionId: sub.id as string };
-  }
-  // Declined — don't leave a dangling incomplete subscription.
-  try {
-    await stripe.subscriptions.cancel(sub.id);
-  } catch {
-    /* ignore */
-  }
-  await db.billingAccount.update({
-    where: { userId },
-    data: { stripeSubscriptionId: null, planKey: null, planStatus: null, currentPeriodEnd: null },
-  });
-  throw new Error("Your card was declined");
-}
-
-export async function grantFromInvoice(invoiceId: string) {
-  const stripe = getStripe();
-  const invoice: any = await stripe.invoices.retrieve(invoiceId);
-  if (invoice.status !== "paid") return null;
-  // Credits only on a new subscription or a renewal (not on proration updates).
-  if (!["subscription_create", "subscription_cycle"].includes(invoice.billing_reason)) return null;
-
-  const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
-  if (!customerId) return null; // (an undefined filter would match the FIRST account — never allow that)
-  const account = await db.billingAccount.findFirst({ where: { stripeCustomerId: customerId } });
-  if (!account) return null;
-
-  const plans = await getPlans(false);
-  const plan =
-    plans.find((p) => p.key === account.planKey) ||
-    plans.find((p) => p.priceCents === invoice.amount_paid);
-  if (!plan) return null;
-
-  return grantCredits({
-    userId: account.userId,
-    amountMilli: plan.creditsMilli,
-    kind: "plan",
-    ref: `inv:${invoice.id}`,
-    note: `${plan.name} plan — monthly credits`,
-    meta: { invoice: invoice.id, plan: plan.key },
-  });
-}
-
-export async function syncSubscription(subscriptionId: string) {
-  const sub: any = await getStripe().subscriptions.retrieve(subscriptionId);
-  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
-  if (!customerId) return;
-  const account = await db.billingAccount.findFirst({ where: { stripeCustomerId: customerId } });
-  if (!account) return;
-
-  const ended = sub.status === "canceled" || sub.status === "incomplete_expired";
-  await db.billingAccount.update({
-    where: { id: account.id },
-    data: ended
-      ? { stripeSubscriptionId: null, planKey: null, planStatus: "canceled", cancelAtPeriodEnd: false }
-      : {
-          stripeSubscriptionId: sub.id,
-          planKey: sub.metadata?.planKey || account.planKey,
-          planStatus: sub.status,
-          currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
-          cancelAtPeriodEnd: !!sub.cancel_at_period_end,
-        },
-  });
-  if (sub.latest_invoice) {
-    const id = typeof sub.latest_invoice === "string" ? sub.latest_invoice : sub.latest_invoice.id;
-    if (id && !ended) await grantFromInvoice(id);
-  }
 }
 
 export async function setCancelAtPeriodEnd(userId: string, cancel: boolean) {
   const account = await getOrCreateAccount(userId);
-  if (!account.stripeSubscriptionId) throw new Error("No active plan");
-  await getStripe().subscriptions.update(account.stripeSubscriptionId, { cancel_at_period_end: cancel });
+  if (!account.stripeSubscriptionId) await linkSubscription(userId);
+  const fresh = await getOrCreateAccount(userId);
+  const code = fresh.stripeSubscriptionId;
+  const token = await kvGet<string | null>(tokenKey(userId), null);
+  if (!code || !token) throw new Error("No active plan");
+  await ps(cancel ? "/subscription/disable" : "/subscription/enable", { method: "POST", body: { code, token } });
   await db.billingAccount.update({ where: { userId }, data: { cancelAtPeriodEnd: cancel } });
 }
 
+/** A cancelled plan stays until the paid period ends; clear it once that date has passed. */
+export async function expirePlanIfDue(userId: string) {
+  const a = await db.billingAccount.findUnique({ where: { userId } });
+  if (!a?.planKey || !a.cancelAtPeriodEnd || !a.currentPeriodEnd || a.currentPeriodEnd.getTime() > Date.now()) return;
+  await db.billingAccount.update({ where: { userId }, data: { planKey: null, planStatus: "canceled", cancelAtPeriodEnd: false, stripeSubscriptionId: null } });
+}
+
 // ------------------------------------------------------------------
-// Cards
+// Cards (saved automatically when a customer pays by card)
 // ------------------------------------------------------------------
-export async function attachSetupIntent(userId: string, setupIntentId: string) {
-  const stripe = getStripe();
-  const si: any = await stripe.setupIntents.retrieve(setupIntentId);
-  const { customerId, account } = await ensureCustomer(userId);
-  if (si.customer !== customerId) throw new Error("Not your card");
-  if (si.status !== "succeeded" || !si.payment_method) throw new Error("Card was not saved");
-  const pmId = typeof si.payment_method === "string" ? si.payment_method : si.payment_method.id;
-  if (!account.defaultPaymentMethod) await setDefaultPaymentMethod(userId, pmId);
-  return pmId as string;
-}
-
-export async function setDefaultPaymentMethod(userId: string, paymentMethodId: string) {
-  const { customerId } = await ensureCustomer(userId);
-  const stripe = getStripe();
-  const pm: any = await stripe.paymentMethods.retrieve(paymentMethodId);
-  if (pm.customer !== customerId) throw new Error("Not your card");
-  await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: paymentMethodId } });
-  await db.billingAccount.update({ where: { userId }, data: { defaultPaymentMethod: paymentMethodId } });
-}
-
-export async function listCards(userId: string) {
+export async function listCards(userId: string): Promise<SavedCard[]> {
   const account = await getOrCreateAccount(userId);
-  if (!account.stripeCustomerId) return [];
-  const list = await getStripe().paymentMethods.list({ customer: account.stripeCustomerId, type: "card" });
-  return list.data.map((pm: any) => ({
-    id: pm.id as string,
-    brand: pm.card?.brand as string,
-    last4: pm.card?.last4 as string,
-    expMonth: pm.card?.exp_month as number,
-    expYear: pm.card?.exp_year as number,
-    isDefault: pm.id === account.defaultPaymentMethod,
-  }));
+  const cards = await kvGet<SavedCard[]>(cardsKey(userId), []);
+  return cards.map((c) => ({ ...c, isDefault: c.id === account.defaultPaymentMethod }));
 }
 
-export async function removeCard(userId: string, paymentMethodId: string) {
+export async function setDefaultPaymentMethod(userId: string, cardId: string) {
+  const cards = await kvGet<SavedCard[]>(cardsKey(userId), []);
+  if (!cards.some((c) => c.id === cardId)) throw new Error("Not your card");
+  await db.billingAccount.update({ where: { userId }, data: { defaultPaymentMethod: cardId } });
+}
+
+export async function removeCard(userId: string, cardId: string) {
   const account = await getOrCreateAccount(userId);
-  const stripe = getStripe();
-  const pm: any = await stripe.paymentMethods.retrieve(paymentMethodId);
-  if (pm.customer !== account.stripeCustomerId) throw new Error("Not your card");
-
-  const others = (await listCards(userId)).filter((c) => c.id !== paymentMethodId);
-  const isDefault = account.defaultPaymentMethod === paymentMethodId;
-  const hasPlan = !!account.stripeSubscriptionId;
-  if (isDefault && others.length === 0 && hasPlan) {
-    throw new Error("Cancel your plan before removing your only card.");
-  }
-
-  await stripe.paymentMethods.detach(paymentMethodId);
-  if (isDefault) {
-    if (others.length > 0) {
-      await setDefaultPaymentMethod(userId, others[0].id);
-      if (account.stripeSubscriptionId) {
-        await stripe.subscriptions.update(account.stripeSubscriptionId, { default_payment_method: others[0].id });
-      }
-    } else {
-      await db.billingAccount.update({
-        where: { userId },
-        data: { defaultPaymentMethod: null, autoReloadEnabled: false },
-      });
-    }
+  const cards = await kvGet<SavedCard[]>(cardsKey(userId), []);
+  if (!cards.some((c) => c.id === cardId)) throw new Error("Not your card");
+  const rest = cards.filter((c) => c.id !== cardId);
+  await kvSet(cardsKey(userId), rest);
+  if (account.defaultPaymentMethod === cardId) {
+    await db.billingAccount.update({
+      where: { userId },
+      data: rest.length ? { defaultPaymentMethod: rest[0].id } : { defaultPaymentMethod: null, autoReloadEnabled: false },
+    });
   }
 }
+
+export { formatCredits };

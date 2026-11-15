@@ -9,8 +9,8 @@ export interface BillingCard {
 }
 
 export interface BillingOverview {
-  stripeReady: boolean;
-  publishableKey: string | null;
+  paymentsReady: boolean;
+  payment: { currency: string; ngnPerUsd: number };
   balanceMilli: number;
   nextExpiry: string | null;
   settings: {

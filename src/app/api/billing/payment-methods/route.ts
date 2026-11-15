@@ -1,16 +1,14 @@
-// Saved cards: GET list · POST {action:"attach"|"default"} · DELETE ?id=
+// Saved cards: GET list · POST {action:"default", paymentMethodId} · DELETE ?id=
+// Cards are saved automatically when a customer pays by card on Paystack.
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { requireUser, unauthorized } from "@/lib/billing/http";
-import { stripeConfigured, getStripe, getOrCreateAccount, stripeMessage } from "@/lib/billing/stripe";
-import { listCards, attachSetupIntent, setDefaultPaymentMethod, removeCard } from "@/lib/billing/flows";
+import { listCards, setDefaultPaymentMethod, removeCard } from "@/lib/billing/flows";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const user = await requireUser();
   if (!user) return unauthorized();
-  if (!stripeConfigured()) return NextResponse.json({ cards: [] });
   return NextResponse.json({ cards: await listCards(user.id) });
 }
 
@@ -19,21 +17,13 @@ export async function POST(request: Request) {
   if (!user) return unauthorized();
   try {
     const body = await request.json();
-    if (body.action === "attach") {
-      const id = await attachSetupIntent(user.id, String(body.setupIntentId));
-      return NextResponse.json({ ok: true, paymentMethodId: id });
-    }
     if (body.action === "default") {
       await setDefaultPaymentMethod(user.id, String(body.paymentMethodId));
-      const account = await getOrCreateAccount(user.id);
-      if (account.stripeSubscriptionId) {
-        await getStripe().subscriptions.update(account.stripeSubscriptionId, { default_payment_method: String(body.paymentMethodId) });
-      }
       return NextResponse.json({ ok: true });
     }
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (e) {
-    return NextResponse.json({ error: stripeMessage(e) }, { status: 400 });
+    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
 }
 
@@ -46,6 +36,6 @@ export async function DELETE(request: Request) {
     await removeCard(user.id, id);
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ error: stripeMessage(e) }, { status: 400 });
+    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
 }

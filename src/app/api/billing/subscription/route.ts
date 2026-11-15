@@ -1,11 +1,11 @@
 // POST {planKey} subscribe · DELETE cancel at period end · PATCH resume
 import { NextResponse } from "next/server";
 import { requireUser, unauthorized } from "@/lib/billing/http";
-import { stripeConfigured } from "@/lib/billing/stripe";
+import { paystackConfigured } from "@/lib/billing/paystack";
 import { subscribe, setCancelAtPeriodEnd } from "@/lib/billing/flows";
 
 function guard() {
-  return stripeConfigured() ? null : NextResponse.json({ error: "Stripe is not configured yet" }, { status: 503 });
+  return paystackConfigured() ? null : NextResponse.json({ error: "Payments are not configured yet" }, { status: 503 });
 }
 
 export async function POST(request: Request) {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   if (g) return g;
   try {
     const { planKey } = await request.json();
-    return NextResponse.json(await subscribe(user.id, String(planKey)));
+    return NextResponse.json(await subscribe(user.id, String(planKey), new URL(request.url).origin));
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }

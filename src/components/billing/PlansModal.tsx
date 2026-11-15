@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { Shell, btnPrimary, btnSecondary } from "./Shell";
-import { getStripeJs } from "./stripeClient";
 import { formatCredits, usd } from "@/lib/billing/units";
 import type { BillingOverview } from "./types";
 
@@ -25,7 +24,6 @@ export function PlansModal({
   const best = overview.plans.reduce((m, p) => Math.max(m, p.creditsMilli / p.priceCents), 0);
 
   async function choose(planKey: string) {
-    if (overview.cards.length === 0) return onAddCard();
     setBusy(planKey);
     setError(null);
     try {
@@ -36,21 +34,14 @@ export function PlansModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not start plan");
-      if (data.status === "requires_action") {
-        const stripe = await getStripeJs(overview.publishableKey!);
-        const r = await stripe!.handleNextAction({ clientSecret: data.clientSecret });
-        if (r.error) throw new Error(r.error.message || "Authentication failed");
-        await fetch("/api/billing/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subscriptionId: data.subscriptionId }),
-        });
+      if (data.url) {
+        window.location.href = data.url; // Paystack checkout; credits are added when you return
+        return;
       }
       setDone(true);
       onDone();
     } catch (e) {
       setError((e as Error).message);
-    } finally {
       setBusy(null);
     }
   }
@@ -91,7 +82,7 @@ export function PlansModal({
                 <li className="flex gap-2"><Check size={16} className="text-emerald-600 mt-0.5 shrink-0" />Cancel anytime</li>
               </ul>
               <button className={`${btnPrimary} w-full mt-4`} disabled={current || !!busy} onClick={() => choose(p.key)}>
-                {current ? "Current plan" : busy === p.key ? "Starting…" : overview.cards.length === 0 ? "Add card to start" : `Start ${p.name}`}
+                {current ? "Current plan" : busy === p.key ? "Opening Paystack…" : `Start ${p.name}`}
               </button>
             </div>
           );

@@ -9,7 +9,6 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Crown, Zap, Rocket, ShieldCheck, XCircle, CheckCircle2, Plus, Check } from "lucide-react";
-import { getStripeJs } from "@/components/billing/stripeClient";
 import { useBilling } from "@/components/billing/BillingProvider";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { CardLabel } from "@/components/billing/Shell";
@@ -127,7 +126,6 @@ function BillingInner() {
   async function choosePlan(planKey: string) {
     if (!overview) return;
     if (guest) return openLogin();
-    if (overview.cards.length === 0) return openAddCard();
     setBusy(true);
     setMsg(null);
     try {
@@ -138,17 +136,10 @@ function BillingInner() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not start plan");
-      if (data.status === "requires_action") {
-        const stripe = await getStripeJs(overview.publishableKey!);
-        const r = await stripe!.handleNextAction({ clientSecret: data.clientSecret });
-        if (r.error) throw new Error(r.error.message || "Authentication failed");
-        await fetch("/api/billing/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subscriptionId: data.subscriptionId }),
-        });
+      if (data.url) {
+        window.location.href = data.url; // Paystack checkout; credits are added when you return
+        return;
       }
-      setMsg("You're on a plan. Your monthly credits have been added.");
       await refresh();
     } catch (e) {
       setMsg((e as Error).message);
@@ -206,7 +197,7 @@ function BillingInner() {
           "All AI tools and models",
           "Cancel anytime",
         ],
-        cta: guest ? `Sign in to get ${p.name}` : current ? "Current plan" : plan ? "Cancel current plan to switch" : overview.cards.length === 0 ? `Add card to get ${p.name}` : `Get ${p.name}`,
+        cta: guest ? `Sign in to get ${p.name}` : current ? "Current plan" : plan ? "Cancel current plan to switch" : `Get ${p.name}`,
         current,
         disabled: current || !!plan || busy,
         best: overview.plans.length > 1 && p.creditsMilli / p.priceCents >= bestRate,

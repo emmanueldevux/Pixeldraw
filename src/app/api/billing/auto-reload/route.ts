@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireUser, unauthorized } from "@/lib/billing/http";
-import { getOrCreateAccount } from "@/lib/billing/stripe";
+import { getOrCreateAccount } from "@/lib/billing/paystack";
 import { getSettings } from "@/lib/billing/settings";
 import { toMilli } from "@/lib/billing/units";
 import { usd } from "@/lib/billing/units";

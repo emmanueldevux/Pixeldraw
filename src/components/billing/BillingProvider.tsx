@@ -38,7 +38,7 @@ const fallback: Ctx = {
 const BillingContext = createContext<Ctx>(fallback);
 export const useBilling = () => useContext(BillingContext);
 
-type Modal = { kind: "topup"; options: TopUpOptions } | { kind: "plans" } | { kind: "autoreload" } | { kind: "notready" } | null;
+type Modal = { kind: "topup"; options: TopUpOptions } | { kind: "plans" } | { kind: "autoreload" } | { kind: "notready" } | { kind: "paid"; ok: boolean } | null;
 
 export function BillingProvider({ children }: { children: ReactNode }) {
   const { status } = useSession();
@@ -58,6 +58,27 @@ export function BillingProvider({ children }: { children: ReactNode }) {
     }
   }, [authed]);
 
+  // Back from Paystack checkout: confirm the payment (the webhook may be slower), then show the result.
+  useEffect(() => {
+    if (!authed) return;
+    const q = new URLSearchParams(window.location.search);
+    const ref = q.get("reference") || q.get("trxref");
+    if (!ref) return;
+    q.delete("reference");
+    q.delete("trxref");
+    q.delete("ps");
+    const rest = q.toString();
+    window.history.replaceState(null, "", window.location.pathname + (rest ? `?${rest}` : ""));
+    fetch("/api/billing/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reference: ref }) })
+      .then(async (r) => {
+        const d = await r.json().catch(() => ({}));
+        setModal({ kind: "paid", ok: r.ok && d.status === "success" });
+        refresh();
+      })
+      .catch(() => setModal({ kind: "paid", ok: false }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed]);
+
   useEffect(() => {
     if (authed) refresh();
     else setOverview(null);
@@ -65,7 +86,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
 
   const guard = (open: () => void) => {
     if (!authed) return openLogin();
-    if (overview && !overview.stripeReady) return setModal({ kind: "notready" });
+    if (overview && !overview.paymentsReady) return setModal({ kind: "notready" });
     open();
   };
 
@@ -116,16 +137,15 @@ export function BillingProvider({ children }: { children: ReactNode }) {
         </Shell>
       )}
 
-      {overview?.publishableKey && addCard && (
+      {modal?.kind === "paid" && (
+        <Shell title={modal.ok ? "Payment successful" : "Payment not completed"} onClose={close} footer={<button className={btnPrimary} onClick={close}>OK</button>}>
+          <p className="text-sm text-gray-600">{modal.ok ? "Your credits have been added. You can keep creating right away." : "We could not confirm that payment. If you were charged, your credits will appear shortly."}</p>
+        </Shell>
+      )}
+
+      {overview && addCard && (
         <div className="relative z-[90]">
-          <AddCardModal
-            publishableKey={overview.publishableKey}
-            onClose={() => setAddCard(false)}
-            onSaved={async () => {
-              setAddCard(false);
-              await refresh();
-            }}
-          />
+          <AddCardModal overview={overview} onClose={() => setAddCard(false)} />
         </div>
       )}
     </BillingContext.Provider>

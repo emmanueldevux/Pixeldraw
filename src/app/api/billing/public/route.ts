@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const [settings, plans] = await Promise.all([getSettings(), getPlans(true)]);
   return NextResponse.json({
-    stripeReady: false,
-    publishableKey: null,
+    paymentsReady: false,
+    payment: { currency: "NGN", ngnPerUsd: 1500 },
     balanceMilli: 0,
     nextExpiry: null,
     settings: {

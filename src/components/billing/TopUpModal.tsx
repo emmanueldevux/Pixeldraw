@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { Shell, btnPrimary, btnSecondary, inputCls, CardLabel } from "./Shell";
-import { getStripeJs } from "./stripeClient";
 import { centsToMilli, formatCredits, usd } from "@/lib/billing/units";
 import type { BillingOverview, TopUpOptions } from "./types";
 
@@ -38,27 +37,21 @@ export function TopUpModal({
   const card = overview.cards.find((c) => c.id === cardId) || overview.cards[0];
   const hasCard = overview.cards.length > 0;
 
-  async function pay() {
+  // mode "card": charge the saved card now. mode "new": go to Paystack checkout (card, bank transfer, USSD).
+  async function pay(mode: "card" | "new") {
     setBusy(true);
     setError(null);
     try {
       const res = await fetch("/api/billing/topup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amountCents: cents, paymentMethodId: card?.id, idempotencyKey: idem }),
+        body: JSON.stringify({ amountCents: cents, paymentMethodId: mode === "card" ? card?.id : "new" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Payment failed");
-
-      if (data.status === "requires_action") {
-        const stripe = await getStripeJs(overview.publishableKey!);
-        const result = await stripe!.handleNextAction({ clientSecret: data.clientSecret });
-        if (result.error) throw new Error(result.error.message || "Authentication failed");
-        await fetch("/api/billing/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentIntentId: data.paymentIntentId }),
-        });
+      if (data.url) {
+        window.location.href = data.url;
+        return;
       }
       setStep("done");
       onDone();
@@ -90,7 +83,7 @@ export function TopUpModal({
         footer={
           <>
             <button className={btnSecondary} onClick={() => setStep("amount")} disabled={busy}>Back</button>
-            <button className={btnPrimary} onClick={pay} disabled={busy}>{busy ? "Processing…" : "Confirm payment"}</button>
+            <button className={btnPrimary} onClick={() => pay("card")} disabled={busy}>{busy ? "Processing…" : "Pay with this card"}</button>
           </>
         }
       >
@@ -148,7 +141,7 @@ export function TopUpModal({
           {hasCard ? (
             <button className={btnPrimary} disabled={!valid} onClick={() => setStep("confirm")}>Continue</button>
           ) : (
-            <button className={btnPrimary} onClick={onAddCard}>Add payment method</button>
+            <button className={btnPrimary} disabled={!valid || busy} onClick={() => pay("new")}>{busy ? "Opening Paystack…" : "Pay with Paystack"}</button>
           )}
         </>
       }
@@ -198,12 +191,15 @@ export function TopUpModal({
               </option>
             ))}
           </select>
-          <button onClick={onAddCard} className="mt-2 w-full text-right text-sm font-semibold text-gray-800 hover:underline">
-            + Add payment method
+          <button onClick={() => pay("new")} disabled={!valid || busy} className="mt-2 w-full text-right text-sm font-semibold text-gray-800 hover:underline disabled:opacity-50">
+            Pay another way (card, bank transfer, USSD)
           </button>
         </>
       ) : (
-        <p className="text-sm text-gray-500">No card saved yet. Add one to continue.</p>
+        <p className="text-sm text-gray-500">You will pay on Paystack with a card, bank transfer or USSD. Your card is saved for next time.</p>
+      )}
+      {valid && overview.payment.currency === "NGN" && (
+        <p className="mt-3 text-xs text-gray-500">Charged in Naira at checkout: about ₦{Math.round((cents / 100) * overview.payment.ngnPerUsd).toLocaleString("en-NG")}.</p>
       )}
     </Shell>
   );

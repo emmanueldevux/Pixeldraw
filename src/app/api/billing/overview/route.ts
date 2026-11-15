@@ -7,8 +7,8 @@ import { getSettings } from "@/lib/billing/settings";
 import { getPlans, getRules } from "@/lib/billing/pricing";
 import { typicalCharges } from "@/lib/billing/metered";
 import { freeTrialStatus } from "@/lib/billing/free";
-import { getOrCreateAccount, stripeConfigured } from "@/lib/billing/stripe";
-import { listCards } from "@/lib/billing/flows";
+import { getOrCreateAccount, paystackConfigured, payCurrency, ngnPerUsd } from "@/lib/billing/paystack";
+import { listCards, expirePlanIfDue } from "@/lib/billing/flows";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,7 @@ export async function GET() {
   const user = await requireUser();
   if (!user) return unauthorized();
 
+  await expirePlanIfDue(user.id).catch(() => {});
   const [settings, plans, rules, account, bal, free] = await Promise.all([
     getSettings(),
     getPlans(true),
@@ -26,7 +27,7 @@ export async function GET() {
   ]);
 
   let cards: Awaited<ReturnType<typeof listCards>> = [];
-  if (stripeConfigured()) {
+  if (paystackConfigured()) {
     try {
       cards = await listCards(user.id);
     } catch (e) {
@@ -39,8 +40,8 @@ export async function GET() {
   const plan = account.planKey ? plans.find((p) => p.key === account.planKey) || (await db.billingPlan.findUnique({ where: { key: account.planKey } })) : null;
 
   return NextResponse.json({
-    stripeReady: stripeConfigured() && !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-    publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || null,
+    paymentsReady: paystackConfigured(),
+    payment: { currency: payCurrency(), ngnPerUsd: ngnPerUsd() },
     balanceMilli: bal.balanceMilli,
     nextExpiry,
     settings: {
