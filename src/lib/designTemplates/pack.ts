@@ -126,6 +126,7 @@ export async function generatePackAd(opts: {
   brandNote?: string; // brainImageNote(...) + adCraftNote(...)
   matchHint?: string; // short brand/mood line that helps pick the layout
   productImage?: string | null;
+  compositionNote?: string; // user-fixed text position (wins over the reference's text layout)
 }): Promise<{ url: string; refIndex: number }> {
   let refIndex = await pickReference(opts.pack, opts.brief, opts.matchHint || "");
   if (opts.packId && opts.pack.refImages.length > 1) {
@@ -142,6 +143,7 @@ export async function generatePackAd(opts: {
       ? "IMAGE 2 is the brand's real product. Put it where the reference's product/subject sits, reproduced exactly (same shape, colours, label, every printed word spelled correctly)."
       : "Choose a product, subject or scene that fits the brief, placed where the reference's product/subject sits.",
     "",
+    opts.compositionNote ? `${opts.compositionNote}\n` : "",
     "THE PACK'S DESIGN DNA (shared style, follow it):",
     opts.pack.packDna || "(follow the reference closely)",
     "",

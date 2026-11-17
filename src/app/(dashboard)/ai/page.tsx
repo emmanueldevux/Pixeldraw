@@ -337,6 +337,7 @@ function AIStudioPageInner() {
   } | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>("instagram_post");
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [attachedMode, setAttachedMode] = useState<"product" | "reference">("product");
   // Clarifying questions popup (asked only when a carousel request is unclear)
   const [slideshowAsk, setSlideshowAsk] = useState<string | null>(null);
   const [clarify, setClarify] = useState<{ questions: ClarifyQuestion[]; onSubmit: (a: Record<string, string>) => void } | null>(null);
@@ -502,6 +503,7 @@ function AIStudioPageInner() {
             extraNotes: sg.extraNotes,
           } : undefined,
           productImage: attachedImage || undefined,
+          attachedMode: attachedImage ? attachedMode : undefined,
           imageProvider: imageModel,
         }),
       });
@@ -560,7 +562,7 @@ function AIStudioPageInner() {
           prompt,
           size: `${platform.width}x${platform.height}`,
           brandId: selectedChannel?.brand.id,
-          productImage: attachedImage || undefined,
+          productImage: attachedMode === "product" ? attachedImage || undefined : undefined,
           imageProvider: imageModel,
         }),
       });
@@ -611,7 +613,7 @@ function AIStudioPageInner() {
           mode: "edit",
           size: `${platform.width}x${platform.height}`,
           brandId: selectedChannel?.brand.id,
-          productImage: attachedImage || undefined,
+          productImage: attachedMode === "product" ? attachedImage || undefined : undefined,
           imageProvider: imageModel,
         }),
       });
@@ -883,6 +885,8 @@ function AIStudioPageInner() {
         disabled={isAuthenticated && !selectedChannel}
         attachedImage={attachedImage}
         onAttachImage={setAttachedImage}
+        attachedMode={attachedMode}
+        onAttachedModeChange={setAttachedMode}
         imageModel={imageModel}
         onImageModelChange={setImageModel}
       />
