@@ -62,6 +62,7 @@ interface State {
   adPackId: string;
   thumbPackId: string;
   slideshowStyleId: string;
+  composition: string; // "auto" or a spot: where single-ad text sits (logo goes above it)
   negativePrompt: string;
   characters: Character[];
 }
@@ -304,6 +305,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
         adPackId: typeof adv.adPackId === "string" ? adv.adPackId : "",
         thumbPackId: typeof adv.thumbPackId === "string" ? adv.thumbPackId : "",
         slideshowStyleId: typeof adv.slideshowStyleId === "string" ? adv.slideshowStyleId : "",
+        composition: typeof adv.composition === "string" ? adv.composition : "auto",
         negativePrompt: typeof adv.negativePrompt === "string" ? adv.negativePrompt : "",
         characters: cleanCharacters(adv.characters),
       });
@@ -371,7 +373,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
           headingFont: state.headingFont,
           tone: state.tone,
           referenceImages: state.referenceImages,
-          advancedSettings: { bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, slideshowStyleId: state.slideshowStyleId, negativePrompt: state.negativePrompt, characters: state.characters },
+          advancedSettings: { bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, slideshowStyleId: state.slideshowStyleId, composition: state.composition, negativePrompt: state.negativePrompt, characters: state.characters },
         }),
       });
       const logoPut = fetch("/api/projects/logo", {
@@ -412,7 +414,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
 
   const e = state.ecommerce;
   const toOpts = (a: string[]) => a.map((v) => ({ value: v, label: v }));
-  const logoAuto = state.logoPosition === "auto";
+  const compAuto = state.composition === "auto";
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -522,24 +524,25 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
             </div>
             <div className="min-w-0 space-y-3">
               <div>
-                <label className={LABEL}>Placement</label>
+                <label className={LABEL}>Composition</label>
                 <Segmented
-                  value={logoAuto ? "auto" : "manual"}
-                  onChange={(v) => patch({ logoPosition: v === "auto" ? "auto" : logoAuto ? "bottom-right" : state.logoPosition })}
+                  value={compAuto ? "auto" : "manual"}
+                  onChange={(v) => patch({ composition: v === "auto" ? "auto" : compAuto ? "bottom-right" : state.composition })}
                   options={[{ value: "auto", label: "Auto" }, { value: "manual", label: "Manual" }]}
                 />
+                <p className="mt-1.5 text-[11px] leading-snug text-zinc-500">Where a single ad&apos;s text sits. Your logo goes just above it.</p>
               </div>
-              <div className={`grid grid-cols-3 gap-1 p-1 rounded-xl w-[96px] ${INSET} ${logoAuto ? "opacity-40 pointer-events-none" : ""}`}>
+              <div className={`grid grid-cols-3 gap-1 p-1 rounded-xl w-[96px] ${INSET} ${compAuto ? "opacity-40 pointer-events-none" : ""}`}>
                 {LOGO_GRID.map((pos, i) =>
                   pos ? (
                     <button
                       key={pos}
                       type="button"
                       aria-label={pos}
-                      onClick={() => patch({ logoPosition: pos })}
-                      className={`h-7 rounded-md flex items-center justify-center transition-all ${state.logoPosition === pos ? "bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)]" : "hover:bg-white/60"}`}
+                      onClick={() => patch({ composition: pos })}
+                      className={`h-7 rounded-md flex items-center justify-center transition-all ${state.composition === pos ? "bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)]" : "hover:bg-white/60"}`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${state.logoPosition === pos ? "bg-zinc-800" : "bg-zinc-400"}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${state.composition === pos ? "bg-zinc-800" : "bg-zinc-400"}`} />
                     </button>
                   ) : (
                     <span key={i} className="h-7" />

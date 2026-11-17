@@ -35,6 +35,7 @@ import type { AIMessage, ImageSize, StyleGuideData } from "@/types";
 import type { LogoPosition } from "@/lib/ai/logoComposite";
 import { getRandomTemplateAsBase64 } from "@/lib/templates";
 import { randomUUID } from "crypto";
+import { parseComposition, compositionDirective, compositeLogoForComposition, type CompositionSpot } from "@/lib/ai/composition";
 import { isAdRequest, wantsNewFormat, previousConcepts, adDirectorRule } from "@/lib/ai/adDirector";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
 import { insufficientResponse } from "@/lib/billing/http";
@@ -108,15 +109,19 @@ async function handlePOST(request: Request) {
       if (!guestAllowed(ip)) return NextResponse.json({ error: "guest_limit" }, { status: 429 });
     }
 
-    const { messages, platform, brandId, brandName, channelDescription, styleGuide, channelId, productImage, imageProvider, freeChat, characterId } =
+    const { messages, platform, brandId, brandName, channelDescription, styleGuide, channelId, productImage: productImageRaw, attachedMode, imageProvider, freeChat, characterId } =
       await request.json();
+    // The attached image is either the PRODUCT to put in the ad, or a REFERENCE AD whose layout to copy.
+    const refAd: string | null = attachedMode === "reference" && productImageRaw ? productImageRaw : null;
+    const productImage: string | null = refAd ? null : productImageRaw || null;
+    const refPack = refAd ? ({ refImages: [refAd], refDnas: [""], packDna: "" } as unknown as import("@/lib/designTemplates/types").DesignTemplate) : null;
     if (guest && !freeChat) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     console.log("[CHAT] 🔑 Received brandId:", brandId, "brandName:", brandName);
 
     // ---- BILLING: check first. Worst case = chat reply + one image. Nothing runs if they can't afford it.
     const billingRef = randomUUID();
-    const likelyImageKey = imageKey({ imageProvider, productImage });
+    const likelyImageKey = imageKey({ imageProvider, productImage: productImage || refAd });
     let auth;
     try {
       if (!guest) auth = await authorize(uid, [{ key: "chat.text" }, { key: likelyImageKey }], { trial: "consume" });
@@ -216,7 +221,11 @@ async function handlePOST(request: Request) {
     // Ad director: persona + angle + hook + (when no reference steers it) an invented format.
     const adReq = !thumbReq && isAdRequest(askText, platform);
     const explicitPack = !!(((loadedBrand?.styleGuide as unknown as { advancedSettings?: { adPackId?: string } } | null)?.advancedSettings)?.adPackId);
-    const inventFormat = adReq && !explicitPack && wantsNewFormat(askText);
+    // Composition (single ads): where the text block sits; the logo goes above it. "auto" = unchanged.
+    const composition = adReq ? parseComposition(((loadedBrand?.styleGuide as unknown as { advancedSettings?: { composition?: string } } | null)?.advancedSettings)?.composition) : "auto";
+    const compLogo = composition !== "auto" && !!loadedBrand?.logo;
+    const compNote = compositionDirective(composition, compLogo);
+    const inventFormat = adReq && !explicitPack && !refAd && wantsNewFormat(askText);
 
     // The project's Brand Brain: audience, voice, positioning, real offers.
     // Every caption and headline the chat writes comes from this.
@@ -228,7 +237,7 @@ async function handlePOST(request: Request) {
     }
 
     const adRule = adReq
-      ? adDirectorRule({ inventFormat, previous: previousConcepts(messages as AIMessage[]), hasBrain: !!brainBlock, hasProductPhoto: !!productImage, platform })
+      ? adDirectorRule({ composition, inventFormat, previous: previousConcepts(messages as AIMessage[]), hasBrain: !!brainBlock, hasProductPhoto: !!productImage, platform })
       : "";
 
     // Prepend system message
@@ -299,7 +308,7 @@ async function handlePOST(request: Request) {
             const brain = lookupId ? await getBrain(lookupId).catch(() => null) : null;
             const brainOk = !!brain && !isEmptyBrain(brain.data);
             const matchHint = brainOk ? [brain!.data.business.industry, brain!.data.voice.oneLine].filter(Boolean).join("; ") : "";
-            const pack = await resolvePack(adv.thumbPackId, { userId: uid, brief: askText, hint: matchHint, purpose: "thumbnail" }).catch(() => null);
+            const pack = refPack || (await resolvePack(adv.thumbPackId, { userId: uid, brief: askText, hint: matchHint, purpose: "thumbnail" }).catch(() => null));
             // Subject: an attached photo wins; otherwise the project's character sheet (by name if mentioned).
             const subjects: { url: string; kind: "person" | "product" }[] = [];
             let characterNote = "";
@@ -330,21 +339,21 @@ async function handlePOST(request: Request) {
               matchHint,
             });
             packImage = out.url;
-            if (pack && out.refIndex !== null) packUsed = { id: pack.id, refIndex: out.refIndex };
+            if (pack && pack.id && out.refIndex !== null) packUsed = { id: pack.id, refIndex: out.refIndex };
             console.log("[CHAT] 🖼️ Thumbnail", thumbSpecNow.aspect, pack ? `from pack ${pack.number} ref ${(out.refIndex ?? 0) + 1}` : "(no pack)", subjects.length ? `with ${subjects.length} subject photo(s)` : "");
           } catch (thumbErr) {
             console.error("[CHAT] thumbnail generation failed, falling back:", thumbErr);
           }
         }
         // No references of the project's own → the project's ad pack (admin reference packs).
-        if (!thumbReq && !inventFormat && refs.length === 0 && (lookupId || freeChat) && process.env.OPENAI_API_KEY) {
+        if (!thumbReq && (!inventFormat || refAd) && refs.length === 0 && (lookupId || freeChat || refAd) && process.env.OPENAI_API_KEY) {
           const adv = ((loadedBrand?.styleGuide as unknown as { advancedSettings?: { adPackId?: string } } | null)?.advancedSettings) || {};
           const brain = lookupId ? await getBrain(lookupId).catch(() => null) : null;
           const lastUser = [...(messages as AIMessage[])].reverse().find((m) => m.role === "user");
           const userAsk = typeof lastUser?.content === "string" ? lastUser.content : "";
           const brainOk = !!brain && !isEmptyBrain(brain.data);
           const matchHint = brainOk ? [brain!.data.business.industry, brain!.data.voice.oneLine, moodFromVoice(brain!.data)].filter(Boolean).join("; ") : "";
-          const pack = await resolvePack(adv.adPackId, { userId: uid, brief: userAsk, hint: matchHint }).catch(() => null);
+          const pack = refPack || (await resolvePack(adv.adPackId, { userId: uid, brief: userAsk, hint: matchHint }).catch(() => null));
           if (pack) {
             const sgAny = loadedBrand?.styleGuide as unknown as Record<string, string | null> | null;
             const sizeFor: Record<string, string> = { instagram_portrait: "1080x1350", facebook_portrait: "1080x1350", linkedin_portrait: "1080x1350", instagram_story: "1080x1920", instagram_reel: "1080x1920", tiktok: "1080x1920", snapchat: "1080x1920", pinterest: "1000x1500", twitter: "1600x900", linkedin_post: "1200x627", facebook: "1200x630", youtube_thumbnail: "1280x720" };
@@ -360,9 +369,10 @@ async function handlePOST(request: Request) {
                 brandNote: [brainOk ? brainImageNote(brain!.data) : "", adCraftNote(userAsk, brainOk ? brain!.data : null)].filter(Boolean).join("\n\n"),
                 matchHint,
                 productImage: productImage || null,
+                compositionNote: compNote || undefined,
               });
               packImage = out.url;
-              packUsed = { id: pack.id, refIndex: out.refIndex };
+              if (pack.id) packUsed = { id: pack.id, refIndex: out.refIndex };
               console.log("[CHAT] 📦 Used ad pack", pack.number, "reference", out.refIndex + 1);
             } catch (packErr) {
               console.error("[CHAT] ad pack generation failed, falling back:", packErr);
@@ -399,13 +409,13 @@ const platformSizes: Record<string, string> = {
 const imageSize = thumbReq ? `${thumbSpecNow.w}x${thumbSpecNow.h}` : platformSizes[platform] || "1080x1080";
 console.log("[CHAT] 📐 Platform:", platform, "→ Size:", imageSize);
 const imageResponse = packImage ? { url: packImage } : await generateImage(
-  imagePrompt,
+  compNote ? `${imagePrompt}\n\n${compNote}` : imagePrompt,
   imageSize,
   refs,
   fullStyleGuide,
   platform,
   loadedBrand?.name || null,
-  loadedBrand?.logo || null,
+  compLogo ? null : loadedBrand?.logo || null, // with a composition the logo is placed below, above the text
   loadedBrand?.logoPosition || null,
   loadedBrand?.logoScale || null,
   productImage || null,
@@ -415,7 +425,9 @@ const imageResponse = packImage ? { url: packImage } : await generateImage(
         imageUrl = imageResponse.url;
         // 4:5 portrait: the model renders 2:3, so trim it to a true 4:5.
         if (imageSize === "1080x1350" && !packImage) imageUrl = await trimToAspect(imageUrl, "4:5").catch(() => imageUrl);
-        if (loadedBrand?.logo) {
+        if (compLogo && imageUrl && loadedBrand?.logo) {
+          imageUrl = await compositeLogoForComposition(imageUrl, loadedBrand.logo, composition as CompositionSpot, loadedBrand.logoScale ?? 0.14).catch(() => imageUrl);
+        } else if (loadedBrand?.logo) {
           imageLogo = {
             url: loadedBrand.logo,
             position: (loadedBrand.logoPosition as string) || "bottom-right",

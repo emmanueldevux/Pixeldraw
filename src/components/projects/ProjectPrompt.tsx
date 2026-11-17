@@ -25,6 +25,9 @@ interface ProjectPromptProps {
   // Attached product image (data URL) that gets sent to the image model.
   attachedImage?: string | null;
   onAttachImage?: (dataUrl: string | null) => void;
+  // What the attached image is: the product to show, or a reference ad whose layout to copy.
+  attachedMode?: "product" | "reference";
+  onAttachedModeChange?: (mode: "product" | "reference") => void;
   // Selected image-generation model.
   imageModel?: string;
   onImageModelChange?: (value: string) => void;
@@ -65,6 +68,8 @@ export function ProjectPrompt({
   disabled = false,
   attachedImage = null,
   onAttachImage,
+  attachedMode = "product",
+  onAttachedModeChange,
   imageModel = "openai",
   onImageModelChange,
 }: ProjectPromptProps) {
@@ -147,7 +152,20 @@ export function ProjectPrompt({
                 </svg>
               </button>
             </div>
-            <span className="text-[11px] text-gray-500">Product image attached — it&apos;ll be added to the graphic</span>
+            <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-[11px] font-semibold">
+              {(["product", "reference"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => onAttachedModeChange?.(m)}
+                  title={m === "product" ? "Put this product in the ad" : "Copy this ad's layout and style"}
+                  className={`px-2.5 py-1 rounded-md transition-colors ${attachedMode === m ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}
+                >
+                  {m === "product" ? "Product" : "Reference ad"}
+                </button>
+              ))}
+            </div>
+            <span className="text-[11px] text-gray-500">{attachedMode === "product" ? "It'll be added to the graphic" : "The AI copies its layout and style"}</span>
           </div>
         )}
 

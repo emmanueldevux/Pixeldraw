@@ -34,7 +34,7 @@ export function previousConcepts(messages: { role: string; content: unknown }[])
   return out.slice(-8);
 }
 
-export function adDirectorRule(opts: { inventFormat: boolean; previous: string[]; hasBrain: boolean; hasProductPhoto: boolean; platform?: string }): string {
+export function adDirectorRule(opts: { inventFormat: boolean; previous: string[]; hasBrain: boolean; hasProductPhoto: boolean; platform?: string; composition?: string }): string {
   const L: string[] = [
     "",
     "AD DIRECTOR MODE (this request is for an ad). Work like a creative team, silently, then answer in the exact reply format at the end.",
@@ -50,6 +50,7 @@ export function adDirectorRule(opts: { inventFormat: boolean; previous: string[]
   } else {
     L.push("2. FORMAT. The layout is set by a reference ad chosen separately, so do not invent a layout. Describe the subject, scene, mood and the exact copy; keep the composition notes short.");
   }
+  if (opts.composition && opts.composition !== "auto") L.push("   The user fixed the TEXT POSITION (" + opts.composition.replace("-", " ") + "): keep all text in one block there, never move it, and do not invent another text layout.");
   L.push(
     "",
     "3. COPY. Direct response. The hook leads with the outcome the person wants, not a description of the product. Cold test: with the image covered, a stranger must know what is sold and who it is for. First mention of the brand is brand name plus plain category. Use ONE writing style for hook and subline (observational, rhetorical question, conditional, contrarian, confessional, imperative, comparative, testimonial, POV, stat-led, reframe, permission-granting, direct address...). Max 1 hook and 1 subline; any other text is short labels. Active voice, speech-like, no fillers. NEVER use em dashes. Never invent prices, numbers, awards, results or customer quotes; if the request or brand brain does not state one, write a strong line without it.",

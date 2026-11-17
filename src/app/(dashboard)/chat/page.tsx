@@ -28,6 +28,7 @@ interface ChatMsg {
   content: string;
   imageUrl?: string | null;
   ref?: string | null; // the photo attached to a user message
+  refMode?: "product" | "reference";
   isLoading?: boolean;
 }
 
@@ -148,6 +149,7 @@ export default function FreeChatPage() {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [attachedMode, setAttachedMode] = useState<"product" | "reference">("product");
   const [imageModel, setImageModel] = useState<string>("openai");
   const [loading, setLoading] = useState(false);
   const [templates, setTemplates] = useState<TemplateRef[]>([]);
@@ -174,6 +176,7 @@ export default function FreeChatPage() {
   async function pickTemplate(t: TemplateRef) {
     try {
       setAttachedImage(await urlToDataUrl(t.publicUrl));
+      setAttachedMode("reference"); // a library template is a layout to copy, not a product
     } catch {
       /* ignore */
     }
@@ -188,14 +191,15 @@ export default function FreeChatPage() {
     reader.readAsDataURL(file);
   }
 
-  const handleSend = async (override?: { text: string; ref?: string | null }) => {
+  const handleSend = async (override?: { text: string; ref?: string | null; refMode?: "product" | "reference" }) => {
     if (!(override?.text ?? input).trim() || loading || sendingRef.current) return;
     // Visitors can chat freely; login is asked for when they download (or hit the visitor limit).
     sendingRef.current = true;
 
     const userText = (override?.text ?? input).trim();
     const ref = override ? override.ref ?? null : attachedImage;
-    const userMsg: ChatMsg = { id: Date.now() + "-u", role: "user", content: userText, ref };
+    const refMode = override ? override.refMode ?? "product" : attachedMode;
+    const userMsg: ChatMsg = { id: Date.now() + "-u", role: "user", content: userText, ref, refMode };
     setMessages((p) => [...p, userMsg, { id: "loading", role: "assistant", content: "", isLoading: true }]);
     setInput("");
     setLoading(true);
@@ -210,6 +214,7 @@ export default function FreeChatPage() {
           brandName: "Free Chat",
           freeChat: true,
           productImage: ref || undefined,
+          attachedMode: ref ? refMode : undefined,
           imageProvider: imageModel,
         }),
       });
@@ -238,7 +243,7 @@ export default function FreeChatPage() {
           const imgRes = await fetch("/api/ai/generate-image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt, size: "1080x1080", productImage: ref || undefined, imageProvider: imageModel }),
+            body: JSON.stringify({ prompt, size: "1080x1080", productImage: ref && refMode === "product" ? ref : undefined, imageProvider: imageModel }),
           });
           const imgData = await imgRes.json();
           imageUrl = imgData.imageUrl || null;
@@ -277,6 +282,8 @@ export default function FreeChatPage() {
       onSubmit={() => handleSend()}
       attachedImage={attachedImage}
       onAttachImage={setAttachedImage}
+      attachedMode={attachedMode}
+      onAttachedModeChange={setAttachedMode}
       imageModel={imageModel}
       onImageModelChange={setImageModel}
     />
@@ -383,7 +390,7 @@ export default function FreeChatPage() {
                               return (
                                 <button
                                   type="button"
-                                  onClick={() => handleSend({ text: `${prevUser.content.replace(/\s*\n*Make a completely different version[^]*$/i, "")}\n\nMake a completely different version: new composition, new pose and expression.`, ref: prevUser.ref })}
+                                  onClick={() => handleSend({ text: `${prevUser.content.replace(/\s*\n*Make a completely different version[^]*$/i, "")}\n\nMake a completely different version: new composition, new pose and expression.`, ref: prevUser.ref, refMode: prevUser.refMode })}
                                   className="flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px] font-medium text-zinc-700 hover:bg-[#F4F4F5]"
                                 >
                                   <Sparkles size={14} /> Redo thumbnail
