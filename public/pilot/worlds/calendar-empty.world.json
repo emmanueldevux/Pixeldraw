@@ -1,0 +1,28 @@
+{
+  "name": "calendar-empty",
+  "extends": "_signed-in",
+  "$comment": "All three routes return empty data arrays.",
+  "entries": {
+    "fetch:GET:/api/calendar:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    },
+    "fetch:GET:/api/jobs:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    },
+    "fetch:GET:/api/plans/items:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    }
+  }
+}

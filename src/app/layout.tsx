@@ -5,6 +5,9 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import AuthProvider from "@/components/layout/AuthProvider";
 import Preloader, { preloaderGuard } from "@/components/layout/Preloader";
+// @pilot-start
+import PilotBoot from "@/pilot/PilotBoot";
+// @pilot-end
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const interTight = Inter_Tight({ subsets: ["latin"], variable: "--font-inter-tight" });
@@ -73,6 +76,9 @@ export default function RootLayout({
       </head>
       {/* Setting the body className to helveticaNow.className applies it globally */}
       <body className={`${helveticaNow.className} antialiased`}>
+        {/* @pilot-start */}
+        <PilotBoot />
+        {/* @pilot-end */}
         <Preloader />
         <AuthProvider>
           {children}

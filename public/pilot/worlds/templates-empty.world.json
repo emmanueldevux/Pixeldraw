@@ -1,0 +1,13 @@
+{
+  "name": "templates-empty",
+  "extends": "_signed-in",
+  "$comment": "Route returns {templates: []} (nothing published yet).",
+  "entries": {
+    "fetch:GET:/api/design-templates:": {
+      "status": 200,
+      "body": {
+        "templates": []
+      }
+    }
+  }
+}

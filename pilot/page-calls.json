@@ -1,0 +1,45 @@
+{
+  "$comment": "Calls each page fires ON MOUNT (derived from the code; see STATE-MAP.generated.md). check-worlds.mjs requires every world listed for a page to pin all of them. Click-triggered calls are added when that interaction is walked.",
+  "/dashboard": [
+    "fetch:GET:/api/generations:",
+    "fetch:GET:/api/projects:"
+  ],
+  "/templates": [
+    "fetch:GET:/api/design-templates:"
+  ],
+  "/inspiration": [
+    "fetch:GET:/api/inspiration:"
+  ],
+  "/chat": [
+    "fetch:GET:/api/templates:"
+  ],
+  "/calendar": [
+    "fetch:GET:/api/calendar:",
+    "fetch:GET:/api/jobs:",
+    "fetch:GET:/api/plans/items:"
+  ],
+  "/ai": [
+    "fetch:GET:/api/projects/style:",
+    "fetch:GET:/api/chat-session:",
+    "fetch:PUT:/api/chat-session:",
+    "fetch:GET:/api/brain:",
+    "fetch:GET:/api/ad-packs:",
+    "fetch:GET:/api/carousel-styles:"
+  ],
+  "/admin": [
+    "fetch:GET:/api/admin/billing:"
+  ],
+  "/billing": [
+    "fetch:GET:/api/billing/public:",
+    "fetch:GET:/api/billing/history:"
+  ],
+  "/settings": [
+    "fetch:GET:/api/projects:",
+    "fetch:GET:/api/projects/style:"
+  ],
+  "/projects": [
+    "fetch:GET:/api/projects:"
+  ],
+  "/signup": [],
+  "/home": []
+}

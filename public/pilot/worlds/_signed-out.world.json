@@ -1,0 +1,20 @@
+{
+  "name": "_signed-out",
+  "extends": [
+    "_base",
+    "_actions"
+  ],
+  "$comment": "PARTIAL. next-auth answers {} when there is no session (client maps it to null). Signed-out routes real handlers answer 401 {error:'Unauthorized'} (see requireUser/unauthorized in billing/http.ts) — pin those per page world when a page calls them anonymously.",
+  "entries": {
+    "fetch:GET:/api/auth/session:": {
+      "status": 200,
+      "body": {}
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 401,
+      "body": {
+        "error": "Unauthorized"
+      }
+    }
+  }
+}

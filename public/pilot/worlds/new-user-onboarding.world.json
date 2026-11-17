@@ -1,0 +1,35 @@
+{
+  "name": "new-user-onboarding",
+  "extends": "_signed-in",
+  "$comment": "Just signed up: onboarding status 'none' => OnboardingProvider opens the wizard over whatever page loaded. No projects, fresh free trial (2 images day one), no plan, 0 credits.",
+  "entries": {
+    "fetch:GET:/api/onboarding:": {
+      "status": 200,
+      "body": {
+        "status": "none",
+        "answers": {
+          "businessName": null,
+          "offering": null,
+          "industry": null,
+          "industryOther": null,
+          "hasWebsite": null,
+          "websiteUrl": null,
+          "platforms": [],
+          "postsPerDay": null,
+          "goals": [],
+          "styles": [],
+          "role": null,
+          "teamSize": null,
+          "referral": null
+        }
+      }
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    }
+  }
+}

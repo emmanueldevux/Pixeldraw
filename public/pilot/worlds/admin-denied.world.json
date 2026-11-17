@@ -1,0 +1,13 @@
+{
+  "name": "admin-denied",
+  "extends": "_signed-in",
+  "$comment": "requireAdmin fails -> 403; the page shows its admins-only message.",
+  "entries": {
+    "fetch:GET:/api/admin/billing:": {
+      "status": 403,
+      "body": {
+        "error": "Not allowed"
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "ai-wizards-empty",
+  "extends": "ai-fresh",
+  "$comment": "No saved slideshow styles, characters, ad packs or carousel styles.",
+  "entries": {
+    "fetch:GET:/api/slideshow/styles:": {
+      "status": 200,
+      "body": {
+        "styles": []
+      }
+    },
+    "fetch:GET:/api/slideshow/character:": {
+      "status": 200,
+      "body": {
+        "characters": []
+      }
+    },
+    "fetch:GET:/api/ad-packs:": {
+      "status": 200,
+      "body": {
+        "packs": []
+      }
+    },
+    "fetch:GET:/api/ad-packs?purpose=thumbnail:": {
+      "status": 200,
+      "body": {
+        "packs": []
+      }
+    },
+    "fetch:GET:/api/carousel-styles:": {
+      "status": 200,
+      "body": {
+        "styles": []
+      }
+    }
+  }
+}

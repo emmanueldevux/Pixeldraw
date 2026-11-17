@@ -1,0 +1,380 @@
+{
+  "worlds": [
+    {
+      "name": "signed-out",
+      "title": "Anonymous visitor",
+      "about": "Anonymous visitor: session is {}. Gated actions open the login popup.",
+      "pages": [
+        "*"
+      ]
+    },
+    {
+      "name": "new-user-onboarding",
+      "title": "New user, onboarding wizard open",
+      "about": "Fresh sign-up: onboarding wizard opens, no projects, free trial untouched, 0 credits.",
+      "pages": [
+        "*"
+      ]
+    },
+    {
+      "name": "onboarding-skipped",
+      "title": "Skipped onboarding",
+      "about": "Onboarding skipped: no popup; reminder bar on /dashboard only.",
+      "pages": [
+        "*"
+      ]
+    },
+    {
+      "name": "free-trial-exhausted",
+      "title": "Free trial used up",
+      "about": "3/3 free images used, no credits, no plan.",
+      "pages": [
+        "*"
+      ]
+    },
+    {
+      "name": "out-of-credits-402",
+      "title": "Out of credits (402 on AI calls)",
+      "about": "Same as free-trial-exhausted, and AI calls return the real 402 so the top-up popup opens.",
+      "pages": [
+        "*"
+      ]
+    },
+    {
+      "name": "paid-power-user",
+      "title": "Paid power user",
+      "about": "Pro plan, 412.5 credits, card + auto-reload, 4 projects.",
+      "pages": [
+        "*"
+      ]
+    },
+    {
+      "name": "payments-not-ready",
+      "title": "Payments not configured",
+      "about": "paymentsReady=false: billing buttons show the 'almost ready' modal.",
+      "pages": [
+        "*"
+      ]
+    },
+    {
+      "name": "admin",
+      "title": "Admin",
+      "about": "isAdmin=true on top of the paid power user.",
+      "pages": [
+        "*"
+      ]
+    },
+    {
+      "name": "session-probe-down",
+      "title": "Session probe fails (500)",
+      "about": "/api/auth/session 500s; everything else unpinned on purpose.",
+      "pages": [
+        "*"
+      ]
+    },
+    {
+      "name": "dashboard-new-user",
+      "title": "New user: wizard over empty dashboard",
+      "about": "Onboarding wizard opens over an empty dashboard.",
+      "pages": [
+        "/dashboard"
+      ]
+    },
+    {
+      "name": "dashboard-skipped-reminder",
+      "title": "Skipped onboarding, nothing yet",
+      "about": "Reminder bar + both empty states.",
+      "pages": [
+        "/dashboard"
+      ]
+    },
+    {
+      "name": "dashboard-empty",
+      "title": "Onboarded, nothing created",
+      "about": "'No projects yet' and 'No files yet' empty states.",
+      "pages": [
+        "/dashboard"
+      ]
+    },
+    {
+      "name": "dashboard-few-files",
+      "title": "One project, five designs",
+      "about": "Carousel pill, untitled fallback, and an imageUrls:[] row the page filters out.",
+      "pages": [
+        "/dashboard"
+      ]
+    },
+    {
+      "name": "dashboard-busy",
+      "title": "Power user, 60 files, long names",
+      "about": "Truncation, 0/128 post counts, every relative-time bucket.",
+      "pages": [
+        "/dashboard"
+      ]
+    },
+    {
+      "name": "dashboard-slow-load",
+      "title": "Slow load (5s)",
+      "about": "Projects spinner vs. the Files tab having no loading state.",
+      "pages": [
+        "/dashboard"
+      ]
+    },
+    {
+      "name": "dashboard-api-failing",
+      "title": "API failing (500s)",
+      "about": "500s render as 'No projects yet' / 'No files yet' — state lie.",
+      "pages": [
+        "/dashboard"
+      ]
+    },
+    {
+      "name": "dashboard-signed-out",
+      "title": "Signed-out visitor",
+      "about": "401s on both mount calls; page shows empty states anonymously.",
+      "pages": [
+        "/dashboard"
+      ]
+    },
+    {
+      "name": "templates-populated",
+      "title": "Templates populated",
+      "about": "Six published templates, two tagged Recommended.",
+      "pages": [
+        "/templates"
+      ]
+    },
+    {
+      "name": "templates-empty",
+      "title": "Templates empty",
+      "about": "Nothing published.",
+      "pages": [
+        "/templates"
+      ]
+    },
+    {
+      "name": "templates-api-failing",
+      "title": "Templates API failing",
+      "about": "500 with an empty list.",
+      "pages": [
+        "/templates"
+      ]
+    },
+    {
+      "name": "inspiration-populated",
+      "title": "Inspiration populated",
+      "about": "Eight tagged images, two slideshow slides.",
+      "pages": [
+        "/inspiration"
+      ]
+    },
+    {
+      "name": "inspiration-empty",
+      "title": "Inspiration empty",
+      "about": "Library has no images.",
+      "pages": [
+        "/inspiration"
+      ]
+    },
+    {
+      "name": "chat-templates",
+      "title": "Chat with templates",
+      "about": "Template picker lists every file in public/templates.",
+      "pages": [
+        "/chat"
+      ]
+    },
+    {
+      "name": "chat-no-templates",
+      "title": "Chat without templates",
+      "about": "Template picker is empty.",
+      "pages": [
+        "/chat"
+      ]
+    },
+    {
+      "name": "calendar-busy",
+      "title": "Calendar busy",
+      "about": "Posts in every status, one job, two planned items.",
+      "pages": [
+        "/calendar"
+      ]
+    },
+    {
+      "name": "calendar-empty",
+      "title": "Calendar empty",
+      "about": "Nothing scheduled, no jobs, no plan.",
+      "pages": [
+        "/calendar"
+      ]
+    },
+    {
+      "name": "ai-with-history",
+      "title": "AI with history",
+      "about": "Saved chat with an image and a 3-slide carousel.",
+      "pages": [
+        "/ai"
+      ]
+    },
+    {
+      "name": "ai-fresh",
+      "title": "AI fresh chat",
+      "about": "Project selected, no saved messages.",
+      "pages": [
+        "/ai"
+      ]
+    },
+    {
+      "name": "admin-populated",
+      "title": "Admin populated",
+      "about": "Real default settings, rules and plans, five recent credit events.",
+      "pages": [
+        "/admin"
+      ]
+    },
+    {
+      "name": "admin-denied",
+      "title": "Admin denied",
+      "about": "403, the admins-only screen.",
+      "pages": [
+        "/admin"
+      ]
+    },
+    {
+      "name": "billing-history-empty",
+      "title": "Billing, empty history",
+      "about": "History tab has no rows.",
+      "pages": [
+        "/billing"
+      ]
+    },
+    {
+      "name": "billing-plan-past-due",
+      "title": "Billing, plan past due",
+      "about": "Plan card shows the payment-failed warning.",
+      "pages": [
+        "/billing"
+      ]
+    },
+    {
+      "name": "billing-plan-cancelling",
+      "title": "Billing, cancelling",
+      "about": "Plan ends at period end; Resume offered.",
+      "pages": [
+        "/billing"
+      ]
+    },
+    {
+      "name": "billing-no-card",
+      "title": "Billing, no card",
+      "about": "Payment methods tab is empty.",
+      "pages": [
+        "/billing"
+      ]
+    },
+    {
+      "name": "billing-payment-declined",
+      "title": "Billing, payment declined",
+      "about": "Top-up, plan and auto-reload show an error.",
+      "pages": [
+        "/billing"
+      ]
+    },
+    {
+      "name": "billing-payments-unavailable",
+      "title": "Billing, payments off",
+      "about": "Buy and subscribe answer 503.",
+      "pages": [
+        "/billing"
+      ]
+    },
+    {
+      "name": "ai-generate-failing",
+      "title": "AI studio, generation failing",
+      "about": "Every generate call answers an error.",
+      "pages": [
+        "/ai"
+      ]
+    },
+    {
+      "name": "ai-carousel-task-failed",
+      "title": "AI studio, carousel fails midway",
+      "about": "One slide done, then the task fails.",
+      "pages": [
+        "/ai"
+      ]
+    },
+    {
+      "name": "ai-generate-slow",
+      "title": "AI studio, slow generation",
+      "about": "Loading states hold for seconds.",
+      "pages": [
+        "/ai"
+      ]
+    },
+    {
+      "name": "ai-generate-402",
+      "title": "AI studio, out of credits everywhere",
+      "about": "All spending calls answer 402.",
+      "pages": [
+        "/ai"
+      ]
+    },
+    {
+      "name": "ai-wizards-empty",
+      "title": "AI studio, wizards empty",
+      "about": "Pickers have nothing saved.",
+      "pages": [
+        "/ai"
+      ]
+    },
+    {
+      "name": "ai-wizards-failing",
+      "title": "AI studio, wizards failing",
+      "about": "Every wizard step answers an error.",
+      "pages": [
+        "/ai"
+      ]
+    },
+    {
+      "name": "signup-email-taken",
+      "title": "Sign up, email taken",
+      "about": "409 on submit.",
+      "pages": [
+        "/signup"
+      ]
+    },
+    {
+      "name": "signup-server-error",
+      "title": "Sign up, server error",
+      "about": "500 on submit.",
+      "pages": [
+        "/signup"
+      ]
+    },
+    {
+      "name": "admin-tabs-populated",
+      "title": "Admin tabs, populated",
+      "about": "Templates, carousel styles and slideshow styles, including drafts.",
+      "pages": [
+        "/admin"
+      ]
+    },
+    {
+      "name": "admin-tabs-empty",
+      "title": "Admin tabs, empty",
+      "about": "Nothing created yet.",
+      "pages": [
+        "/admin"
+      ]
+    },
+    {
+      "name": "admin-tabs-denied",
+      "title": "Admin tabs, denied",
+      "about": "403 on every tab.",
+      "pages": [
+        "/admin"
+      ]
+    }
+  ]
+}

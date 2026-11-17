@@ -1,0 +1,25 @@
+{
+  "name": "admin-tabs-empty",
+  "extends": "admin-populated",
+  "$comment": "Same GETs return empty lists.",
+  "entries": {
+    "fetch:GET:/api/admin/templates:": {
+      "status": 200,
+      "body": {
+        "templates": []
+      }
+    },
+    "fetch:GET:/api/admin/carousel-styles:": {
+      "status": 200,
+      "body": {
+        "styles": []
+      }
+    },
+    "fetch:GET:/api/admin/slideshow-styles:": {
+      "status": 200,
+      "body": {
+        "styles": []
+      }
+    }
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "name": "dashboard-slow-load",
+  "extends": "dashboard-few-files",
+  "$comment": "Both mount calls take 5s: Projects tab shows the spinner (channelsLoading). The Files tab has NO loading state — it shows 'No files yet' until data lands (code: files starts [] with no flag). Derived from the page.",
+  "entries": {
+    "fetch:GET:/api/generations:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "gen_000",
+            "kind": "image",
+            "title": "Spring promo 0",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-1h"
+          },
+          {
+            "id": "gen_001",
+            "kind": "image",
+            "title": "Spring promo 1",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-2h"
+          }
+        ]
+      },
+      "delayMs": 5000
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "br_1",
+            "userId": "usr_pilot_01",
+            "name": "Lagos Bloom Florals",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "$now-60d",
+            "updatedAt": "$now-2h",
+            "styleGuide": {
+              "id": "sg_br_1",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_1",
+                "brandId": "br_1",
+                "name": "instagram post",
+                "platform": "instagram_post",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "$now-60d",
+                "updatedAt": "$now-2h",
+                "_count": {
+                  "posts": 6
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "delayMs": 5000
+    }
+  }
+}

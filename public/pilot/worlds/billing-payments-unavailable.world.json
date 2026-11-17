@@ -1,0 +1,19 @@
+{
+  "name": "billing-payments-unavailable",
+  "extends": "payments-not-ready",
+  "$comment": "paystackConfigured() false -> topup/subscription 503 'Payments are not configured yet'.",
+  "entries": {
+    "fetch:POST:/api/billing/topup:": {
+      "status": 503,
+      "body": {
+        "error": "Payments are not configured yet"
+      }
+    },
+    "fetch:POST:/api/billing/subscription:": {
+      "status": 503,
+      "body": {
+        "error": "Payments are not configured yet"
+      }
+    }
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "name": "calendar-busy",
+  "extends": "_signed-in",
+  "$comment": "posts = Post rows incl. channel (api/calendar), jobs = Job rows incl. channel.brand (api/jobs), plan items = PlanItemLite (components/plan/PlanWizard.tsx). Dates are $now-relative so they land in the visible month. Covers draft/scheduled/published/failed.",
+  "entries": {
+    "fetch:GET:/api/calendar:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "post_1",
+            "channelId": "ch_1",
+            "title": "Mother's Day bouquet",
+            "caption": null,
+            "imageUrl": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+            "platform": "instagram_post",
+            "size": "1080x1080",
+            "status": "scheduled",
+            "scheduledAt": "$now+1d",
+            "publishedAt": null,
+            "createdAt": "$now-9d",
+            "updatedAt": "$now-1d",
+            "channel": {
+              "id": "ch_1",
+              "brandId": "br_1",
+              "name": "instagram post",
+              "platform": "instagram_post",
+              "description": null,
+              "styleOverrides": null,
+              "createdAt": "2026-10-01T09:00:00.000Z",
+              "updatedAt": "2026-11-14T16:20:00.000Z"
+            }
+          },
+          {
+            "id": "post_2",
+            "channelId": "ch_1",
+            "title": "Weekend delivery",
+            "caption": null,
+            "imageUrl": "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+            "platform": "instagram_post",
+            "size": "1080x1080",
+            "status": "scheduled",
+            "scheduledAt": "$now+2d",
+            "publishedAt": null,
+            "createdAt": "$now-9d",
+            "updatedAt": "$now-1d",
+            "channel": {
+              "id": "ch_1",
+              "brandId": "br_1",
+              "name": "instagram post",
+              "platform": "instagram_post",
+              "description": null,
+              "styleOverrides": null,
+              "createdAt": "2026-10-01T09:00:00.000Z",
+              "updatedAt": "2026-11-14T16:20:00.000Z"
+            }
+          },
+          {
+            "id": "post_3",
+            "channelId": "ch_1",
+            "title": "Rose care tips",
+            "caption": null,
+            "imageUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+            "platform": "instagram_post",
+            "size": "1080x1080",
+            "status": "draft",
+            "scheduledAt": "$now+4d",
+            "publishedAt": null,
+            "createdAt": "$now-9d",
+            "updatedAt": "$now-1d",
+            "channel": {
+              "id": "ch_1",
+              "brandId": "br_1",
+              "name": "instagram post",
+              "platform": "instagram_post",
+              "description": null,
+              "styleOverrides": null,
+              "createdAt": "2026-10-01T09:00:00.000Z",
+              "updatedAt": "2026-11-14T16:20:00.000Z"
+            }
+          },
+          {
+            "id": "post_4",
+            "channelId": "ch_1",
+            "title": "New arrivals",
+            "caption": null,
+            "imageUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "platform": "instagram_post",
+            "size": "1080x1080",
+            "status": "published",
+            "scheduledAt": "$now-2d",
+            "publishedAt": "$now-2d",
+            "createdAt": "$now-9d",
+            "updatedAt": "$now-1d",
+            "channel": {
+              "id": "ch_1",
+              "brandId": "br_1",
+              "name": "instagram post",
+              "platform": "instagram_post",
+              "description": null,
+              "styleOverrides": null,
+              "createdAt": "2026-10-01T09:00:00.000Z",
+              "updatedAt": "2026-11-14T16:20:00.000Z"
+            }
+          },
+          {
+            "id": "post_5",
+            "channelId": "ch_1",
+            "title": "Flash sale",
+            "caption": null,
+            "imageUrl": null,
+            "platform": "instagram_post",
+            "size": "1080x1080",
+            "status": "failed",
+            "scheduledAt": "$now-1d",
+            "publishedAt": null,
+            "createdAt": "$now-9d",
+            "updatedAt": "$now-1d",
+            "channel": {
+              "id": "ch_1",
+              "brandId": "br_1",
+              "name": "instagram post",
+              "platform": "instagram_post",
+              "description": null,
+              "styleOverrides": null,
+              "createdAt": "2026-10-01T09:00:00.000Z",
+              "updatedAt": "2026-11-14T16:20:00.000Z"
+            }
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/jobs:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "job_1",
+            "userId": "usr_pilot_01",
+            "channelId": "ch_1",
+            "name": "Morning bloom",
+            "prompt": "A fresh bouquet photo with a short caption",
+            "schedule": "09:00",
+            "platform": "instagram_post",
+            "size": "1080x1080",
+            "deliveryEmail": true,
+            "deliveryTelegram": false,
+            "deliverySocial": false,
+            "telegramChatId": null,
+            "isActive": true,
+            "lastRunAt": "$now-1d",
+            "createdAt": "$now-20d",
+            "updatedAt": "$now-1d",
+            "channel": {
+              "id": "ch_1",
+              "brandId": "br_1",
+              "name": "instagram post",
+              "platform": "instagram_post",
+              "description": null,
+              "styleOverrides": null,
+              "createdAt": "2026-10-01T09:00:00.000Z",
+              "updatedAt": "2026-11-14T16:20:00.000Z",
+              "brand": {
+                "id": "br_1",
+                "userId": "usr_pilot_01",
+                "name": "Lagos Bloom Florals",
+                "logo": null
+              }
+            }
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/plans/items:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "pl_1",
+            "scheduledAt": "$now+3d",
+            "platform": "instagram_post",
+            "format": "image",
+            "size": "1080x1080",
+            "topic": "Valentine bundles",
+            "theme": "Romance",
+            "status": "planned"
+          },
+          {
+            "id": "pl_2",
+            "scheduledAt": "$now+5d",
+            "platform": "tiktok",
+            "format": "carousel",
+            "size": "1080x1920",
+            "topic": "How to keep roses fresh",
+            "theme": null,
+            "status": "planned"
+          }
+        ]
+      }
+    }
+  }
+}

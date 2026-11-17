@@ -1,0 +1,13 @@
+{
+  "name": "signup-server-error",
+  "extends": "signed-out",
+  "$comment": "POST /api/auth/signup -> 500 'Internal server error'.",
+  "entries": {
+    "fetch:POST:/api/auth/signup:": {
+      "status": 500,
+      "body": {
+        "error": "Internal server error"
+      }
+    }
+  }
+}

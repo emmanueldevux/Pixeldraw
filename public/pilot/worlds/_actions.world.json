@@ -1,0 +1,1111 @@
+{
+  "name": "_actions",
+  "$comment": "PARTIAL. Happy-path answers for every call a click can trigger (wizards, billing modals, generation, projects, jobs, plans, onboarding, signup, admin tabs) plus billing history/public and slideshow styles/characters. Extended by _signed-in and _signed-out so no world answers 599 for a normal click. Failure variants override single keys in named worlds. Paystack redirects are never pinned (a data.url would navigate the rig frame away).",
+  "entries": {
+    "fetch:GET:/api/billing/history:": {
+      "status": 200,
+      "body": {
+        "events": [
+          {
+            "id": "ev_0",
+            "deltaMilli": 100000,
+            "kind": "purchase",
+            "note": "Top-up $10",
+            "meta": null,
+            "expiresAt": null,
+            "createdAt": "$now-1h"
+          },
+          {
+            "id": "ev_1",
+            "deltaMilli": -2042,
+            "kind": "usage",
+            "note": "Image (GPT Image)",
+            "meta": null,
+            "expiresAt": null,
+            "createdAt": "$now-3h"
+          },
+          {
+            "id": "ev_2",
+            "deltaMilli": -2042,
+            "kind": "usage",
+            "note": "Image (GPT Image)",
+            "meta": null,
+            "expiresAt": null,
+            "createdAt": "$now-5h"
+          },
+          {
+            "id": "ev_3",
+            "deltaMilli": 3000,
+            "kind": "free",
+            "note": "Free trial image",
+            "meta": null,
+            "expiresAt": null,
+            "createdAt": "$now-7h"
+          },
+          {
+            "id": "ev_4",
+            "deltaMilli": 200000,
+            "kind": "plan",
+            "note": "Starter plan credits",
+            "meta": null,
+            "expiresAt": null,
+            "createdAt": "$now-9h"
+          },
+          {
+            "id": "ev_5",
+            "deltaMilli": 50000,
+            "kind": "autoreload",
+            "note": "Auto-reload $5",
+            "meta": null,
+            "expiresAt": null,
+            "createdAt": "$now-11h"
+          },
+          {
+            "id": "ev_6",
+            "deltaMilli": 5000,
+            "kind": "admin",
+            "note": "Goodwill credit",
+            "meta": null,
+            "expiresAt": null,
+            "createdAt": "$now-13h"
+          },
+          {
+            "id": "ev_7",
+            "deltaMilli": -300,
+            "kind": "usage",
+            "note": "Chat reply",
+            "meta": null,
+            "expiresAt": null,
+            "createdAt": "$now-15h"
+          }
+        ]
+      }
+    },
+    "fetch:POST:/api/billing/topup:": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "status": "success"
+      }
+    },
+    "fetch:POST:/api/billing/subscription:": {
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    "fetch:DELETE:/api/billing/subscription:": {
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    "fetch:PATCH:/api/billing/subscription:": {
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    "fetch:PUT:/api/billing/auto-reload:": {
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    "fetch:POST:/api/billing/sync:": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "status": "success"
+      }
+    },
+    "fetch:POST:/api/billing/payment-methods:": {
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    "fetch:DELETE:/api/billing/payment-methods:": {
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    "fetch:POST:/api/ai/chat:": {
+      "status": 200,
+      "body": {
+        "content": "Here's a soft pink ad with your bouquet front and centre.",
+        "model": "pilot",
+        "imageUrl": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+        "generationId": "gen_new_1",
+        "logo": null,
+        "usage": {
+          "promptTokens": 120,
+          "completionTokens": 60
+        }
+      }
+    },
+    "fetch:POST:/api/ai/generate-image:": {
+      "status": 200,
+      "body": {
+        "generationId": "gen_new_2",
+        "imageUrl": "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+        "revisedPrompt": "A pastel bouquet on a kitchen table",
+        "logo": null
+      }
+    },
+    "fetch:POST:/api/ai/carousel:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "background": true,
+          "taskId": "task_1",
+          "plan": {
+            "topic": "How to style roses",
+            "totalSlides": 5,
+            "ctaGoal": ""
+          },
+          "format": "carousel",
+          "style": {
+            "id": "cs_1",
+            "name": "Soft studio"
+          },
+          "size": "1080x1350",
+          "disclosure": null,
+          "slides": []
+        }
+      }
+    },
+    "fetch:POST:/api/tasks/task_1/step:": {
+      "sequence": [
+        {
+          "status": 200,
+          "delayMs": 600,
+          "body": {
+            "success": true,
+            "data": {
+              "id": "task_1",
+              "status": "running",
+              "progress": 2,
+              "total": 5,
+              "slides": [
+                {
+                  "slideNumber": 1,
+                  "role": "hook",
+                  "headline": "5 ways to style roses",
+                  "body": "Short supporting line for slide 1.",
+                  "imageUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+                },
+                {
+                  "slideNumber": 2,
+                  "role": "cta",
+                  "headline": "Mix your heights",
+                  "body": "Short supporting line for slide 2.",
+                  "imageUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+                }
+              ],
+              "error": null,
+              "generationId": null,
+              "style": "Soft studio",
+              "size": "1080x1350"
+            }
+          }
+        },
+        {
+          "status": 200,
+          "delayMs": 600,
+          "body": {
+            "success": true,
+            "data": {
+              "id": "task_1",
+              "status": "running",
+              "progress": 4,
+              "total": 5,
+              "slides": [
+                {
+                  "slideNumber": 1,
+                  "role": "hook",
+                  "headline": "5 ways to style roses",
+                  "body": "Short supporting line for slide 1.",
+                  "imageUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+                },
+                {
+                  "slideNumber": 2,
+                  "role": "tip",
+                  "headline": "Mix your heights",
+                  "body": "Short supporting line for slide 2.",
+                  "imageUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+                },
+                {
+                  "slideNumber": 3,
+                  "role": "tip",
+                  "headline": "Use odd numbers",
+                  "body": "Short supporting line for slide 3.",
+                  "imageUrl": "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+                },
+                {
+                  "slideNumber": 4,
+                  "role": "cta",
+                  "headline": "Trim stems at an angle",
+                  "body": "Short supporting line for slide 4.",
+                  "imageUrl": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+                }
+              ],
+              "error": null,
+              "generationId": null,
+              "style": "Soft studio",
+              "size": "1080x1350"
+            }
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "success": true,
+            "data": {
+              "id": "task_1",
+              "status": "done",
+              "progress": 5,
+              "total": 5,
+              "slides": [
+                {
+                  "slideNumber": 1,
+                  "role": "hook",
+                  "headline": "5 ways to style roses",
+                  "body": "Short supporting line for slide 1.",
+                  "imageUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+                },
+                {
+                  "slideNumber": 2,
+                  "role": "tip",
+                  "headline": "Mix your heights",
+                  "body": "Short supporting line for slide 2.",
+                  "imageUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+                },
+                {
+                  "slideNumber": 3,
+                  "role": "tip",
+                  "headline": "Use odd numbers",
+                  "body": "Short supporting line for slide 3.",
+                  "imageUrl": "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+                },
+                {
+                  "slideNumber": 4,
+                  "role": "tip",
+                  "headline": "Trim stems at an angle",
+                  "body": "Short supporting line for slide 4.",
+                  "imageUrl": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+                },
+                {
+                  "slideNumber": 5,
+                  "role": "cta",
+                  "headline": "Order today",
+                  "body": "Short supporting line for slide 5.",
+                  "imageUrl": "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+                }
+              ],
+              "error": null,
+              "generationId": "gen_task_1",
+              "style": "Soft studio",
+              "size": "1080x1350"
+            }
+          }
+        }
+      ]
+    },
+    "fetch:POST:/api/generations:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:POST:/api/generations/caption:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "caption": "Roses that last all week. Here's how we style ours.",
+          "hashtags": [
+            "#roses",
+            "#lagosflorist"
+          ]
+        }
+      }
+    },
+    "fetch:POST:/api/generations/redo-slide:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "slideNumber": 2,
+          "imageUrl": "/templates/68a06692e2f01159966dd6f9f51468d6.jpg",
+          "headline": "Mix your heights",
+          "body": "Short supporting line."
+        }
+      }
+    },
+    "fetch:POST:/api/projects:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "brand": {
+            "id": "br_1",
+            "userId": "usr_pilot_01",
+            "name": "Lagos Bloom Florals",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "$now-45d",
+            "updatedAt": "$now-1d"
+          },
+          "channel": {
+            "id": "ch_new",
+            "brandId": "br_1",
+            "name": "instagram post",
+            "platform": "instagram_post",
+            "description": null,
+            "styleOverrides": null,
+            "createdAt": "$now",
+            "updatedAt": "$now"
+          }
+        }
+      }
+    },
+    "fetch:DELETE:/api/projects:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:PUT:/api/projects/logo:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "br_1",
+          "userId": "usr_pilot_01",
+          "name": "Lagos Bloom Florals",
+          "logo": null,
+          "logoPosition": "bottom-right",
+          "logoScale": 0.14,
+          "createdAt": "$now-45d",
+          "updatedAt": "$now-1d"
+        }
+      }
+    },
+    "fetch:PUT:/api/projects/style:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:GET:/api/slideshow/styles:": {
+      "status": 200,
+      "body": {
+        "styles": [
+          {
+            "id": "ss_1",
+            "name": "Everyday candid",
+            "description": "Phone-photo look with white caption boxes.",
+            "textStyle": "white",
+            "formats": [
+              "single",
+              "split"
+            ],
+            "mine": false,
+            "cover": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "preview": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ]
+          },
+          {
+            "id": "ss_own1",
+            "name": "My story style",
+            "description": "",
+            "textStyle": "plain",
+            "formats": [
+              "single"
+            ],
+            "mine": true,
+            "cover": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+            "preview": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ]
+          }
+        ]
+      }
+    },
+    "fetch:POST:/api/slideshow/styles:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "style": {
+          "id": "ss_own1",
+          "name": "My story style",
+          "description": "",
+          "textStyle": "plain",
+          "formats": [
+            "single"
+          ],
+          "mine": true,
+          "cover": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+          "preview": [
+            "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+          ]
+        }
+      }
+    },
+    "fetch:DELETE:/api/slideshow/styles:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:GET:/api/slideshow/character:": {
+      "status": 200,
+      "body": {
+        "characters": [
+          {
+            "id": "c_1",
+            "name": "Ada",
+            "description": "Late 20s, natural curls, linen shirt, warm smile.",
+            "photos": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg",
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "source": "ai"
+          }
+        ]
+      }
+    },
+    "fetch:PUT:/api/slideshow/character:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "characters": [
+          {
+            "id": "c_1",
+            "name": "Ada",
+            "description": "Late 20s, natural curls, linen shirt, warm smile.",
+            "photos": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg",
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "source": "ai"
+          }
+        ]
+      }
+    },
+    "fetch:POST:/api/slideshow/character:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "photos": [
+          "/templates/68a06692e2f01159966dd6f9f51468d6.jpg",
+          "/templates/c6d151889045da73f6d8747282591c92.jpg"
+        ]
+      }
+    },
+    "fetch:POST:/api/slideshow/plan:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "plan": {
+          "title": "5 ways to style roses",
+          "slides": [
+            {
+              "n": 1,
+              "kind": "single",
+              "scene": "A bouquet on a kitchen table, window light",
+              "scene2": "",
+              "text": "5 ways to style roses",
+              "detail": "",
+              "text2": "",
+              "person": "character"
+            },
+            {
+              "n": 2,
+              "kind": "single",
+              "scene": "A bouquet on a kitchen table, window light",
+              "scene2": "",
+              "text": "Mix your heights",
+              "detail": "",
+              "text2": "",
+              "person": "none"
+            },
+            {
+              "n": 3,
+              "kind": "split",
+              "scene": "A bouquet on a kitchen table, window light",
+              "scene2": "Close-up of hands trimming stems",
+              "text": "Trim at an angle",
+              "detail": "",
+              "text2": "Angle cuts drink more",
+              "person": "none"
+            },
+            {
+              "n": 4,
+              "kind": "single",
+              "scene": "A bouquet on a kitchen table, window light",
+              "scene2": "",
+              "text": "Change the water daily",
+              "detail": "",
+              "text2": "",
+              "person": "none"
+            },
+            {
+              "n": 5,
+              "kind": "single",
+              "scene": "A bouquet on a kitchen table, window light",
+              "scene2": "",
+              "text": "Order yours today",
+              "detail": "",
+              "text2": "",
+              "person": "none"
+            }
+          ]
+        },
+        "textStyle": "white"
+      }
+    },
+    "fetch:POST:/api/slideshow/slide:": {
+      "status": 200,
+      "delayMs": 500,
+      "body": {
+        "success": true,
+        "url": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+        "viewUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+        "chargedMilli": 2402
+      }
+    },
+    "fetch:POST:/api/slideshow/save:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "generationId": "gen_ss_1"
+      }
+    },
+    "fetch:POST:/api/carousel-styles:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "style": {
+          "id": "cs_new",
+          "name": "My new style",
+          "description": "",
+          "mine": true,
+          "cover": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+          "preview": [
+            "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+          ]
+        }
+      }
+    },
+    "fetch:DELETE:/api/carousel-styles:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:POST:/api/carousel-styles/upload:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "url": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+      }
+    },
+    "fetch:POST:/api/ad-packs:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "pack": {
+          "id": "tpl_own2",
+          "title": "New pack",
+          "description": "",
+          "mine": true,
+          "coverImages": [
+            "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+          ]
+        }
+      }
+    },
+    "fetch:DELETE:/api/ad-packs:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:POST:/api/plans:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "plan_1",
+          "items": [
+            {
+              "id": "pl_new1",
+              "planId": "plan_1",
+              "scheduledAt": "$now+1d",
+              "platform": "instagram_post",
+              "format": "image",
+              "size": "1080x1080",
+              "topic": "Valentine bundles",
+              "theme": null,
+              "status": "planned"
+            },
+            {
+              "id": "pl_new2",
+              "planId": "plan_1",
+              "scheduledAt": "$now+2d",
+              "platform": "tiktok",
+              "format": "image",
+              "size": "1080x1920",
+              "topic": "Keeping roses fresh",
+              "theme": null,
+              "status": "planned"
+            },
+            {
+              "id": "pl_new3",
+              "planId": "plan_1",
+              "scheduledAt": "$now+3d",
+              "platform": "instagram_post",
+              "format": "carousel",
+              "size": "1080x1080",
+              "topic": "Behind the scenes",
+              "theme": null,
+              "status": "planned"
+            },
+            {
+              "id": "pl_new4",
+              "planId": "plan_1",
+              "scheduledAt": "$now+4d",
+              "platform": "tiktok",
+              "format": "image",
+              "size": "1080x1920",
+              "topic": "Customer story",
+              "theme": null,
+              "status": "planned"
+            },
+            {
+              "id": "pl_new5",
+              "planId": "plan_1",
+              "scheduledAt": "$now+5d",
+              "platform": "instagram_post",
+              "format": "image",
+              "size": "1080x1080",
+              "topic": "Weekend offer",
+              "theme": null,
+              "status": "planned"
+            },
+            {
+              "id": "pl_new6",
+              "planId": "plan_1",
+              "scheduledAt": "$now+6d",
+              "platform": "tiktok",
+              "format": "carousel",
+              "size": "1080x1920",
+              "topic": "Care tips",
+              "theme": null,
+              "status": "planned"
+            }
+          ]
+        },
+        "trimmed": 0
+      }
+    },
+    "fetch:PATCH:/api/plans/plan_1:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:POST:/api/jobs:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "job_new",
+          "userId": "usr_pilot_01",
+          "channelId": "ch_1",
+          "name": "New automation",
+          "prompt": "A fresh bouquet photo with a short caption",
+          "schedule": "09:00",
+          "platform": "instagram_post",
+          "size": "1080x1080",
+          "deliveryEmail": true,
+          "deliveryTelegram": false,
+          "deliverySocial": false,
+          "telegramChatId": null,
+          "isActive": true,
+          "lastRunAt": null,
+          "createdAt": "$now",
+          "updatedAt": "$now"
+        }
+      }
+    },
+    "fetch:PATCH:/api/jobs/job_1:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "job_1",
+          "userId": "usr_pilot_01",
+          "channelId": "ch_1",
+          "name": "Morning bloom",
+          "prompt": "A fresh bouquet photo with a short caption",
+          "schedule": "09:00",
+          "platform": "instagram_post",
+          "size": "1080x1080",
+          "deliveryEmail": true,
+          "deliveryTelegram": false,
+          "deliverySocial": false,
+          "telegramChatId": null,
+          "isActive": true,
+          "lastRunAt": null,
+          "createdAt": "$now",
+          "updatedAt": "$now"
+        }
+      }
+    },
+    "fetch:DELETE:/api/jobs/job_1:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:PATCH:/api/jobs/job_2:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "job_2",
+          "userId": "usr_pilot_01",
+          "channelId": "ch_1",
+          "name": "New automation",
+          "prompt": "A fresh bouquet photo with a short caption",
+          "schedule": "09:00",
+          "platform": "instagram_post",
+          "size": "1080x1080",
+          "deliveryEmail": true,
+          "deliveryTelegram": false,
+          "deliverySocial": false,
+          "telegramChatId": null,
+          "isActive": true,
+          "lastRunAt": null,
+          "createdAt": "$now",
+          "updatedAt": "$now"
+        }
+      }
+    },
+    "fetch:DELETE:/api/jobs/job_2:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:POST:/api/onboarding:": {
+      "status": 200,
+      "body": {
+        "status": "done",
+        "answers": {}
+      }
+    },
+    "fetch:POST:/api/auth/signup:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "user": {
+          "id": "usr_pilot_02",
+          "name": "Ada Okafor",
+          "email": "ada@example.com"
+        }
+      }
+    },
+    "fetch:DELETE:/api/chat-session:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:GET:/api/templates:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "templates": [
+          {
+            "id": "(3) Instagram.jpeg",
+            "name": "(3) Instagram",
+            "filename": "(3) Instagram.jpeg",
+            "publicUrl": "/templates/(3) Instagram.jpeg"
+          },
+          {
+            "id": "112548598f5ab8fc4c09207f62da0abc.jpg",
+            "name": "112548598f5ab8fc4c09207f62da0abc",
+            "filename": "112548598f5ab8fc4c09207f62da0abc.jpg",
+            "publicUrl": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+          },
+          {
+            "id": "2069e417aa5289fc21b33843b87f37eb.jpg",
+            "name": "2069e417aa5289fc21b33843b87f37eb",
+            "filename": "2069e417aa5289fc21b33843b87f37eb.jpg",
+            "publicUrl": "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+          },
+          {
+            "id": "2409004ccdb788fd8760aa48ae05b114.jpg",
+            "name": "2409004ccdb788fd8760aa48ae05b114",
+            "filename": "2409004ccdb788fd8760aa48ae05b114.jpg",
+            "publicUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+          },
+          {
+            "id": "677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "name": "677cc0b2f67da326311a099ecf5c7e88",
+            "filename": "677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "publicUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+          },
+          {
+            "id": "68a06692e2f01159966dd6f9f51468d6.jpg",
+            "name": "68a06692e2f01159966dd6f9f51468d6",
+            "filename": "68a06692e2f01159966dd6f9f51468d6.jpg",
+            "publicUrl": "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+          },
+          {
+            "id": "DEX vs Futuros Centralizados 2026_ Qual Plataforma é a Sua_.jpeg",
+            "name": "DEX vs Futuros Centralizados 2026  Qual Plataforma é a Sua",
+            "filename": "DEX vs Futuros Centralizados 2026_ Qual Plataforma é a Sua_.jpeg",
+            "publicUrl": "/templates/DEX vs Futuros Centralizados 2026_ Qual Plataforma é a Sua_.jpeg"
+          },
+          {
+            "id": "Instagram (5).jpeg",
+            "name": "Instagram (5)",
+            "filename": "Instagram (5).jpeg",
+            "publicUrl": "/templates/Instagram (5).jpeg"
+          },
+          {
+            "id": "Pin this_ AI affiliate marketing strategies 🏆.jpeg",
+            "name": "Pin this  AI affiliate marketing strategies 🏆",
+            "filename": "Pin this_ AI affiliate marketing strategies 🏆.jpeg",
+            "publicUrl": "/templates/Pin this_ AI affiliate marketing strategies 🏆.jpeg"
+          },
+          {
+            "id": "Social Media - Dommos Company - Dantte Sousa.jpeg",
+            "name": "Social Media   Dommos Company   Dantte Sousa",
+            "filename": "Social Media - Dommos Company - Dantte Sousa.jpeg",
+            "publicUrl": "/templates/Social Media - Dommos Company - Dantte Sousa.jpeg"
+          },
+          {
+            "id": "c6d151889045da73f6d8747282591c92.jpg",
+            "name": "c6d151889045da73f6d8747282591c92",
+            "filename": "c6d151889045da73f6d8747282591c92.jpg",
+            "publicUrl": "/templates/c6d151889045da73f6d8747282591c92.jpg"
+          },
+          {
+            "id": "uxlly-generated (17).png",
+            "name": "uxlly generated (17)",
+            "filename": "uxlly-generated (17).png",
+            "publicUrl": "/templates/uxlly-generated (17).png"
+          }
+        ]
+      }
+    },
+    "fetch:POST:/api/inspiration:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {}
+      }
+    },
+    "fetch:DELETE:/api/inspiration:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:POST:/api/admin/templates:": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "template": {
+          "id": "tpl_1",
+          "number": 1,
+          "kind": "pack",
+          "refImages": [
+            "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+          ],
+          "coverImages": [
+            "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+          ],
+          "tags": [],
+          "aspect": "4:5",
+          "styles": [],
+          "needsProduct": false,
+          "useBrandBrain": true,
+          "published": true,
+          "sortOrder": 1,
+          "usageCount": 40,
+          "ownerId": null,
+          "fields": [],
+          "title": "Colour-block product ad",
+          "category": "Static ads",
+          "description": "Bold single colour with the product centred."
+        },
+        "url": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+        "prompt": "Colour-block ad of {product} on a flat pastel background.",
+        "title": "Pack",
+        "fields": []
+      }
+    },
+    "fetch:POST:/api/admin/carousel-styles:": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "style": {
+          "id": "cs_1",
+          "name": "Soft studio",
+          "description": "Pastel backgrounds with serif headlines.",
+          "published": true,
+          "sortOrder": 1,
+          "usageCount": 88,
+          "cover": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+          "refs": [
+            "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+            "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+          ],
+          "dna": {}
+        },
+        "url": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+        "dna": ""
+      }
+    },
+    "fetch:POST:/api/admin/slideshow-styles:": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "style": {
+          "id": "ss_1",
+          "name": "Everyday candid",
+          "description": "Phone-photo look with white caption boxes.",
+          "published": true,
+          "sortOrder": 1,
+          "usageCount": 41,
+          "textStyle": "white",
+          "formats": [
+            "single",
+            "split"
+          ],
+          "refs": [
+            "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+          ],
+          "dna": ""
+        },
+        "url": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+        "dna": ""
+      }
+    },
+    "fetch:POST:/api/admin/billing:": {
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    "fetch:PUT:/api/admin/billing:": {
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    "fetch:GET:/api/billing/public:": {
+      "status": 200,
+      "body": {
+        "paymentsReady": false,
+        "payment": {
+          "currency": "NGN",
+          "ngnPerUsd": 1500
+        },
+        "balanceMilli": 0,
+        "nextExpiry": null,
+        "settings": {
+          "creditValueCents": 10,
+          "topupMinCents": 500,
+          "topupMaxCents": 50000,
+          "topupPresetsCents": [
+            1000,
+            2500,
+            5000,
+            10000
+          ],
+          "creditExpiryDays": 365,
+          "autoReloadMinCents": 500,
+          "autoReloadMaxCents": 50000
+        },
+        "plan": null,
+        "autoReload": {
+          "enabled": false,
+          "belowMilli": 0,
+          "amountCents": 0
+        },
+        "cards": [],
+        "free": {
+          "enabled": false,
+          "available": false,
+          "usedTotal": 0,
+          "cap": 0,
+          "usedToday": 0,
+          "todayLimit": 0,
+          "firstDay": false
+        },
+        "plans": [
+          {
+            "key": "starter",
+            "name": "Starter",
+            "priceCents": 2000,
+            "creditsMilli": 200000
+          },
+          {
+            "key": "pro",
+            "name": "Pro",
+            "priceCents": 5000,
+            "creditsMilli": 550000
+          }
+        ],
+        "pricing": [
+          {
+            "key": "chat.text",
+            "label": "Chat reply",
+            "creditsMilli": 300
+          },
+          {
+            "key": "image.openai",
+            "label": "Image (GPT Image)",
+            "creditsMilli": 2042
+          },
+          {
+            "key": "image.flux",
+            "label": "Image (FLUX)",
+            "creditsMilli": 300
+          },
+          {
+            "key": "image.edit",
+            "label": "Image with your product / reference photo",
+            "creditsMilli": 2402
+          },
+          {
+            "key": "vision.analysis",
+            "label": "Brand / reference analysis",
+            "creditsMilli": 300
+          },
+          {
+            "key": "carousel.plan",
+            "label": "Carousel planning (per carousel)",
+            "creditsMilli": 300
+          }
+        ],
+        "isAdmin": false
+      }
+    }
+  }
+}

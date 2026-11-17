@@ -1,0 +1,38 @@
+{
+  "name": "_base",
+  "$comment": "PARTIAL. next-auth client endpoints every page triggers via <SessionProvider>. Shapes from next-auth v4 client; providers from src/lib/auth.ts (Google + Credentials).",
+  "policy": {
+    "default": "replay-only"
+  },
+  "entries": {
+    "fetch:GET:/api/auth/csrf:": {
+      "status": 200,
+      "body": {
+        "csrfToken": "pilot-csrf-token"
+      }
+    },
+    "fetch:GET:/api/auth/providers:": {
+      "status": 200,
+      "body": {
+        "google": {
+          "id": "google",
+          "name": "Google",
+          "type": "oauth",
+          "signinUrl": "/api/auth/signin/google",
+          "callbackUrl": "/api/auth/callback/google"
+        },
+        "credentials": {
+          "id": "credentials",
+          "name": "Credentials",
+          "type": "credentials",
+          "signinUrl": "/api/auth/signin/credentials",
+          "callbackUrl": "/api/auth/callback/credentials"
+        }
+      }
+    },
+    "fetch:POST:/api/auth/_log:": {
+      "status": 200,
+      "body": {}
+    }
+  }
+}

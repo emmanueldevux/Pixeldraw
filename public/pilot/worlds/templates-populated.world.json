@@ -1,0 +1,172 @@
+{
+  "name": "templates-populated",
+  "extends": "_signed-in",
+  "$comment": "GET /api/design-templates -> {templates} where each is toPublic(t)+typicalMilli (lib/designTemplates/types.ts). Six published templates across all four categories; two are tagged Recommended so the page opens on that tab.",
+  "entries": {
+    "fetch:GET:/api/design-templates:": {
+      "status": 200,
+      "body": {
+        "templates": [
+          {
+            "id": "tpl_1",
+            "number": 1,
+            "kind": "pack",
+            "refImages": [],
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "tags": [
+              "Recommended",
+              "ecommerce"
+            ],
+            "aspect": "4:5",
+            "styles": [],
+            "needsProduct": true,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 1,
+            "usageCount": 412,
+            "ownerId": null,
+            "fields": [
+              {
+                "key": "Headline",
+                "label": "Headline (optional)",
+                "placeholder": "Fresh blooms, same day"
+              }
+            ],
+            "typicalMilli": 2042,
+            "title": "Colour-block product ad",
+            "description": "A bold single-colour background with the product front and centre.",
+            "category": "Static ads"
+          },
+          {
+            "id": "tpl_2",
+            "number": 2,
+            "kind": "pack",
+            "refImages": [],
+            "coverImages": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "tags": [
+              "Recommended",
+              "promo"
+            ],
+            "aspect": "1:1",
+            "styles": [],
+            "needsProduct": true,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 2,
+            "usageCount": 290,
+            "ownerId": null,
+            "fields": [],
+            "typicalMilli": 2042,
+            "title": "Weekend promo",
+            "description": "Offer-led layout with a price burst and a clear call to action.",
+            "category": "Static ads"
+          },
+          {
+            "id": "tpl_3",
+            "number": 3,
+            "kind": "pack",
+            "refImages": [],
+            "coverImages": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "tags": [
+              "education"
+            ],
+            "aspect": "4:5",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 3,
+            "usageCount": 171,
+            "ownerId": null,
+            "fields": [],
+            "typicalMilli": 2042,
+            "title": "5-tip carousel",
+            "description": "Hook slide, five tip slides and a closing call to action.",
+            "category": "Carousel"
+          },
+          {
+            "id": "tpl_4",
+            "number": 4,
+            "kind": "pack",
+            "refImages": [],
+            "coverImages": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "tags": [],
+            "aspect": "9:16",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 4,
+            "usageCount": 96,
+            "ownerId": null,
+            "fields": [],
+            "typicalMilli": 2042,
+            "title": "Story-style slideshow",
+            "description": "Vertical photo slides with large on-slide copy.",
+            "category": "Slideshows"
+          },
+          {
+            "id": "tpl_5",
+            "number": 5,
+            "kind": "pack",
+            "refImages": [],
+            "coverImages": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "tags": [
+              "youtube"
+            ],
+            "aspect": "16:9",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 5,
+            "usageCount": 54,
+            "ownerId": null,
+            "fields": [],
+            "typicalMilli": 2042,
+            "title": "Bold face thumbnail",
+            "description": "High-contrast thumbnail with a big expression and three words.",
+            "category": "Thumbnails"
+          },
+          {
+            "id": "tpl_6",
+            "number": 6,
+            "kind": "pack",
+            "refImages": [],
+            "coverImages": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "tags": [],
+            "aspect": "4:5",
+            "styles": [],
+            "needsProduct": true,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 6,
+            "usageCount": 12,
+            "ownerId": null,
+            "fields": [],
+            "typicalMilli": 2042,
+            "title": "Quiet minimal ad",
+            "description": "Soft light, lots of space, one line of copy.",
+            "category": "Static ads"
+          }
+        ]
+      }
+    }
+  }
+}

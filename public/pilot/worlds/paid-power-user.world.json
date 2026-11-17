@@ -1,0 +1,274 @@
+{
+  "name": "paid-power-user",
+  "extends": "_signed-in",
+  "$comment": "Pro plan active (550 credits), card on file, auto-reload on, four projects across platforms.",
+  "entries": {
+    "fetch:GET:/api/billing/overview:": {
+      "status": 200,
+      "body": {
+        "paymentsReady": true,
+        "payment": {
+          "currency": "NGN",
+          "ngnPerUsd": 1500
+        },
+        "balanceMilli": 412500,
+        "nextExpiry": "2027-10-02T00:00:00.000Z",
+        "settings": {
+          "creditValueCents": 10,
+          "topupMinCents": 500,
+          "topupMaxCents": 50000,
+          "topupPresetsCents": [
+            1000,
+            2500,
+            5000,
+            10000
+          ],
+          "creditExpiryDays": 365,
+          "autoReloadMinCents": 500,
+          "autoReloadMaxCents": 50000
+        },
+        "plan": {
+          "key": "pro",
+          "name": "Pro",
+          "priceCents": 5000,
+          "creditsMilli": 550000,
+          "status": "active",
+          "currentPeriodEnd": "2026-12-02T00:00:00.000Z",
+          "cancelAtPeriodEnd": false
+        },
+        "autoReload": {
+          "enabled": true,
+          "belowMilli": 50000,
+          "amountCents": 2500
+        },
+        "cards": [
+          {
+            "id": "pm_1",
+            "brand": "visa",
+            "last4": "4242",
+            "expMonth": 8,
+            "expYear": 2029,
+            "isDefault": true
+          }
+        ],
+        "free": {
+          "enabled": true,
+          "available": false,
+          "usedTotal": 3,
+          "cap": 3,
+          "usedToday": 1,
+          "todayLimit": 1,
+          "firstDay": false
+        },
+        "plans": [
+          {
+            "key": "starter",
+            "name": "Starter",
+            "priceCents": 2000,
+            "creditsMilli": 200000
+          },
+          {
+            "key": "pro",
+            "name": "Pro",
+            "priceCents": 5000,
+            "creditsMilli": 550000
+          }
+        ],
+        "pricing": [
+          {
+            "key": "chat.text",
+            "label": "Chat reply",
+            "creditsMilli": 300
+          },
+          {
+            "key": "image.openai",
+            "label": "Image (GPT Image)",
+            "creditsMilli": 2042
+          },
+          {
+            "key": "image.flux",
+            "label": "Image (FLUX)",
+            "creditsMilli": 300
+          },
+          {
+            "key": "image.edit",
+            "label": "Image with your product / reference photo",
+            "creditsMilli": 2402
+          },
+          {
+            "key": "vision.analysis",
+            "label": "Brand / reference analysis",
+            "creditsMilli": 300
+          },
+          {
+            "key": "carousel.plan",
+            "label": "Carousel planning (per carousel)",
+            "creditsMilli": 300
+          }
+        ],
+        "isAdmin": false
+      }
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "br_1",
+            "userId": "usr_pilot_01",
+            "name": "Lagos Bloom Florals",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "2026-10-01T09:00:00.000Z",
+            "updatedAt": "2026-11-14T16:20:00.000Z",
+            "styleGuide": {
+              "id": "sg_br_1",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_1",
+                "brandId": "br_1",
+                "name": "instagram post",
+                "platform": "instagram_post",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "2026-10-01T09:00:00.000Z",
+                "updatedAt": "2026-11-14T16:20:00.000Z",
+                "_count": {
+                  "posts": 42
+                }
+              },
+              {
+                "id": "ch_2",
+                "brandId": "br_1",
+                "name": "tiktok",
+                "platform": "tiktok",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "2026-10-01T09:00:00.000Z",
+                "updatedAt": "2026-11-14T16:20:00.000Z",
+                "_count": {
+                  "posts": 17
+                }
+              }
+            ]
+          },
+          {
+            "id": "br_2",
+            "userId": "usr_pilot_01",
+            "name": "Kano Coffee Roasters",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "2026-10-01T09:00:00.000Z",
+            "updatedAt": "2026-11-10T11:00:00.000Z",
+            "styleGuide": {
+              "id": "sg_br_2",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_3",
+                "brandId": "br_2",
+                "name": "instagram story",
+                "platform": "instagram_story",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "2026-10-01T09:00:00.000Z",
+                "updatedAt": "2026-11-14T16:20:00.000Z",
+                "_count": {
+                  "posts": 9
+                }
+              }
+            ]
+          },
+          {
+            "id": "br_3",
+            "userId": "usr_pilot_01",
+            "name": "Surulere Fitness",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "2026-10-01T09:00:00.000Z",
+            "updatedAt": "2026-11-02T08:30:00.000Z",
+            "styleGuide": {
+              "id": "sg_br_3",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_4",
+                "brandId": "br_3",
+                "name": "linkedin post",
+                "platform": "linkedin_post",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "2026-10-01T09:00:00.000Z",
+                "updatedAt": "2026-11-14T16:20:00.000Z",
+                "_count": {
+                  "posts": 3
+                }
+              }
+            ]
+          },
+          {
+            "id": "br_4",
+            "userId": "usr_pilot_01",
+            "name": "Ibadan Print Co",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "2026-10-01T09:00:00.000Z",
+            "updatedAt": "2026-10-20T08:30:00.000Z",
+            "styleGuide": {
+              "id": "sg_br_4",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_5",
+                "brandId": "br_4",
+                "name": "facebook",
+                "platform": "facebook",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "2026-10-01T09:00:00.000Z",
+                "updatedAt": "2026-11-14T16:20:00.000Z",
+                "_count": {
+                  "posts": 0
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

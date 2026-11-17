@@ -1,0 +1,170 @@
+{
+  "name": "admin-tabs-populated",
+  "extends": "admin-populated",
+  "$comment": "Admin GETs return {templates} / {styles} with unpublished rows included (publishedOnly:false).",
+  "entries": {
+    "fetch:GET:/api/admin/templates:": {
+      "status": 200,
+      "body": {
+        "templates": [
+          {
+            "id": "tpl_1",
+            "number": 1,
+            "kind": "pack",
+            "refImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "tags": [],
+            "aspect": "4:5",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 1,
+            "usageCount": 40,
+            "ownerId": null,
+            "fields": [],
+            "title": "Colour-block product ad",
+            "category": "Static ads",
+            "description": "Bold single colour with the product centred."
+          },
+          {
+            "id": "tpl_2",
+            "number": 2,
+            "kind": "pack",
+            "refImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "tags": [],
+            "aspect": "1:1",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 2,
+            "usageCount": 80,
+            "ownerId": null,
+            "fields": [],
+            "title": "Weekend promo",
+            "category": "Static ads",
+            "description": "Offer-led layout."
+          },
+          {
+            "id": "tpl_3",
+            "number": 3,
+            "kind": "pack",
+            "refImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "tags": [],
+            "aspect": "4:5",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 3,
+            "usageCount": 120,
+            "ownerId": null,
+            "fields": [],
+            "title": "5-tip carousel",
+            "category": "Carousel",
+            "description": "Hook, five tips, call to action."
+          },
+          {
+            "id": "tpl_4",
+            "number": 4,
+            "kind": "pack",
+            "refImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "tags": [],
+            "aspect": "16:9",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": false,
+            "sortOrder": 4,
+            "usageCount": 0,
+            "ownerId": null,
+            "fields": [],
+            "title": "Draft: bold thumbnail",
+            "category": "Thumbnails",
+            "description": "Not published yet."
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/admin/carousel-styles:": {
+      "status": 200,
+      "body": {
+        "styles": [
+          {
+            "id": "cs_1",
+            "name": "Soft studio",
+            "description": "Pastel backgrounds with serif headlines.",
+            "published": true,
+            "sortOrder": 1,
+            "usageCount": 88,
+            "cover": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+            "refs": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "dna": {}
+          },
+          {
+            "id": "cs_2",
+            "name": "Draft: bold type",
+            "description": "",
+            "published": false,
+            "sortOrder": 2,
+            "usageCount": 0,
+            "cover": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "refs": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "dna": {}
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/admin/slideshow-styles:": {
+      "status": 200,
+      "body": {
+        "styles": [
+          {
+            "id": "ss_1",
+            "name": "Everyday candid",
+            "description": "Phone-photo look with white caption boxes.",
+            "published": true,
+            "sortOrder": 1,
+            "usageCount": 41,
+            "textStyle": "white",
+            "formats": [
+              "single",
+              "split"
+            ],
+            "refs": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "dna": ""
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "name": "inspiration-populated",
+  "extends": "_signed-in",
+  "$comment": "GET /api/inspiration -> {success,data} rows of InspirationImage (prisma). Eight images mixing platforms/styles/moods; two are slideshow reference slides.",
+  "entries": {
+    "fetch:GET:/api/inspiration:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "insp_1",
+            "url": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+            "platform": "instagram_post",
+            "style": "minimal",
+            "mood": "calm",
+            "industry": "florist",
+            "tags": [
+              "pastel",
+              "product"
+            ],
+            "addedBy": "usr_pilot_01",
+            "createdAt": "$now-1d",
+            "set": null,
+            "slideNumber": null,
+            "role": null,
+            "onSlideText": null,
+            "imageSubject": null,
+            "imageStyle": null,
+            "psychologyDevice": null
+          },
+          {
+            "id": "insp_2",
+            "url": "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+            "platform": "instagram_post",
+            "style": "editorial",
+            "mood": "luxury",
+            "industry": "fashion",
+            "tags": [
+              "serif"
+            ],
+            "addedBy": "usr_pilot_01",
+            "createdAt": "$now-2d",
+            "set": null,
+            "slideNumber": null,
+            "role": null,
+            "onSlideText": null,
+            "imageSubject": null,
+            "imageStyle": null,
+            "psychologyDevice": null
+          },
+          {
+            "id": "insp_3",
+            "url": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+            "platform": "tiktok",
+            "style": "maximalist",
+            "mood": "playful",
+            "industry": "food",
+            "tags": [
+              "bright"
+            ],
+            "addedBy": "usr_pilot_01",
+            "createdAt": "$now-3d",
+            "set": "set1",
+            "slideNumber": 1,
+            "role": "hook",
+            "onSlideText": "5 ways to style roses",
+            "imageSubject": "a bouquet on a kitchen table",
+            "imageStyle": "warm window light, big white text",
+            "psychologyDevice": "specific number"
+          },
+          {
+            "id": "insp_4",
+            "url": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "platform": "tiktok",
+            "style": "maximalist",
+            "mood": "playful",
+            "industry": "food",
+            "tags": [
+              "bright"
+            ],
+            "addedBy": "usr_pilot_01",
+            "createdAt": "$now-4d",
+            "set": "set1",
+            "slideNumber": 2,
+            "role": "tip",
+            "onSlideText": "1. Mix heights",
+            "imageSubject": "roses in tall and short vases",
+            "imageStyle": "same warm light",
+            "psychologyDevice": "social proof"
+          },
+          {
+            "id": "insp_5",
+            "url": "/templates/68a06692e2f01159966dd6f9f51468d6.jpg",
+            "platform": "linkedin_post",
+            "style": "3d render",
+            "mood": "professional",
+            "industry": "saas",
+            "tags": [],
+            "addedBy": "usr_pilot_01",
+            "createdAt": "$now-5d",
+            "set": null,
+            "slideNumber": null,
+            "role": null,
+            "onSlideText": null,
+            "imageSubject": null,
+            "imageStyle": null,
+            "psychologyDevice": null
+          },
+          {
+            "id": "insp_6",
+            "url": "/templates/c6d151889045da73f6d8747282591c92.jpg",
+            "platform": "youtube_thumbnail",
+            "style": "bold",
+            "mood": "energetic",
+            "industry": "fitness",
+            "tags": [
+              "face"
+            ],
+            "addedBy": "usr_pilot_01",
+            "createdAt": "$now-6d",
+            "set": null,
+            "slideNumber": null,
+            "role": null,
+            "onSlideText": null,
+            "imageSubject": null,
+            "imageStyle": null,
+            "psychologyDevice": null
+          },
+          {
+            "id": "insp_7",
+            "url": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+            "platform": null,
+            "style": "minimal",
+            "mood": "dreamy",
+            "industry": null,
+            "tags": [],
+            "addedBy": "usr_pilot_01",
+            "createdAt": "$now-7d",
+            "set": null,
+            "slideNumber": null,
+            "role": null,
+            "onSlideText": null,
+            "imageSubject": null,
+            "imageStyle": null,
+            "psychologyDevice": null
+          },
+          {
+            "id": "insp_8",
+            "url": "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+            "platform": "facebook",
+            "style": null,
+            "mood": "gritty",
+            "industry": "fitness",
+            "tags": [],
+            "addedBy": "usr_pilot_01",
+            "createdAt": "$now-8d",
+            "set": null,
+            "slideNumber": null,
+            "role": null,
+            "onSlideText": null,
+            "imageSubject": null,
+            "imageStyle": null,
+            "psychologyDevice": null
+          }
+        ]
+      }
+    }
+  }
+}

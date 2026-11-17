@@ -1,0 +1,19 @@
+{
+  "name": "dashboard-signed-out",
+  "extends": "signed-out",
+  "$comment": "Page fires BOTH mount fetches with no auth gate. Real routes answer 401 {error:'Unauthorized'} (generations/route.ts, projects/route.ts). Page: generations → `!d.success` returns silently; projects → `data.success` false, loading flag cleared => 'No projects yet / Create your first project' shows to an anonymous visitor.",
+  "entries": {
+    "fetch:GET:/api/generations:": {
+      "status": 401,
+      "body": {
+        "error": "Unauthorized"
+      }
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 401,
+      "body": {
+        "error": "Unauthorized"
+      }
+    }
+  }
+}

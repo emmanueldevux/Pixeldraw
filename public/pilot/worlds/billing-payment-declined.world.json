@@ -1,0 +1,25 @@
+{
+  "name": "billing-payment-declined",
+  "extends": "paid-power-user",
+  "$comment": "topup/subscription answer 400 {error} (flows throw Error(message)); auto-reload 400 'Add a payment method first'.",
+  "entries": {
+    "fetch:POST:/api/billing/topup:": {
+      "status": 400,
+      "body": {
+        "error": "Your card was declined. Try another card."
+      }
+    },
+    "fetch:POST:/api/billing/subscription:": {
+      "status": 400,
+      "body": {
+        "error": "Your card was declined. Try another card."
+      }
+    },
+    "fetch:PUT:/api/billing/auto-reload:": {
+      "status": 400,
+      "body": {
+        "error": "Add a payment method first"
+      }
+    }
+  }
+}

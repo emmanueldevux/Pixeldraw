@@ -1,0 +1,217 @@
+{
+  "name": "ai-with-history",
+  "extends": "_signed-in",
+  "$comment": "GET /api/brain -> BrainRecord (lib/brain/types.ts; EMPTY_BRAIN is read from source); GET /api/ad-packs[?purpose=thumbnail] -> {packs:[{id,title,description,mine,coverImages}]} (ad-packs/route.ts shape()); GET /api/carousel-styles -> {styles:[{id,name,description,mine,cover,preview}]} (route shape()); GET /api/projects/style -> {success,data} (route lines 36-52); GET /api/chat-session -> {success,data: messages[]} where messages follow the PUT mapper (id, role, content, imageUrl, logo, generationId, carouselSlides, createdAt). PUT saves; pinned to success.",
+  "entries": {
+    "fetch:GET:/api/projects/style:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "primaryColor": "#2563EB",
+          "secondaryColor": "#1D4ED8",
+          "accentColor": "#22C55E",
+          "backgroundColor": null,
+          "headingFont": "Inter",
+          "tone": "professional",
+          "extraNotes": "",
+          "referenceImages": [],
+          "advancedSettings": {},
+          "logo": null,
+          "logoPosition": "bottom-right",
+          "logoScale": 0.14
+        }
+      }
+    },
+    "fetch:GET:/api/chat-session:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "m1",
+            "role": "user",
+            "content": "Make a Mother's Day ad for my bouquets",
+            "imageUrl": null,
+            "logo": null,
+            "generationId": null,
+            "carouselSlides": null,
+            "createdAt": "$now-2h"
+          },
+          {
+            "id": "m2",
+            "role": "assistant",
+            "content": "Here is a soft pink ad with your bouquet front and centre.",
+            "imageUrl": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+            "logo": null,
+            "generationId": "gen_000",
+            "carouselSlides": null,
+            "createdAt": "$now-2h"
+          },
+          {
+            "id": "m3",
+            "role": "user",
+            "content": "Now a 3-slide carousel on styling roses",
+            "imageUrl": null,
+            "logo": null,
+            "generationId": null,
+            "carouselSlides": null,
+            "createdAt": "$now-1h"
+          },
+          {
+            "id": "m4",
+            "role": "assistant",
+            "content": "Done. Three slides: hook, tip and call to action.",
+            "imageUrl": null,
+            "logo": null,
+            "generationId": "gen_002",
+            "carouselSlides": [
+              {
+                "imageUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+              },
+              {
+                "imageUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+              },
+              {
+                "imageUrl": "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+              }
+            ],
+            "createdAt": "$now-1h"
+          }
+        ]
+      }
+    },
+    "fetch:PUT:/api/chat-session:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:GET:/api/brain:": {
+      "status": 200,
+      "body": {
+        "brandId": "br_1",
+        "status": "ready",
+        "data": {
+          "business": {
+            "name": "Lagos Bloom Florals",
+            "whatYouSell": "Fresh bouquets and same-day delivery",
+            "industry": "Florist",
+            "location": "Lagos, Nigeria",
+            "website": "lagosbloom.example",
+            "summary": "A florist in Lagos selling bouquets for gifting. Customers are busy professionals who order online."
+          },
+          "products": [],
+          "audience": [],
+          "voice": {
+            "oneLine": "",
+            "traits": [],
+            "rhythm": "",
+            "address": "",
+            "emoji": "",
+            "useWords": [],
+            "avoidWords": [],
+            "examples": {
+              "headline": "",
+              "caption": "",
+              "cta": ""
+            },
+            "dos": [],
+            "donts": []
+          },
+          "positioning": {
+            "standsAgainst": "",
+            "counterPosition": "",
+            "valueProp": "",
+            "without": "",
+            "pillars": []
+          },
+          "offers": [
+            {
+              "id": "O1",
+              "title": "Free delivery over 20k",
+              "details": "Orders above NGN 20,000 ship free in Lagos.",
+              "code": "BLOOM20",
+              "isGuarantee": false
+            }
+          ],
+          "offerRules": ""
+        },
+        "edited": [],
+        "generatedAt": "$now-3d",
+        "updatedAt": "$now-1d"
+      }
+    },
+    "fetch:GET:/api/ad-packs:": {
+      "status": 200,
+      "body": {
+        "packs": [
+          {
+            "id": "tpl_1",
+            "title": "Colour-block product ad",
+            "description": "Bold single colour with the product centred.",
+            "mine": false,
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ]
+          },
+          {
+            "id": "tpl_own1",
+            "title": "My weekend promos",
+            "description": "",
+            "mine": true,
+            "coverImages": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ]
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/ad-packs?purpose=thumbnail:": {
+      "status": 200,
+      "body": {
+        "packs": [
+          {
+            "id": "tpl_5",
+            "title": "Bold face thumbnail",
+            "description": "High-contrast thumbnail.",
+            "mine": false,
+            "coverImages": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ]
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/carousel-styles:": {
+      "status": 200,
+      "body": {
+        "styles": [
+          {
+            "id": "cs_1",
+            "name": "Soft studio",
+            "description": "Pastel backgrounds with serif headlines.",
+            "mine": false,
+            "cover": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+            "preview": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ]
+          },
+          {
+            "id": "cs_own1",
+            "name": "My launch style",
+            "description": "",
+            "mine": true,
+            "cover": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "preview": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

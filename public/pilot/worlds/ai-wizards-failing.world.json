@@ -1,0 +1,67 @@
+{
+  "name": "ai-wizards-failing",
+  "extends": "ai-with-history",
+  "$comment": "Wizard calls fail: plan/slide/character 502 (routes), style/pack/plan/job create 500, upload 400.",
+  "entries": {
+    "fetch:POST:/api/slideshow/plan:": {
+      "status": 502,
+      "body": {
+        "error": "Couldn't plan the slideshow. Nothing was charged. Try again."
+      }
+    },
+    "fetch:POST:/api/slideshow/slide:": {
+      "status": 502,
+      "body": {
+        "error": "This photo couldn't be made. You were not charged."
+      }
+    },
+    "fetch:POST:/api/slideshow/character:": {
+      "status": 502,
+      "body": {
+        "error": "The character couldn't be made. You were not charged. Try again."
+      }
+    },
+    "fetch:POST:/api/slideshow/styles:": {
+      "status": 500,
+      "body": {
+        "error": "Couldn't study the examples. Nothing was charged. Try again."
+      }
+    },
+    "fetch:POST:/api/ad-packs:": {
+      "status": 500,
+      "body": {
+        "error": "Could not study the references. Nothing was charged. Try again."
+      }
+    },
+    "fetch:POST:/api/carousel-styles:": {
+      "status": 500,
+      "body": {
+        "error": "Could not create the style"
+      }
+    },
+    "fetch:POST:/api/carousel-styles/upload:": {
+      "status": 400,
+      "body": {
+        "error": "Send a smaller image"
+      }
+    },
+    "fetch:POST:/api/plans:": {
+      "status": 500,
+      "body": {
+        "error": "Could not draft the plan"
+      }
+    },
+    "fetch:POST:/api/jobs:": {
+      "status": 500,
+      "body": {
+        "error": "Internal error"
+      }
+    },
+    "fetch:POST:/api/projects:": {
+      "status": 500,
+      "body": {
+        "error": "Internal error"
+      }
+    }
+  }
+}

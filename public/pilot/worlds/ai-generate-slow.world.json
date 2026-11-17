@@ -1,0 +1,156 @@
+{
+  "name": "ai-generate-slow",
+  "extends": "ai-with-history",
+  "$comment": "chat and generate-image take 9 seconds (loading bubble stays up); carousel steps take 4 seconds each.",
+  "entries": {
+    "fetch:POST:/api/ai/chat:": {
+      "status": 200,
+      "body": {
+        "content": "Here's a soft pink ad with your bouquet front and centre.",
+        "model": "pilot",
+        "imageUrl": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+        "generationId": "gen_new_1",
+        "logo": null,
+        "usage": {
+          "promptTokens": 120,
+          "completionTokens": 60
+        }
+      },
+      "delayMs": 9000
+    },
+    "fetch:POST:/api/ai/generate-image:": {
+      "status": 200,
+      "body": {
+        "generationId": "gen_new_2",
+        "imageUrl": "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+        "revisedPrompt": "A pastel bouquet on a kitchen table",
+        "logo": null
+      },
+      "delayMs": 9000
+    },
+    "fetch:POST:/api/tasks/task_1/step:": {
+      "sequence": [
+        {
+          "status": 200,
+          "delayMs": 4000,
+          "body": {
+            "success": true,
+            "data": {
+              "id": "task_1",
+              "status": "running",
+              "progress": 1,
+              "total": 5,
+              "slides": [
+                {
+                  "slideNumber": 1,
+                  "role": "hook",
+                  "headline": "5 ways to style roses",
+                  "body": "Short supporting line for slide 1.",
+                  "imageUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+                }
+              ],
+              "error": null,
+              "generationId": null,
+              "style": "Soft studio",
+              "size": "1080x1350"
+            }
+          }
+        },
+        {
+          "status": 200,
+          "delayMs": 4000,
+          "body": {
+            "success": true,
+            "data": {
+              "id": "task_1",
+              "status": "running",
+              "progress": 3,
+              "total": 5,
+              "slides": [
+                {
+                  "slideNumber": 1,
+                  "role": "hook",
+                  "headline": "5 ways to style roses",
+                  "body": "Short supporting line for slide 1.",
+                  "imageUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+                },
+                {
+                  "slideNumber": 2,
+                  "role": "tip",
+                  "headline": "Mix your heights",
+                  "body": "Short supporting line for slide 2.",
+                  "imageUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+                },
+                {
+                  "slideNumber": 3,
+                  "role": "cta",
+                  "headline": "Use odd numbers",
+                  "body": "Short supporting line for slide 3.",
+                  "imageUrl": "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+                }
+              ],
+              "error": null,
+              "generationId": null,
+              "style": "Soft studio",
+              "size": "1080x1350"
+            }
+          }
+        },
+        {
+          "status": 200,
+          "delayMs": 4000,
+          "body": {
+            "success": true,
+            "data": {
+              "id": "task_1",
+              "status": "done",
+              "progress": 5,
+              "total": 5,
+              "slides": [
+                {
+                  "slideNumber": 1,
+                  "role": "hook",
+                  "headline": "5 ways to style roses",
+                  "body": "Short supporting line for slide 1.",
+                  "imageUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+                },
+                {
+                  "slideNumber": 2,
+                  "role": "tip",
+                  "headline": "Mix your heights",
+                  "body": "Short supporting line for slide 2.",
+                  "imageUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+                },
+                {
+                  "slideNumber": 3,
+                  "role": "tip",
+                  "headline": "Use odd numbers",
+                  "body": "Short supporting line for slide 3.",
+                  "imageUrl": "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+                },
+                {
+                  "slideNumber": 4,
+                  "role": "tip",
+                  "headline": "Trim stems at an angle",
+                  "body": "Short supporting line for slide 4.",
+                  "imageUrl": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+                },
+                {
+                  "slideNumber": 5,
+                  "role": "cta",
+                  "headline": "Order today",
+                  "body": "Short supporting line for slide 5.",
+                  "imageUrl": "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+                }
+              ],
+              "error": null,
+              "generationId": "gen_task_1",
+              "style": "Soft studio",
+              "size": "1080x1350"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

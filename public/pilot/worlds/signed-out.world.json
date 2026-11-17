@@ -1,0 +1,5 @@
+{
+  "name": "signed-out",
+  "extends": "_signed-out",
+  "$comment": "Anonymous visitor browsing. Gated actions open the login popup (AuthGate.requireAuth). Page data calls are NOT pinned yet — they surface in the rig's 'unpinned' list until each page's world is authored."
+}

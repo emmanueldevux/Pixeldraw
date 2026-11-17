@@ -1,0 +1,25 @@
+{
+  "name": "admin-tabs-denied",
+  "extends": "admin-denied",
+  "$comment": "Admin tab GETs answer 403 'Admins only'.",
+  "entries": {
+    "fetch:GET:/api/admin/templates:": {
+      "status": 403,
+      "body": {
+        "error": "Admins only"
+      }
+    },
+    "fetch:GET:/api/admin/carousel-styles:": {
+      "status": 403,
+      "body": {
+        "error": "Admins only"
+      }
+    },
+    "fetch:GET:/api/admin/slideshow-styles:": {
+      "status": 403,
+      "body": {
+        "error": "Admins only"
+      }
+    }
+  }
+}

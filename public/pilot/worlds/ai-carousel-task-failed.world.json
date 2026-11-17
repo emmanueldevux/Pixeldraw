@@ -1,0 +1,32 @@
+{
+  "name": "ai-carousel-task-failed",
+  "extends": "ai-with-history",
+  "$comment": "Carousel starts, the first poll comes back status:failed with error -> 'Carousel generation failed'.",
+  "entries": {
+    "fetch:POST:/api/tasks/task_1/step:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "task_1",
+          "status": "failed",
+          "progress": 1,
+          "total": 5,
+          "slides": [
+            {
+              "slideNumber": 1,
+              "role": "hook",
+              "headline": "5 ways to style roses",
+              "body": "Short supporting line for slide 1.",
+              "imageUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            }
+          ],
+          "error": "The image service timed out",
+          "generationId": null,
+          "style": "Soft studio",
+          "size": "1080x1350"
+        }
+      }
+    }
+  }
+}

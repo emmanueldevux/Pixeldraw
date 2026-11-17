@@ -1,0 +1,70 @@
+{
+  "name": "dashboard-few-files",
+  "extends": "_signed-in",
+  "$comment": "One project (shell default), five saved designs. Row 3 is a 3-slide carousel ('3 slides' pill); row 4 has an empty title (page falls back to label 'Design'); row 5 has imageUrls [] and the page FILTERS it out (so 4 tiles show, not 5). All rows follow the select{} in generations/route.ts.",
+  "entries": {
+    "fetch:GET:/api/generations:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "gen_000",
+            "kind": "image",
+            "title": "Mother's Day bouquet ad",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-1h"
+          },
+          {
+            "id": "gen_001",
+            "kind": "image",
+            "title": "Weekend delivery promo",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-2h"
+          },
+          {
+            "id": "gen_002",
+            "kind": "carousel",
+            "title": "5 ways to style roses",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-3h"
+          },
+          {
+            "id": "gen_003",
+            "kind": "image",
+            "title": "",
+            "imageUrls": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-4h"
+          },
+          {
+            "id": "gen_004",
+            "kind": "image",
+            "title": "Draft with no image yet",
+            "imageUrls": [],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-5h"
+          }
+        ]
+      }
+    }
+  }
+}

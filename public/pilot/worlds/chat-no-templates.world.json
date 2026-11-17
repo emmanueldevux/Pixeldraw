@@ -1,0 +1,14 @@
+{
+  "name": "chat-no-templates",
+  "extends": "_signed-in",
+  "$comment": "Directory empty -> {success:true, templates: []}.",
+  "entries": {
+    "fetch:GET:/api/templates:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "templates": []
+      }
+    }
+  }
+}

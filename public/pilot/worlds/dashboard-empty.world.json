@@ -1,0 +1,21 @@
+{
+  "name": "dashboard-empty",
+  "extends": "_signed-in",
+  "$comment": "Onboarded, but no projects and no generated files: 'No projects yet' (Projects tab) and 'No files yet' (Files tab).",
+  "entries": {
+    "fetch:GET:/api/generations:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    }
+  }
+}

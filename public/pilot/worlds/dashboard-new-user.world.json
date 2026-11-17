@@ -1,0 +1,14 @@
+{
+  "name": "dashboard-new-user",
+  "extends": "new-user-onboarding",
+  "$comment": "Onboarding status 'none' => the wizard opens OVER an empty dashboard (no projects, no files).",
+  "entries": {
+    "fetch:GET:/api/generations:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    }
+  }
+}

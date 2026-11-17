@@ -1,0 +1,14 @@
+{
+  "name": "templates-api-failing",
+  "extends": "_signed-in",
+  "$comment": "Route catch -> 500 {templates: [], error}; the page ignores status and shows its empty state.",
+  "entries": {
+    "fetch:GET:/api/design-templates:": {
+      "status": 500,
+      "body": {
+        "templates": [],
+        "error": "Templates are not set up yet"
+      }
+    }
+  }
+}

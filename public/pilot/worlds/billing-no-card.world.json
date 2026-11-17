@@ -1,0 +1,104 @@
+{
+  "name": "billing-no-card",
+  "extends": "paid-power-user",
+  "$comment": "cards: [] and autoReload off -> 'No cards saved yet', auto-reload modal asks to add a card.",
+  "entries": {
+    "fetch:GET:/api/billing/overview:": {
+      "status": 200,
+      "body": {
+        "paymentsReady": true,
+        "payment": {
+          "currency": "NGN",
+          "ngnPerUsd": 1500
+        },
+        "balanceMilli": 412500,
+        "nextExpiry": "2027-10-02T00:00:00.000Z",
+        "settings": {
+          "creditValueCents": 10,
+          "topupMinCents": 500,
+          "topupMaxCents": 50000,
+          "topupPresetsCents": [
+            1000,
+            2500,
+            5000,
+            10000
+          ],
+          "creditExpiryDays": 365,
+          "autoReloadMinCents": 500,
+          "autoReloadMaxCents": 50000
+        },
+        "plan": {
+          "key": "pro",
+          "name": "Pro",
+          "priceCents": 5000,
+          "creditsMilli": 550000,
+          "status": "active",
+          "currentPeriodEnd": "2026-12-02T00:00:00.000Z",
+          "cancelAtPeriodEnd": false
+        },
+        "autoReload": {
+          "enabled": false,
+          "belowMilli": 0,
+          "amountCents": 0
+        },
+        "cards": [],
+        "free": {
+          "enabled": true,
+          "available": false,
+          "usedTotal": 3,
+          "cap": 3,
+          "usedToday": 1,
+          "todayLimit": 1,
+          "firstDay": false
+        },
+        "plans": [
+          {
+            "key": "starter",
+            "name": "Starter",
+            "priceCents": 2000,
+            "creditsMilli": 200000
+          },
+          {
+            "key": "pro",
+            "name": "Pro",
+            "priceCents": 5000,
+            "creditsMilli": 550000
+          }
+        ],
+        "pricing": [
+          {
+            "key": "chat.text",
+            "label": "Chat reply",
+            "creditsMilli": 300
+          },
+          {
+            "key": "image.openai",
+            "label": "Image (GPT Image)",
+            "creditsMilli": 2042
+          },
+          {
+            "key": "image.flux",
+            "label": "Image (FLUX)",
+            "creditsMilli": 300
+          },
+          {
+            "key": "image.edit",
+            "label": "Image with your product / reference photo",
+            "creditsMilli": 2402
+          },
+          {
+            "key": "vision.analysis",
+            "label": "Brand / reference analysis",
+            "creditsMilli": 300
+          },
+          {
+            "key": "carousel.plan",
+            "label": "Carousel planning (per carousel)",
+            "creditsMilli": 300
+          }
+        ],
+        "isAdmin": false
+      }
+    }
+  }
+}

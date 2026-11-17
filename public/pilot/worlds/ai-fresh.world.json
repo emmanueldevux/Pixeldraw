@@ -1,0 +1,158 @@
+{
+  "name": "ai-fresh",
+  "extends": "_signed-in",
+  "$comment": "Same as ai-with-history but chat-session GET returns [] (a project with no saved chat).",
+  "entries": {
+    "fetch:GET:/api/projects/style:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "primaryColor": "#2563EB",
+          "secondaryColor": "#1D4ED8",
+          "accentColor": "#22C55E",
+          "backgroundColor": null,
+          "headingFont": "Inter",
+          "tone": "professional",
+          "extraNotes": "",
+          "referenceImages": [],
+          "advancedSettings": {},
+          "logo": null,
+          "logoPosition": "bottom-right",
+          "logoScale": 0.14
+        }
+      }
+    },
+    "fetch:GET:/api/chat-session:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    },
+    "fetch:PUT:/api/chat-session:": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    },
+    "fetch:GET:/api/brain:": {
+      "status": 200,
+      "body": {
+        "brandId": "br_1",
+        "status": "empty",
+        "data": {
+          "business": {
+            "name": "",
+            "whatYouSell": "",
+            "industry": "",
+            "location": "",
+            "website": "",
+            "summary": ""
+          },
+          "products": [],
+          "audience": [],
+          "voice": {
+            "oneLine": "",
+            "traits": [],
+            "rhythm": "",
+            "address": "",
+            "emoji": "",
+            "useWords": [],
+            "avoidWords": [],
+            "examples": {
+              "headline": "",
+              "caption": "",
+              "cta": ""
+            },
+            "dos": [],
+            "donts": []
+          },
+          "positioning": {
+            "standsAgainst": "",
+            "counterPosition": "",
+            "valueProp": "",
+            "without": "",
+            "pillars": []
+          },
+          "offers": [],
+          "offerRules": ""
+        },
+        "edited": [],
+        "generatedAt": null,
+        "updatedAt": null
+      }
+    },
+    "fetch:GET:/api/ad-packs:": {
+      "status": 200,
+      "body": {
+        "packs": [
+          {
+            "id": "tpl_1",
+            "title": "Colour-block product ad",
+            "description": "Bold single colour with the product centred.",
+            "mine": false,
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ]
+          },
+          {
+            "id": "tpl_own1",
+            "title": "My weekend promos",
+            "description": "",
+            "mine": true,
+            "coverImages": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ]
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/ad-packs?purpose=thumbnail:": {
+      "status": 200,
+      "body": {
+        "packs": [
+          {
+            "id": "tpl_5",
+            "title": "Bold face thumbnail",
+            "description": "High-contrast thumbnail.",
+            "mine": false,
+            "coverImages": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ]
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/carousel-styles:": {
+      "status": 200,
+      "body": {
+        "styles": [
+          {
+            "id": "cs_1",
+            "name": "Soft studio",
+            "description": "Pastel backgrounds with serif headlines.",
+            "mine": false,
+            "cover": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+            "preview": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ]
+          },
+          {
+            "id": "cs_own1",
+            "name": "My launch style",
+            "description": "",
+            "mine": true,
+            "cover": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "preview": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

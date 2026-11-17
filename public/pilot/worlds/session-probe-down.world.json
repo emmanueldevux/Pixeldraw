@@ -1,0 +1,16 @@
+{
+  "name": "session-probe-down",
+  "extends": [
+    "_base",
+    "_actions"
+  ],
+  "$comment": "The auth probe itself fails (500). next-auth's client swallows the error and reports no session, so the app can't tell 'down' from 'signed out' — this world shows what the user actually sees. Everything else is deliberately unpinned.",
+  "entries": {
+    "fetch:GET:/api/auth/session:": {
+      "status": 500,
+      "body": {
+        "error": "Internal error"
+      }
+    }
+  }
+}

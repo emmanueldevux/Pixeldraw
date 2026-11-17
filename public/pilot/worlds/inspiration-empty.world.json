@@ -1,0 +1,14 @@
+{
+  "name": "inspiration-empty",
+  "extends": "_signed-in",
+  "$comment": "Route returns {success:true,data:[]}.",
+  "entries": {
+    "fetch:GET:/api/inspiration:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    }
+  }
+}

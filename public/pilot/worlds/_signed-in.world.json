@@ -1,0 +1,182 @@
+{
+  "name": "_signed-in",
+  "extends": [
+    "_base",
+    "_actions"
+  ],
+  "$comment": "PARTIAL. Authenticated session + the three calls the dashboard shell makes on EVERY page once authed: BillingProvider -> GET /api/billing/overview, OnboardingProvider -> GET /api/onboarding, (AppHeader -> GET /api/projects on first open of the History menu). Defaults = a returning, onboarded user with one project and a fresh free trial; child worlds override.",
+  "entries": {
+    "fetch:GET:/api/auth/session:": {
+      "status": 200,
+      "body": {
+        "user": {
+          "name": "Ada Okafor",
+          "email": "ada@example.com",
+          "image": null,
+          "id": "usr_pilot_01"
+        },
+        "expires": "2026-12-16T00:00:00.000Z"
+      }
+    },
+    "fetch:GET:/api/billing/overview:": {
+      "status": 200,
+      "body": {
+        "paymentsReady": true,
+        "payment": {
+          "currency": "NGN",
+          "ngnPerUsd": 1500
+        },
+        "balanceMilli": 0,
+        "nextExpiry": null,
+        "settings": {
+          "creditValueCents": 10,
+          "topupMinCents": 500,
+          "topupMaxCents": 50000,
+          "topupPresetsCents": [
+            1000,
+            2500,
+            5000,
+            10000
+          ],
+          "creditExpiryDays": 365,
+          "autoReloadMinCents": 500,
+          "autoReloadMaxCents": 50000
+        },
+        "plan": null,
+        "autoReload": {
+          "enabled": false,
+          "belowMilli": 0,
+          "amountCents": 0
+        },
+        "cards": [],
+        "free": {
+          "enabled": true,
+          "available": true,
+          "usedTotal": 0,
+          "cap": 3,
+          "usedToday": 0,
+          "todayLimit": 2,
+          "firstDay": true
+        },
+        "plans": [
+          {
+            "key": "starter",
+            "name": "Starter",
+            "priceCents": 2000,
+            "creditsMilli": 200000
+          },
+          {
+            "key": "pro",
+            "name": "Pro",
+            "priceCents": 5000,
+            "creditsMilli": 550000
+          }
+        ],
+        "pricing": [
+          {
+            "key": "chat.text",
+            "label": "Chat reply",
+            "creditsMilli": 300
+          },
+          {
+            "key": "image.openai",
+            "label": "Image (GPT Image)",
+            "creditsMilli": 2042
+          },
+          {
+            "key": "image.flux",
+            "label": "Image (FLUX)",
+            "creditsMilli": 300
+          },
+          {
+            "key": "image.edit",
+            "label": "Image with your product / reference photo",
+            "creditsMilli": 2402
+          },
+          {
+            "key": "vision.analysis",
+            "label": "Brand / reference analysis",
+            "creditsMilli": 300
+          },
+          {
+            "key": "carousel.plan",
+            "label": "Carousel planning (per carousel)",
+            "creditsMilli": 300
+          }
+        ],
+        "isAdmin": false
+      }
+    },
+    "fetch:GET:/api/onboarding:": {
+      "status": 200,
+      "body": {
+        "status": "completed",
+        "answers": {
+          "businessName": "Lagos Bloom Florals",
+          "offering": "Same-day flower delivery",
+          "industry": "ecommerce",
+          "industryOther": null,
+          "hasWebsite": true,
+          "websiteUrl": "https://lagosbloom.example",
+          "platforms": [
+            "instagram",
+            "tiktok"
+          ],
+          "postsPerDay": "1",
+          "goals": [
+            "sales"
+          ],
+          "styles": [
+            "minimal"
+          ],
+          "role": "owner",
+          "teamSize": "1",
+          "referral": "friend"
+        }
+      }
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "br_1",
+            "userId": "usr_pilot_01",
+            "name": "Lagos Bloom Florals",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "2026-10-01T09:00:00.000Z",
+            "updatedAt": "2026-11-14T16:20:00.000Z",
+            "styleGuide": {
+              "id": "sg_br_1",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_1",
+                "brandId": "br_1",
+                "name": "instagram post",
+                "platform": "instagram_post",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "2026-10-01T09:00:00.000Z",
+                "updatedAt": "2026-11-14T16:20:00.000Z",
+                "_count": {
+                  "posts": 6
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

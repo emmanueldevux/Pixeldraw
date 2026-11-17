@@ -1,0 +1,13 @@
+{
+  "name": "billing-history-empty",
+  "extends": "paid-power-user",
+  "$comment": "GET /api/billing/history -> {events: []}: brand-new ledger.",
+  "entries": {
+    "fetch:GET:/api/billing/history:": {
+      "status": 200,
+      "body": {
+        "events": []
+      }
+    }
+  }
+}

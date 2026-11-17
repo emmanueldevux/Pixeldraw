@@ -1,0 +1,314 @@
+{
+  "name": "admin-populated",
+  "extends": "_signed-in",
+  "$comment": "settings = DEFAULT_SETTINGS, rules = DEFAULT_RULES(+active), plans = DEFAULT_PLANS, all read from the source files by this generator so they cannot drift; recent = CreditEvent rows with email.",
+  "entries": {
+    "fetch:GET:/api/admin/billing:": {
+      "status": 200,
+      "body": {
+        "settings": {
+          "creditValueCents": 10,
+          "topupMinCents": 500,
+          "topupMaxCents": 50000,
+          "topupPresetsCents": [
+            1000,
+            2500,
+            5000,
+            10000
+          ],
+          "creditExpiryDays": 365,
+          "freeEnabled": true,
+          "freeDay1": 2,
+          "freeLaterDay": 1,
+          "freeTotal": 3,
+          "autoReloadMinCents": 500,
+          "autoReloadMaxCents": 50000,
+          "currency": "usd",
+          "markupPercent": 300,
+          "imageTextInCentsPerM": 500,
+          "imageImageInCentsPerM": 800,
+          "imageOutCentsPerM": 3000,
+          "openaiTextInCentsPerM": 15,
+          "openaiTextOutCentsPerM": 60,
+          "textInCentsPerM": 14,
+          "textOutCentsPerM": 28,
+          "fluxImageMicroUsd": 3000,
+          "minChargeMilli": 300
+        },
+        "rules": [
+          {
+            "key": "chat.text",
+            "label": "Chat reply (text model)",
+            "provider": "deepseek / openai",
+            "creditsMilli": 200,
+            "costMicroUsd": 2000,
+            "active": true
+          },
+          {
+            "key": "image.openai",
+            "label": "Image — GPT Image 2",
+            "provider": "openai",
+            "creditsMilli": 1500,
+            "costMicroUsd": 45000,
+            "active": true
+          },
+          {
+            "key": "image.flux",
+            "label": "Image — FLUX",
+            "provider": "together",
+            "creditsMilli": 500,
+            "costMicroUsd": 3000,
+            "active": true
+          },
+          {
+            "key": "image.edit",
+            "label": "Image with product / reference photo",
+            "provider": "openai",
+            "creditsMilli": 2000,
+            "costMicroUsd": 60000,
+            "active": true
+          },
+          {
+            "key": "vision.analysis",
+            "label": "Brand / reference analysis (vision)",
+            "provider": "openai",
+            "creditsMilli": 1000,
+            "costMicroUsd": 25000,
+            "active": true
+          },
+          {
+            "key": "carousel.plan",
+            "label": "Carousel planning (text)",
+            "provider": "deepseek / openai",
+            "creditsMilli": 300,
+            "costMicroUsd": 5000,
+            "active": true
+          }
+        ],
+        "plans": [
+          {
+            "key": "starter",
+            "name": "Starter",
+            "priceCents": 2000,
+            "creditsMilli": 200000,
+            "sortOrder": 1,
+            "active": true
+          },
+          {
+            "key": "pro",
+            "name": "Pro",
+            "priceCents": 5000,
+            "creditsMilli": 550000,
+            "sortOrder": 2,
+            "active": true
+          }
+        ],
+        "recent": [
+          {
+            "id": "ev_0",
+            "email": "tunde@example.com",
+            "kind": "purchase",
+            "deltaMilli": 100000,
+            "note": "Top-up $10",
+            "createdAt": "$now-1h"
+          },
+          {
+            "id": "ev_1",
+            "email": "ada@example.com",
+            "kind": "usage",
+            "deltaMilli": -2042,
+            "note": "image.openai",
+            "createdAt": "$now-2h"
+          },
+          {
+            "id": "ev_2",
+            "email": "tunde@example.com",
+            "kind": "free",
+            "deltaMilli": 3000,
+            "note": "Free trial",
+            "createdAt": "$now-3h"
+          },
+          {
+            "id": "ev_3",
+            "email": "ada@example.com",
+            "kind": "plan",
+            "deltaMilli": 200000,
+            "note": "Starter plan",
+            "createdAt": "$now-4h"
+          },
+          {
+            "id": "ev_4",
+            "email": "tunde@example.com",
+            "kind": "admin",
+            "deltaMilli": 5000,
+            "note": "Goodwill credit",
+            "createdAt": "$now-5h"
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/admin/templates:": {
+      "status": 200,
+      "body": {
+        "templates": [
+          {
+            "id": "tpl_1",
+            "number": 1,
+            "kind": "pack",
+            "refImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "tags": [],
+            "aspect": "4:5",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 1,
+            "usageCount": 40,
+            "ownerId": null,
+            "fields": [],
+            "title": "Colour-block product ad",
+            "category": "Static ads",
+            "description": "Bold single colour with the product centred."
+          },
+          {
+            "id": "tpl_2",
+            "number": 2,
+            "kind": "pack",
+            "refImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "tags": [],
+            "aspect": "1:1",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 2,
+            "usageCount": 80,
+            "ownerId": null,
+            "fields": [],
+            "title": "Weekend promo",
+            "category": "Static ads",
+            "description": "Offer-led layout."
+          },
+          {
+            "id": "tpl_3",
+            "number": 3,
+            "kind": "pack",
+            "refImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "tags": [],
+            "aspect": "4:5",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": true,
+            "sortOrder": 3,
+            "usageCount": 120,
+            "ownerId": null,
+            "fields": [],
+            "title": "5-tip carousel",
+            "category": "Carousel",
+            "description": "Hook, five tips, call to action."
+          },
+          {
+            "id": "tpl_4",
+            "number": 4,
+            "kind": "pack",
+            "refImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "coverImages": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "tags": [],
+            "aspect": "16:9",
+            "styles": [],
+            "needsProduct": false,
+            "useBrandBrain": true,
+            "published": false,
+            "sortOrder": 4,
+            "usageCount": 0,
+            "ownerId": null,
+            "fields": [],
+            "title": "Draft: bold thumbnail",
+            "category": "Thumbnails",
+            "description": "Not published yet."
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/admin/carousel-styles:": {
+      "status": 200,
+      "body": {
+        "styles": [
+          {
+            "id": "cs_1",
+            "name": "Soft studio",
+            "description": "Pastel backgrounds with serif headlines.",
+            "published": true,
+            "sortOrder": 1,
+            "usageCount": 88,
+            "cover": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+            "refs": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "dna": {}
+          },
+          {
+            "id": "cs_2",
+            "name": "Draft: bold type",
+            "description": "",
+            "published": false,
+            "sortOrder": 2,
+            "usageCount": 0,
+            "cover": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "refs": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "dna": {}
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/admin/slideshow-styles:": {
+      "status": 200,
+      "body": {
+        "styles": [
+          {
+            "id": "ss_1",
+            "name": "Everyday candid",
+            "description": "Phone-photo look with white caption boxes.",
+            "published": true,
+            "sortOrder": 1,
+            "usageCount": 41,
+            "textStyle": "white",
+            "formats": [
+              "single",
+              "split"
+            ],
+            "refs": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "dna": ""
+          }
+        ]
+      }
+    }
+  }
+}

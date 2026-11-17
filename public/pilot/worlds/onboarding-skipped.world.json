@@ -1,0 +1,28 @@
+{
+  "name": "onboarding-skipped",
+  "extends": "_signed-in",
+  "$comment": "Skipped onboarding: no popup, but OnboardingReminder bar shows on /dashboard only (pathname === '/dashboard').",
+  "entries": {
+    "fetch:GET:/api/onboarding:": {
+      "status": 200,
+      "body": {
+        "status": "skipped",
+        "answers": {
+          "businessName": "Lagos Bloom Florals",
+          "offering": null,
+          "industry": null,
+          "industryOther": null,
+          "hasWebsite": null,
+          "websiteUrl": null,
+          "platforms": [],
+          "postsPerDay": null,
+          "goals": [],
+          "styles": [],
+          "role": null,
+          "teamSize": null,
+          "referral": null
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,895 @@
+{
+  "name": "dashboard-busy",
+  "extends": "paid-power-user",
+  "$comment": "Power user at the page's limit: 60 files (carousels every 7th, some untitled) and 5 brands / 6 channels including one with a very long brand + channel name to test truncation, 0-post and 128-post counts, and every formatRelative bucket (just now→5m→3h→1d→4d→absolute date). Long names and counts are invented content within real shapes.",
+  "entries": {
+    "fetch:GET:/api/generations:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "gen_000",
+            "kind": "image",
+            "title": "Spring promo 0",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-1h"
+          },
+          {
+            "id": "gen_001",
+            "kind": "image",
+            "title": "Spring promo 1",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-2h"
+          },
+          {
+            "id": "gen_002",
+            "kind": "image",
+            "title": "Spring promo 2",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-3h"
+          },
+          {
+            "id": "gen_003",
+            "kind": "carousel",
+            "title": "Carousel 3",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-4h"
+          },
+          {
+            "id": "gen_004",
+            "kind": "image",
+            "title": "Spring promo 4",
+            "imageUrls": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-5h"
+          },
+          {
+            "id": "gen_005",
+            "kind": "image",
+            "title": "",
+            "imageUrls": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-6h"
+          },
+          {
+            "id": "gen_006",
+            "kind": "image",
+            "title": "Spring promo 6",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-7h"
+          },
+          {
+            "id": "gen_007",
+            "kind": "image",
+            "title": "Spring promo 7",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-8h"
+          },
+          {
+            "id": "gen_008",
+            "kind": "image",
+            "title": "Spring promo 8",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-9h"
+          },
+          {
+            "id": "gen_009",
+            "kind": "image",
+            "title": "Spring promo 9",
+            "imageUrls": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-10h"
+          },
+          {
+            "id": "gen_010",
+            "kind": "carousel",
+            "title": "Carousel 10",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-11h"
+          },
+          {
+            "id": "gen_011",
+            "kind": "image",
+            "title": "Spring promo 11",
+            "imageUrls": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-12h"
+          },
+          {
+            "id": "gen_012",
+            "kind": "image",
+            "title": "Spring promo 12",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-13h"
+          },
+          {
+            "id": "gen_013",
+            "kind": "image",
+            "title": "Spring promo 13",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-14h"
+          },
+          {
+            "id": "gen_014",
+            "kind": "image",
+            "title": "Spring promo 14",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-15h"
+          },
+          {
+            "id": "gen_015",
+            "kind": "image",
+            "title": "Spring promo 15",
+            "imageUrls": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-16h"
+          },
+          {
+            "id": "gen_016",
+            "kind": "image",
+            "title": "",
+            "imageUrls": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-17h"
+          },
+          {
+            "id": "gen_017",
+            "kind": "carousel",
+            "title": "Carousel 17",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-18h"
+          },
+          {
+            "id": "gen_018",
+            "kind": "image",
+            "title": "Spring promo 18",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-19h"
+          },
+          {
+            "id": "gen_019",
+            "kind": "image",
+            "title": "Spring promo 19",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-20h"
+          },
+          {
+            "id": "gen_020",
+            "kind": "image",
+            "title": "Spring promo 20",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-21h"
+          },
+          {
+            "id": "gen_021",
+            "kind": "image",
+            "title": "Spring promo 21",
+            "imageUrls": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-22h"
+          },
+          {
+            "id": "gen_022",
+            "kind": "image",
+            "title": "Spring promo 22",
+            "imageUrls": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-23h"
+          },
+          {
+            "id": "gen_023",
+            "kind": "image",
+            "title": "Spring promo 23",
+            "imageUrls": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-24h"
+          },
+          {
+            "id": "gen_024",
+            "kind": "carousel",
+            "title": "Carousel 24",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-25h"
+          },
+          {
+            "id": "gen_025",
+            "kind": "image",
+            "title": "Spring promo 25",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-26h"
+          },
+          {
+            "id": "gen_026",
+            "kind": "image",
+            "title": "Spring promo 26",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-27h"
+          },
+          {
+            "id": "gen_027",
+            "kind": "image",
+            "title": "",
+            "imageUrls": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-28h"
+          },
+          {
+            "id": "gen_028",
+            "kind": "image",
+            "title": "Spring promo 28",
+            "imageUrls": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-29h"
+          },
+          {
+            "id": "gen_029",
+            "kind": "image",
+            "title": "Spring promo 29",
+            "imageUrls": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-30h"
+          },
+          {
+            "id": "gen_030",
+            "kind": "image",
+            "title": "Spring promo 30",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-31h"
+          },
+          {
+            "id": "gen_031",
+            "kind": "carousel",
+            "title": "Carousel 31",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-32h"
+          },
+          {
+            "id": "gen_032",
+            "kind": "image",
+            "title": "Spring promo 32",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-33h"
+          },
+          {
+            "id": "gen_033",
+            "kind": "image",
+            "title": "Spring promo 33",
+            "imageUrls": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-34h"
+          },
+          {
+            "id": "gen_034",
+            "kind": "image",
+            "title": "Spring promo 34",
+            "imageUrls": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-35h"
+          },
+          {
+            "id": "gen_035",
+            "kind": "image",
+            "title": "Spring promo 35",
+            "imageUrls": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-36h"
+          },
+          {
+            "id": "gen_036",
+            "kind": "image",
+            "title": "Spring promo 36",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-37h"
+          },
+          {
+            "id": "gen_037",
+            "kind": "image",
+            "title": "Spring promo 37",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-38h"
+          },
+          {
+            "id": "gen_038",
+            "kind": "carousel",
+            "title": "Carousel 38",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-39h"
+          },
+          {
+            "id": "gen_039",
+            "kind": "image",
+            "title": "Spring promo 39",
+            "imageUrls": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-40h"
+          },
+          {
+            "id": "gen_040",
+            "kind": "image",
+            "title": "Spring promo 40",
+            "imageUrls": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-41h"
+          },
+          {
+            "id": "gen_041",
+            "kind": "image",
+            "title": "Spring promo 41",
+            "imageUrls": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-42h"
+          },
+          {
+            "id": "gen_042",
+            "kind": "image",
+            "title": "Spring promo 42",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-43h"
+          },
+          {
+            "id": "gen_043",
+            "kind": "image",
+            "title": "Spring promo 43",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-44h"
+          },
+          {
+            "id": "gen_044",
+            "kind": "image",
+            "title": "Spring promo 44",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-45h"
+          },
+          {
+            "id": "gen_045",
+            "kind": "carousel",
+            "title": "Carousel 45",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-46h"
+          },
+          {
+            "id": "gen_046",
+            "kind": "image",
+            "title": "Spring promo 46",
+            "imageUrls": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-47h"
+          },
+          {
+            "id": "gen_047",
+            "kind": "image",
+            "title": "Spring promo 47",
+            "imageUrls": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-48h"
+          },
+          {
+            "id": "gen_048",
+            "kind": "image",
+            "title": "Spring promo 48",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-49h"
+          },
+          {
+            "id": "gen_049",
+            "kind": "image",
+            "title": "",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-50h"
+          },
+          {
+            "id": "gen_050",
+            "kind": "image",
+            "title": "Spring promo 50",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-51h"
+          },
+          {
+            "id": "gen_051",
+            "kind": "image",
+            "title": "Spring promo 51",
+            "imageUrls": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-52h"
+          },
+          {
+            "id": "gen_052",
+            "kind": "carousel",
+            "title": "Carousel 52",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-53h"
+          },
+          {
+            "id": "gen_053",
+            "kind": "image",
+            "title": "Spring promo 53",
+            "imageUrls": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-54h"
+          },
+          {
+            "id": "gen_054",
+            "kind": "image",
+            "title": "Spring promo 54",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-55h"
+          },
+          {
+            "id": "gen_055",
+            "kind": "image",
+            "title": "Spring promo 55",
+            "imageUrls": [
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-56h"
+          },
+          {
+            "id": "gen_056",
+            "kind": "image",
+            "title": "Spring promo 56",
+            "imageUrls": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-57h"
+          },
+          {
+            "id": "gen_057",
+            "kind": "image",
+            "title": "Spring promo 57",
+            "imageUrls": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-58h"
+          },
+          {
+            "id": "gen_058",
+            "kind": "image",
+            "title": "Spring promo 58",
+            "imageUrls": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-59h"
+          },
+          {
+            "id": "gen_059",
+            "kind": "carousel",
+            "title": "Carousel 59",
+            "imageUrls": [
+              "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg",
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "caption": null,
+            "brandId": "br_1",
+            "createdAt": "$now-60h"
+          }
+        ]
+      }
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "br_1",
+            "userId": "usr_pilot_01",
+            "name": "Lagos Bloom Florals",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "$now-60d",
+            "updatedAt": "$now-5m",
+            "styleGuide": {
+              "id": "sg_br_1",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_1",
+                "brandId": "br_1",
+                "name": "instagram post",
+                "platform": "instagram_post",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "$now-60d",
+                "updatedAt": "$now-5m",
+                "_count": {
+                  "posts": 42
+                }
+              },
+              {
+                "id": "ch_2",
+                "brandId": "br_1",
+                "name": "tiktok",
+                "platform": "tiktok",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "$now-60d",
+                "updatedAt": "$now-3h",
+                "_count": {
+                  "posts": 17
+                }
+              }
+            ]
+          },
+          {
+            "id": "br_2",
+            "userId": "usr_pilot_01",
+            "name": "Kano Coffee Roasters",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "$now-60d",
+            "updatedAt": "$now-1d",
+            "styleGuide": {
+              "id": "sg_br_2",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_3",
+                "brandId": "br_2",
+                "name": "instagram story",
+                "platform": "instagram_story",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "$now-60d",
+                "updatedAt": "$now-1d",
+                "_count": {
+                  "posts": 9
+                }
+              }
+            ]
+          },
+          {
+            "id": "br_3",
+            "userId": "usr_pilot_01",
+            "name": "Surulere Fitness",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "$now-60d",
+            "updatedAt": "$now-4d",
+            "styleGuide": {
+              "id": "sg_br_3",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_4",
+                "brandId": "br_3",
+                "name": "linkedin post",
+                "platform": "linkedin_post",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "$now-60d",
+                "updatedAt": "$now-4d",
+                "_count": {
+                  "posts": 3
+                }
+              }
+            ]
+          },
+          {
+            "id": "br_4",
+            "userId": "usr_pilot_01",
+            "name": "Ibadan Print Co",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "$now-60d",
+            "updatedAt": "$now-30d",
+            "styleGuide": {
+              "id": "sg_br_4",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_5",
+                "brandId": "br_4",
+                "name": "facebook",
+                "platform": "facebook",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "$now-60d",
+                "updatedAt": "$now-30d",
+                "_count": {
+                  "posts": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "br_5",
+            "userId": "usr_pilot_01",
+            "name": "Ibadan Print & Packaging Cooperative Society of Western Nigeria",
+            "logo": null,
+            "logoPosition": "bottom-right",
+            "logoScale": 0.14,
+            "createdAt": "$now-60d",
+            "updatedAt": "$now-9d",
+            "styleGuide": {
+              "id": "sg_br_5",
+              "primaryColor": "#2563EB",
+              "secondaryColor": "#1D4ED8",
+              "accentColor": "#22C55E",
+              "backgroundColor": null,
+              "headingFont": "Inter",
+              "tone": "professional",
+              "extraNotes": null
+            },
+            "channels": [
+              {
+                "id": "ch_6",
+                "brandId": "br_5",
+                "name": "Wholesale price list carousel for corporate event planners",
+                "platform": "linkedin_carousel",
+                "description": null,
+                "styleOverrides": null,
+                "createdAt": "$now-60d",
+                "updatedAt": "$now-9d",
+                "_count": {
+                  "posts": 128
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

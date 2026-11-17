@@ -1,0 +1,21 @@
+{
+  "name": "dashboard-skipped-reminder",
+  "extends": "onboarding-skipped",
+  "$comment": "Skipped onboarding, nothing created yet: reminder bar on top + both empty states. Reminder only renders when pathname === '/dashboard'.",
+  "entries": {
+    "fetch:GET:/api/generations:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": []
+      }
+    }
+  }
+}

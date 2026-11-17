@@ -1,0 +1,37 @@
+{
+  "name": "ai-generate-failing",
+  "extends": "ai-with-history",
+  "$comment": "chat/generate-image/carousel 500 (routes' catch blocks); the task poller returns {error} so the carousel throws 'Carousel generation failed'.",
+  "entries": {
+    "fetch:POST:/api/ai/chat:": {
+      "status": 500,
+      "body": {
+        "error": "Failed to generate response"
+      }
+    },
+    "fetch:POST:/api/ai/generate-image:": {
+      "status": 500,
+      "body": {
+        "error": "Failed to generate image"
+      }
+    },
+    "fetch:POST:/api/ai/carousel:": {
+      "status": 500,
+      "body": {
+        "error": "Failed to generate carousel"
+      }
+    },
+    "fetch:POST:/api/generations/caption:": {
+      "status": 502,
+      "body": {
+        "error": "Could not write a caption."
+      }
+    },
+    "fetch:POST:/api/generations/redo-slide:": {
+      "status": 502,
+      "body": {
+        "error": "Could not redo that slide. Nothing was charged."
+      }
+    }
+  }
+}

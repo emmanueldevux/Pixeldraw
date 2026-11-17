@@ -1,0 +1,115 @@
+{
+  "name": "out-of-credits-402",
+  "extends": "free-trial-exhausted",
+  "$comment": "Free trial spent, 0 credits. AI actions return the real 402 body (insufficientResponse in billing/http.ts); the /ai and /chat pages react by opening the top-up popup with reason 'out_of_credits'.",
+  "entries": {
+    "fetch:POST:/api/ai/chat:": {
+      "status": 402,
+      "body": {
+        "error": "insufficient_credits",
+        "message": "You're out of credits. Top up to keep creating.",
+        "neededMilli": 2042,
+        "balanceMilli": 0
+      }
+    },
+    "fetch:POST:/api/ai/generate-image:": {
+      "status": 402,
+      "body": {
+        "error": "insufficient_credits",
+        "message": "You're out of credits. Top up to keep creating.",
+        "neededMilli": 2042,
+        "balanceMilli": 0
+      }
+    },
+    "fetch:POST:/api/ai/carousel:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    },
+    "fetch:POST:/api/generations/caption:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    },
+    "fetch:POST:/api/generations/redo-slide:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    },
+    "fetch:POST:/api/slideshow/plan:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    },
+    "fetch:POST:/api/slideshow/slide:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    },
+    "fetch:POST:/api/slideshow/character:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    },
+    "fetch:POST:/api/slideshow/styles:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    },
+    "fetch:POST:/api/carousel-styles:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    },
+    "fetch:POST:/api/ad-packs:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    },
+    "fetch:POST:/api/plans:": {
+      "status": 402,
+      "body": {
+        "error": "Not enough credits",
+        "code": "insufficient_credits",
+        "neededMilli": 2042,
+        "message": "You're out of credits. Top up to keep creating."
+      }
+    }
+  }
+}

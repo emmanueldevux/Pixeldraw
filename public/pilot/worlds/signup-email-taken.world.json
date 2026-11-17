@@ -1,0 +1,13 @@
+{
+  "name": "signup-email-taken",
+  "extends": "signed-out",
+  "$comment": "POST /api/auth/signup -> 409 'An account with this email already exists'.",
+  "entries": {
+    "fetch:POST:/api/auth/signup:": {
+      "status": 409,
+      "body": {
+        "error": "An account with this email already exists"
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "dashboard-api-failing",
+  "extends": "_signed-in",
+  "$comment": "Server errors. projects/route.ts catch => 500 {error:'Internal error'}; page checks data.success (false), finally clears loading => the UI says 'No projects yet' for a user who HAS projects (state lie). generations/route.ts has no try/catch => Next answers 500 with a non-JSON body, r.json() rejects, page's .catch(() => {}) swallows it => 'No files yet'.",
+  "entries": {
+    "fetch:GET:/api/generations:": {
+      "status": 500,
+      "bodyText": "Internal Server Error",
+      "headers": {
+        "content-type": "text/plain"
+      }
+    },
+    "fetch:GET:/api/projects:": {
+      "status": 500,
+      "body": {
+        "error": "Internal error"
+      }
+    }
+  }
+}

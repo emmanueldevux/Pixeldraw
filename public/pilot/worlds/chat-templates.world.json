@@ -1,0 +1,87 @@
+{
+  "name": "chat-templates",
+  "extends": "_signed-in",
+  "$comment": "GET /api/templates -> {success, templates:[{id,name,filename,publicUrl}]}: a directory listing of public/templates, so this is the REAL file list (sorted).",
+  "entries": {
+    "fetch:GET:/api/templates:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "templates": [
+          {
+            "id": "(3) Instagram.jpeg",
+            "name": "(3) Instagram",
+            "filename": "(3) Instagram.jpeg",
+            "publicUrl": "/templates/(3) Instagram.jpeg"
+          },
+          {
+            "id": "112548598f5ab8fc4c09207f62da0abc.jpg",
+            "name": "112548598f5ab8fc4c09207f62da0abc",
+            "filename": "112548598f5ab8fc4c09207f62da0abc.jpg",
+            "publicUrl": "/templates/112548598f5ab8fc4c09207f62da0abc.jpg"
+          },
+          {
+            "id": "2069e417aa5289fc21b33843b87f37eb.jpg",
+            "name": "2069e417aa5289fc21b33843b87f37eb",
+            "filename": "2069e417aa5289fc21b33843b87f37eb.jpg",
+            "publicUrl": "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+          },
+          {
+            "id": "2409004ccdb788fd8760aa48ae05b114.jpg",
+            "name": "2409004ccdb788fd8760aa48ae05b114",
+            "filename": "2409004ccdb788fd8760aa48ae05b114.jpg",
+            "publicUrl": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+          },
+          {
+            "id": "677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "name": "677cc0b2f67da326311a099ecf5c7e88",
+            "filename": "677cc0b2f67da326311a099ecf5c7e88.jpg",
+            "publicUrl": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+          },
+          {
+            "id": "68a06692e2f01159966dd6f9f51468d6.jpg",
+            "name": "68a06692e2f01159966dd6f9f51468d6",
+            "filename": "68a06692e2f01159966dd6f9f51468d6.jpg",
+            "publicUrl": "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+          },
+          {
+            "id": "DEX vs Futuros Centralizados 2026_ Qual Plataforma é a Sua_.jpeg",
+            "name": "DEX vs Futuros Centralizados 2026  Qual Plataforma é a Sua",
+            "filename": "DEX vs Futuros Centralizados 2026_ Qual Plataforma é a Sua_.jpeg",
+            "publicUrl": "/templates/DEX vs Futuros Centralizados 2026_ Qual Plataforma é a Sua_.jpeg"
+          },
+          {
+            "id": "Instagram (5).jpeg",
+            "name": "Instagram (5)",
+            "filename": "Instagram (5).jpeg",
+            "publicUrl": "/templates/Instagram (5).jpeg"
+          },
+          {
+            "id": "Pin this_ AI affiliate marketing strategies 🏆.jpeg",
+            "name": "Pin this  AI affiliate marketing strategies 🏆",
+            "filename": "Pin this_ AI affiliate marketing strategies 🏆.jpeg",
+            "publicUrl": "/templates/Pin this_ AI affiliate marketing strategies 🏆.jpeg"
+          },
+          {
+            "id": "Social Media - Dommos Company - Dantte Sousa.jpeg",
+            "name": "Social Media   Dommos Company   Dantte Sousa",
+            "filename": "Social Media - Dommos Company - Dantte Sousa.jpeg",
+            "publicUrl": "/templates/Social Media - Dommos Company - Dantte Sousa.jpeg"
+          },
+          {
+            "id": "c6d151889045da73f6d8747282591c92.jpg",
+            "name": "c6d151889045da73f6d8747282591c92",
+            "filename": "c6d151889045da73f6d8747282591c92.jpg",
+            "publicUrl": "/templates/c6d151889045da73f6d8747282591c92.jpg"
+          },
+          {
+            "id": "uxlly-generated (17).png",
+            "name": "uxlly generated (17)",
+            "filename": "uxlly-generated (17).png",
+            "publicUrl": "/templates/uxlly-generated (17).png"
+          }
+        ]
+      }
+    }
+  }
+}
