@@ -4,7 +4,9 @@ import json, sys, collections
 from playwright.sync_api import sync_playwright
 base, out = sys.argv[1], sys.argv[2]; clicks = "--clicks" in sys.argv
 man = json.load(open("/home/claude/pixeldraw/public/pilot/worlds/index.json"))["worlds"]
+import os
 ROUTES = ["/dashboard","/templates","/projects","/inspiration","/calendar","/chat","/ai","/billing","/settings","/admin","/signup","/home"]
+ROUTES = [r for r in ROUTES if not os.environ.get("ONLY") or r in os.environ["ONLY"].split(",")]
 WIDTHS = [(390,844),(768,1024),(1280,800)]
 res = collections.defaultdict(set); crashes = []
 def unp(pg):

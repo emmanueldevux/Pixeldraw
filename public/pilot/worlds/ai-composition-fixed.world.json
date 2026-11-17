@@ -1,0 +1,29 @@
+{
+  "name": "ai-composition-fixed",
+  "extends": "ai-with-history",
+  "$comment": "GET /api/projects/style -> data.advancedSettings.composition = 'bottom-left' (ProjectSettings reads typeof adv.composition === 'string'); the Composition grid is enabled and a spot is selected. 'auto' (the default for every other world) greys the grid out.",
+  "entries": {
+    "fetch:GET:/api/projects/style:": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "primaryColor": "#2563EB",
+          "secondaryColor": "#1D4ED8",
+          "accentColor": "#22C55E",
+          "backgroundColor": null,
+          "headingFont": "Inter",
+          "tone": "professional",
+          "extraNotes": "",
+          "referenceImages": [],
+          "advancedSettings": {
+            "composition": "bottom-left"
+          },
+          "logo": null,
+          "logoPosition": "bottom-right",
+          "logoScale": 0.14
+        }
+      }
+    }
+  }
+}

@@ -375,6 +375,14 @@
       "pages": [
         "/admin"
       ]
+    },
+    {
+      "name": "ai-composition-fixed",
+      "title": "AI studio, composition fixed",
+      "about": "Project has a fixed text position (bottom-left).",
+      "pages": [
+        "/ai"
+      ]
     }
   ]
 }
