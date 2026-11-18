@@ -2,7 +2,7 @@
 // UXLLY — New project wizard
 //   1. Business (name, what you sell, website, logo)
 //   2. Size (cards with the real proportions; one size per project)
-//   3. Style (optional references, brand colours, tone, font)
+//   3. References (optional)   4. Colours and font (optional)
 // Same popup look as the sign-up business details. File name kept so the
 // Projects page keeps working unchanged.
 // ============================================================
@@ -26,7 +26,8 @@ import type { PlatformKey } from "@/types";
 export type ProjectKind = "ads" | "carousels" | "slideshows" | "thumbnails";
 
 const BUSINESS: ShellStep = { id: "business", title: "Tell us about the business", sub: "This is what the AI writes from, so be specific. You can change it later in project settings." };
-const STYLE: ShellStep = { id: "style", title: "Show us your style", sub: "All optional. Add examples you like and set your brand colours." };
+const REFS: ShellStep = { id: "refs", title: "Add references", sub: "Optional. Pick styles you like or upload designs to copy the feel from." };
+const LOOK: ShellStep = { id: "look", title: "Colours and font", sub: "Optional. Set your brand colours, tone and heading font." };
 
 const KINDS: Record<ProjectKind, { heading: string; sizeKeys?: string[]; size: ShellStep; extra?: ShellStep; style: boolean; firstPlatform: PlatformKey }> = {
   ads: {
@@ -74,7 +75,8 @@ const KIND_CARDS: { kind: ProjectKind; label: string; hint: string; icon: typeof
 const DEFAULT_STEPS: ShellStep[] = [
   BUSINESS,
   { id: "size", title: "What are you designing for?", sub: "Pick the size this project makes. 4:5 portrait is the best-performing feed size on Instagram, Facebook and LinkedIn." },
-  STYLE,
+  REFS,
+  LOOK,
 ];
 
 function SlideshowStylePick({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -143,7 +145,7 @@ function Wizard({ onClose, kindProp, openChat }: { onClose: () => void; kindProp
   const [kind, setKind] = useState<ProjectKind | undefined>(kindProp);
   const needPicker = kindProp === undefined;
   const K = kind ? KINDS[kind] : null;
-  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, K.extra!, ...(K.style ? [STYLE] : [])] : DEFAULT_STEPS;
+  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, K.extra!, ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
   const STEPS: ShellStep[] = needPicker ? [PICK, ...KIND_STEPS] : KIND_STEPS;
   const [adPackId, setAdPackId] = useState("");
   const [thumbPackId, setThumbPackId] = useState("");
@@ -289,7 +291,7 @@ function Wizard({ onClose, kindProp, openChat }: { onClose: () => void; kindProp
       busy={busy}
       continueDisabled={!canContinue}
       finishLabel="Create project"
-      skippable={sid === "style" || sid === "type"}
+      skippable={sid === "refs" || sid === "look" || sid === "type"}
       onBack={() => setI(Math.max(0, i - 1))}
       onNext={next}
       onSkip={() => (lastStep ? create() : setI(i + 1))}
@@ -351,7 +353,7 @@ function Wizard({ onClose, kindProp, openChat }: { onClose: () => void; kindProp
         </div>
       )}
 
-      {sid === "style" && (
+      {sid === "refs" && (
         <div className="space-y-6">
           <div>
             <p className="mb-2 text-sm font-semibold text-gray-800">Pick a style you like</p>
@@ -391,7 +393,11 @@ function Wizard({ onClose, kindProp, openChat }: { onClose: () => void; kindProp
             </div>
             <p className="mt-1.5 text-xs text-gray-500">Posts you like or competitor graphics. No references? No problem, the AI will use brand colours and the project's ad pack.</p>
           </div>
+        </div>
+      )}
 
+      {sid === "look" && (
+        <div className="space-y-6">
           <div>
             <p className="mb-2 text-sm font-semibold text-gray-800">Brand colours</p>
             <div className="grid grid-cols-2 gap-2.5">

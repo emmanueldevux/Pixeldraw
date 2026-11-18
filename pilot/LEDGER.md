@@ -84,3 +84,7 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - The "Reference ads" / "Reference thumbnails" step shows the ready-made templates as cards grouped by category (your own styles first under "My styles"), with an Auto card first and a dashed "Add my style" tile below that opens the existing pack wizard. Replaces the dropdown in the wizard only; the project settings picker keeps the dropdown (`AdPackPicker variant="gallery"`).
 - `/api/ad-packs` now returns `category` per pack (the field already exists on DesignTemplate). Packs with no category fall under "More templates".
 - Rig: demo packs have categories; `_actions` pins GET /api/ad-packs (+ `?purpose=thumbnail`) so the wizard has templates outside the AI studio worlds. 48 worlds valid, 17 tests pass.
+
+## PRJ-0028 — References and Colours/font are separate wizard steps
+- The wizard's single "Show us your style" step is now two optional steps: "Add references" (pick styles you like + upload reference images) and "Colours and font" (brand colours, tone, heading font, style notes). Applies to ads, carousels and thumbnails (slideshows have no style step). Both are skippable; the last step creates the project.
+- Verified in the export: Ads now has 5 steps (kind, business, size, template, references, colours/font = steps 1-5 after the picker count).
