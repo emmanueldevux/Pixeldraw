@@ -92,3 +92,9 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 ## PRJ-0029 — Ads wizard: template-pack step removed (for now)
 - Request: the "Reference ads" step (Auto + template gallery + Add my style) is redundant; templates and reference uploads live on the references step. The ads wizard is now: business, size, references (template grid + reference images), colours and font (4 steps). Ads projects still save `adPackId: ""` so the category stays "Ads". Thumbnails, carousels and slideshows keep their own settings step. The gallery variant of `AdPackPicker` stays in the code, unused by the wizard.
 - An attempt to merge the two screens was reverted at the user's request.
+
+## PRJ-0030 — Admin: four categories, bulk/folder add, drag to slots, auto-study
+- Template categories are now only Ads, Carousels, Thumbnails, Slideshows (`CATEGORIES`/`canonCategory`; legacy strings map at read time, unknown -> "Unclassified"; saving writes the canonical one). No "New category" input.
+- Carousel and slideshow style editors accept multiple images or a whole folder into a tray; drag them onto Intro / Details / Outro (or reorder slideshow slides), or use Auto-sort.
+- Reference DNA is studied automatically when the images change (hand-edited DNA is kept); "Re-study" remains for a manual redo.
+- Rig fixtures for the admin worlds corrected. Verified in the export: drop from tray to slot moves the image (synthetic DnD events); Playwright's drag_to doesn't carry dataTransfer so it can't test this.

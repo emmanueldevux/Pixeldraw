@@ -170,9 +170,14 @@
             "sortOrder": 1,
             "usageCount": 40,
             "ownerId": null,
-            "fields": [],
+            "prompt": "",
+            "params": [],
+            "packDna": "Sample pack DNA: bold single-colour background, product centred, one headline, small badge.",
+            "refDnas": [
+              "Ad 1: product centred, headline above, badge top-right."
+            ],
             "title": "Colour-block product ad",
-            "category": "Static ads",
+            "category": "Ads",
             "description": "Bold single colour with the product centred."
           },
           {
@@ -194,9 +199,14 @@
             "sortOrder": 2,
             "usageCount": 80,
             "ownerId": null,
-            "fields": [],
+            "prompt": "",
+            "params": [],
+            "packDna": "Sample pack DNA: bold single-colour background, product centred, one headline, small badge.",
+            "refDnas": [
+              "Ad 1: product centred, headline above, badge top-right."
+            ],
             "title": "Weekend promo",
-            "category": "Static ads",
+            "category": "Ads",
             "description": "Offer-led layout."
           },
           {
@@ -218,9 +228,14 @@
             "sortOrder": 3,
             "usageCount": 120,
             "ownerId": null,
-            "fields": [],
+            "prompt": "",
+            "params": [],
+            "packDna": "Sample pack DNA: bold single-colour background, product centred, one headline, small badge.",
+            "refDnas": [
+              "Ad 1: product centred, headline above, badge top-right."
+            ],
             "title": "5-tip carousel",
-            "category": "Carousel",
+            "category": "Carousels",
             "description": "Hook, five tips, call to action."
           },
           {
@@ -242,7 +257,12 @@
             "sortOrder": 4,
             "usageCount": 0,
             "ownerId": null,
-            "fields": [],
+            "prompt": "",
+            "params": [],
+            "packDna": "Sample pack DNA: bold single-colour background, product centred, one headline, small badge.",
+            "refDnas": [
+              "Ad 1: product centred, headline above, badge top-right."
+            ],
             "title": "Draft: bold thumbnail",
             "category": "Thumbnails",
             "description": "Not published yet."
@@ -261,13 +281,22 @@
             "published": true,
             "sortOrder": 1,
             "usageCount": 88,
-            "cover": "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
-            "refs": [
+            "introRefs": [
               "/templates/2409004ccdb788fd8760aa48ae05b114.jpg",
               "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
               "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
             ],
-            "dna": {}
+            "introDna": "Pastel full-bleed background, large serif headline top-left, small handle bottom.",
+            "detailsRefs": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ],
+            "detailsDna": "Cream card, one tip per slide, number badge top-right.",
+            "outroRefs": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ],
+            "outroDna": "Solid colour, centred call to action with a button shape.",
+            "ownerId": null
           },
           {
             "id": "cs_2",
@@ -276,11 +305,15 @@
             "published": false,
             "sortOrder": 2,
             "usageCount": 0,
-            "cover": "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg",
-            "refs": [
+            "introRefs": [
               "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
             ],
-            "dna": {}
+            "introDna": "",
+            "detailsRefs": [],
+            "detailsDna": "",
+            "outroRefs": [],
+            "outroDna": "",
+            "ownerId": null
           }
         ]
       }

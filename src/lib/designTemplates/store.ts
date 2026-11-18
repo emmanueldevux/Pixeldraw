@@ -6,13 +6,14 @@ import { db } from "@/lib/db";
 import { uploadImage } from "@/lib/storage";
 import { BUILT_IN_TEMPLATES, TEMPLATE_1_NEW_COLOUR_LINE, TEMPLATE_1_OLD_COLOUR_LINE } from "./defaults";
 import { pickPack } from "./pack";
-import { cleanTemplateInput, isThumbPack, type DesignTemplate, type TemplateParam, type TemplateStyle } from "./types";
+import { canonCategory, cleanTemplateInput, isThumbPack, type DesignTemplate, type TemplateParam, type TemplateStyle } from "./types";
 
 type Row = Omit<DesignTemplate, "params" | "styles" | "aspect" | "kind"> & { params: unknown; styles: unknown; aspect: string; kind?: string | null };
 
 function toTemplate(r: Row): DesignTemplate {
   return {
     ...r,
+    category: canonCategory(r.category),
     aspect: (r.aspect as DesignTemplate["aspect"]) || "9:16",
     kind: r.kind === "pack" ? "pack" : "prompt",
     refImages: r.refImages || [],

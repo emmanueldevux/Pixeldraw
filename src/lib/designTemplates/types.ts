@@ -65,6 +65,18 @@ export type PublicTemplate = Omit<DesignTemplate, "prompt" | "params" | "packDna
   fields: { key: string; label: string; placeholder: string }[];
 };
 
+/** The only four categories. Older labels ("Static ads", "Product ads", "Carousel") map onto them; anything else is unclassified. */
+export const CATEGORIES = ["Ads", "Carousels", "Thumbnails", "Slideshows"] as const;
+export function canonCategory(c: unknown): string {
+  const v = String(c || "").trim().toLowerCase();
+  if (!v) return "";
+  if (/^(static ads?|product ads?|ads?|single ads?)$/.test(v)) return "Ads";
+  if (/^carousels?$/.test(v)) return "Carousels";
+  if (/^thumbnails?$/.test(v)) return "Thumbnails";
+  if (/^slideshows?$/.test(v)) return "Slideshows";
+  return "";
+}
+
 /** A reference pack for thumbnails (kept apart from ad packs by its category). */
 export const isThumbPack = (t: { category?: string | null }) => (t.category || "").trim().toLowerCase() === "thumbnails";
 
@@ -101,7 +113,7 @@ export function cleanTemplateInput(raw: Record<string, unknown>) {
   return {
     title: s(raw.title, 120).trim() || "Untitled template",
     description: s(raw.description, 600).trim(),
-    category: s(raw.category, 60).trim(),
+    category: canonCategory(raw.category),
     tags: arr(raw.tags).map((t) => s(t, 40).trim()).filter(Boolean).slice(0, 15),
     aspect,
     coverImages: arr(raw.coverImages).map((u) => s(u, 3_000_000)).filter(Boolean).slice(0, 8),

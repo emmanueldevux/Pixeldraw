@@ -9,12 +9,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, Eye, ImagePlus, Loader2, Plus, Trash2, X } from "lucide-react";
 import { btnPrimary, btnSecondary, inputCls } from "@/components/billing/Shell";
-import { ASPECTS, missingParams, renderPrompt, type DesignTemplate, type TemplateParam, type TemplateStyle } from "@/lib/designTemplates/types";
+import { ASPECTS, CATEGORIES, missingParams, renderPrompt, type DesignTemplate, type TemplateParam, type TemplateStyle } from "@/lib/designTemplates/types";
 
 const label = "block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5";
 const box = "rounded-xl border border-gray-200 bg-white p-5";
 
-export const TYPE_CATEGORIES = ["Static ads", "Carousel", "Slideshows", "Thumbnails"];
+export const TYPE_CATEGORIES: string[] = [...CATEGORIES];
 const isRec = (tags: string[]) => tags.some((t) => t.toLowerCase() === "recommended");
 const withRec = (tags: string[], on: boolean) => {
   const rest = tags.filter((t) => t.toLowerCase() !== "recommended");
@@ -128,7 +128,7 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
     setMsg(r.ok ? `Saved "${t.title}".` : "Could not save that change.");
   }
 
-  const allCats = Array.from(new Set([...TYPE_CATEGORIES, ...(list || []).map((t) => t.category).filter(Boolean)]));
+  const allCats = TYPE_CATEGORIES;
   const filtered = (list || []).filter((t) => {
     const hay = `${t.title} ${t.category} ${t.tags.join(" ")}`.toLowerCase();
     if (q && !hay.includes(q.toLowerCase())) return false;
@@ -257,7 +257,7 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
                 {allCats.map((c) => (
                   <button key={c} type="button" onClick={() => set("category", c)} className={`px-3 py-1.5 rounded-lg border text-sm font-medium ${draft.category === c ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"}`}>{c}</button>
                 ))}
-                <input className={`${inputCls} !w-44`} placeholder="New category…" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const v = e.currentTarget.value.trim(); if (v) { set("category", v); e.currentTarget.value = ""; } } }} />
+                
               </div>
               <label className="mt-3 flex items-center gap-2 text-sm font-medium text-gray-800">
                 <input type="checkbox" checked={isRec(draft.tags)} onChange={(e) => set("tags", withRec(draft.tags, e.target.checked))} /> Recommended (also shows in the Recommended tab)

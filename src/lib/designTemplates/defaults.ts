@@ -13,7 +13,7 @@ export const TEMPLATE_1: Seed = {
   title: "Product campaign ad (9:16)",
   description:
     "Upload a photo of your packaged product and get a finished, scroll-stopping vertical campaign ad. The AI art director picks the best of nine proven ad styles for your product and keeps your pack exactly as it is.",
-  category: "Product ads",
+  category: "Ads",
   tags: ["vertical-ad", "packaging-accurate", "product-reproduction", "lifestyle-ads", "scroll-stopping", "brand-campaign", "mobile-first"],
   aspect: "9:16",
   coverImages: [],
@@ -145,7 +145,7 @@ export const TEMPLATE_2: Seed = {
   title: "Premium campaign poster (4:5)",
   description:
     "Turn your product photo into a premium, photorealistic campaign poster for Instagram and Facebook feeds. Six art directions, from steamy food scenes and refreshing splashes to luxury still life, action sports and dramatic studio hero shots.",
-  category: "Product ads",
+  category: "Ads",
   tags: ["feed-ad", "4:5", "premium", "photoreal", "campaign-poster", "product-hero", "luxury"],
   aspect: "4:5",
   coverImages: [],
@@ -263,7 +263,7 @@ export const TEMPLATE_3: Seed = {
   title: "Ingredient-world benefit poster (4:5)",
   description:
     "A clean, ultra-premium product poster: your product as the hero, surrounded by a world built from its key ingredient or benefit, with a bold stacked headline and benefit icons written from your brand. Six looks, from fresh fruit splash and icy cool to golden liquid, futuristic gel, candy burst and road at dusk.",
-  category: "Product ads",
+  category: "Ads",
   tags: ["feed-ad", "4:5", "fmcg", "beauty", "benefit-icons", "ingredient-world", "premium"],
   aspect: "4:5",
   coverImages: [],

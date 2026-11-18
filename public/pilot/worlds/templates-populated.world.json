@@ -38,7 +38,7 @@
             "typicalMilli": 2042,
             "title": "Colour-block product ad",
             "description": "A bold single-colour background with the product front and centre.",
-            "category": "Static ads"
+            "category": "Ads"
           },
           {
             "id": "tpl_2",
@@ -64,7 +64,7 @@
             "typicalMilli": 2042,
             "title": "Weekend promo",
             "description": "Offer-led layout with a price burst and a clear call to action.",
-            "category": "Static ads"
+            "category": "Ads"
           },
           {
             "id": "tpl_3",
@@ -91,7 +91,7 @@
             "typicalMilli": 2042,
             "title": "5-tip carousel",
             "description": "Hook slide, five tip slides and a closing call to action.",
-            "category": "Carousel"
+            "category": "Carousels"
           },
           {
             "id": "tpl_4",
@@ -163,7 +163,7 @@
             "typicalMilli": 2042,
             "title": "Quiet minimal ad",
             "description": "Soft light, lots of space, one line of copy.",
-            "category": "Static ads"
+            "category": "Ads"
           }
         ]
       }

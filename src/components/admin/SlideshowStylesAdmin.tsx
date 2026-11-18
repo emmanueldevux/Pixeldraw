@@ -7,7 +7,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ImagePlus, Loader2, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { FolderOpen, ImagePlus, Loader2, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { btnPrimary, btnSecondary, inputCls } from "@/components/billing/Shell";
 import { FORMATS, type SlideshowStyleRec } from "@/lib/slideshow/types";
 
@@ -31,6 +31,10 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const folderRef = useRef<HTMLInputElement>(null);
+  const studiedSig = useRef("");
+  const edited = useRef(false); // DNA typed by hand is never overwritten automatically
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
 
   const load = useCallback(
     async (selectId?: string) => {
@@ -39,13 +43,27 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
       if (!r.ok) return setMsg(j.error || "Could not load styles (did you add the SlideshowStyle table?)");
       setList(j.styles);
       const pick = j.styles.find((s: SlideshowStyleRec) => s.id === selectId) || j.styles[0];
-      setD(pick ? structuredClone(pick) : structuredClone(BLANK));
+      const next: Draft = pick ? structuredClone(pick) : structuredClone(BLANK);
+      studiedSig.current = next.refs.join("|");
+      edited.current = false;
+      setD(next);
     },
     [setMsg],
   );
   useEffect(() => {
     load();
   }, [load]);
+
+  // The AI studies the examples by itself a moment after they change (unless the DNA was typed by hand).
+  useEffect(() => {
+    if (!d || busy) return;
+    const sig = d.refs.join("|");
+    if (sig === studiedSig.current) return;
+    if (!d.refs.length || edited.current) { studiedSig.current = sig; return; }
+    const t = setTimeout(() => { void study(); }, 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [d?.refs, busy]);
 
   if (!list || !d) return <div className="mt-10 flex justify-center"><Loader2 className="animate-spin text-gray-400" /></div>;
 
@@ -77,11 +95,16 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
     await load();
   }
 
-  async function upload(files: FileList | null) {
-    if (!files) return;
+  // Many images or a whole folder: put in order by file name.
+  async function upload(files: FileList | File[] | null) {
+    const imgs = Array.from(files || [])
+      .filter((f) => f.type.startsWith("image/"))
+      .sort((a, b) => ((a as File & { webkitRelativePath?: string }).webkitRelativePath || a.name).localeCompare((b as File & { webkitRelativePath?: string }).webkitRelativePath || b.name, undefined, { numeric: true }))
+      .slice(0, 12);
+    if (!imgs.length) return setMsg("No images found.");
     setBusy("upload");
     const added: string[] = [];
-    for (const f of Array.from(files).slice(0, 8)) {
+    for (const f of imgs) {
       try {
         added.push((await post({ action: "upload", dataUrl: await readFile(f) })).url);
       } catch (e) {
@@ -90,20 +113,34 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
     }
     setD((cur) => (cur ? { ...cur, refs: [...cur.refs, ...added].slice(0, 12) } : cur));
     setBusy(null);
-    if (added.length) setMsg("Examples added. Click 'Study examples' to write the DNA, then Save.");
+    if (added.length) setMsg("Examples added. The AI will study them in a moment.");
+  }
+
+  // Drag one example onto another to change the slide order.
+  function reorder(from: number, to: number) {
+    setD((cur) => {
+      if (!cur || from === to) return cur;
+      const refs = [...cur.refs];
+      const [m] = refs.splice(from, 1);
+      refs.splice(to, 0, m);
+      return { ...cur, refs };
+    });
   }
 
   async function study() {
     if (!d) return;
     setBusy("study");
     setMsg(null);
+    const sig = d.refs.join("|");
     try {
       const j = await post({ action: "study", refs: d.refs });
       setD((cur) => (cur ? { ...cur, dna: j.dna } : cur));
+      edited.current = false;
       setMsg("DNA written. Review it, then Save.");
     } catch (e) {
       setMsg((e as Error).message);
     } finally {
+      studiedSig.current = sig;
       setBusy(null);
     }
   }
@@ -168,28 +205,46 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div
+          className="rounded-xl border border-gray-200 bg-white p-5"
+          onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) e.preventDefault(); }}
+          onDrop={(e) => { if (e.dataTransfer.files.length) { e.preventDefault(); void upload(e.dataTransfer.files); } }}
+        >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-gray-900">Example slides</p>
-              <p className="text-xs text-gray-500">3-6 slides from the style you love. Text on them is fine; the AI studies how captions look and are written, never copies the words.</p>
+              <p className="text-xs text-gray-500">3-6 slides from the style you love, in order (drag to reorder). Drop images here or choose a folder. The AI studies them by itself; it never copies the words.</p>
             </div>
             <div className="flex gap-2">
               <button className={`${btnSecondary} inline-flex items-center gap-1.5`} onClick={() => fileRef.current?.click()} disabled={!!busy}>
                 {busy === "upload" ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />} Add examples
               </button>
-              <button className={`${btnSecondary} inline-flex items-center gap-1.5`} onClick={study} disabled={!!busy || d.refs.length === 0}>
-                {busy === "study" ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} {d.dna ? "Re-study" : "Study examples"}
+              <button className={`${btnSecondary} inline-flex items-center gap-1.5`} onClick={() => folderRef.current?.click()} disabled={!!busy}>
+                <FolderOpen size={15} /> Choose folder
               </button>
+              {(busy === "study" || d.dna) && (
+                <button className={`${btnSecondary} inline-flex items-center gap-1.5`} onClick={() => void study()} disabled={!!busy || d.refs.length === 0} title="Rewrite the DNA from the current examples">
+                  {busy === "study" ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} {busy === "study" ? "Studying…" : "Re-study"}
+                </button>
+              )}
             </div>
-            <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
+            <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { void upload(e.target.files); e.target.value = ""; }} />
+            <input ref={folderRef} type="file" accept="image/*" multiple className="hidden" {...({ webkitdirectory: "", directory: "" } as Record<string, string>)} onChange={(e) => { void upload(e.target.files); e.target.value = ""; }} />
           </div>
           {d.refs.length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-3">
               {d.refs.map((src, i) => (
-                <div key={src.slice(-40) + i} className="relative w-24 aspect-[3/4] rounded-lg overflow-hidden border border-gray-200 bg-gray-100 group">
+                <div
+                  key={src.slice(-40) + i}
+                  draggable
+                  onDragStart={() => setDragFrom(i)}
+                  onDragOver={(e) => { if (dragFrom !== null) e.preventDefault(); }}
+                  onDrop={(e) => { if (dragFrom !== null) { e.preventDefault(); e.stopPropagation(); reorder(dragFrom, i); setDragFrom(null); } }}
+                  className="relative w-24 aspect-[3/4] rounded-lg overflow-hidden border border-gray-200 bg-gray-100 group cursor-grab"
+                >
+                  <span className="absolute bottom-1 left-1 z-10 rounded bg-black/60 px-1.5 text-[10px] font-semibold text-white">{i + 1}</span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <img src={src} alt="" className="w-full h-full object-cover pointer-events-none" />
                   <button onClick={() => setD({ ...d, refs: d.refs.filter((_, n) => n !== i) })} className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100" aria-label="Remove">
                     <X size={13} />
                   </button>
@@ -197,11 +252,11 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-sm text-gray-400">No examples yet.</p>
+            <p className="mt-3 text-sm text-gray-400">No examples yet. Drop images here or choose a folder.</p>
           )}
           <div className="mt-4">
             <span className={label}>DNA (the AI follows this for every slideshow in this style; edit freely)</span>
-            <textarea className={`${inputCls} h-56 font-mono text-[12.5px] leading-relaxed`} value={d.dna} onChange={(e) => setD({ ...d, dna: e.target.value })} placeholder="Add examples, then click 'Study examples' and the AI writes this." spellCheck={false} />
+            <textarea className={`${inputCls} h-56 font-mono text-[12.5px] leading-relaxed`} value={d.dna} onChange={(e) => { edited.current = true; setD({ ...d, dna: e.target.value }); }} placeholder="Add examples and the AI writes this by itself." spellCheck={false} />
           </div>
         </div>
 
