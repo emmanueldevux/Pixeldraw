@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Globe, Loader2, Plus, Upload } from "lucide-react";
+import { Globe, Image as ImageIcon, Images, LayoutGrid, Loader2, Plus, Smartphone, Upload } from "lucide-react";
 import { AdPackPicker, CarouselSettings, CharacterSheet } from "@/components/ai/ProjectSettings";
 import SlideshowStyleWizard from "@/components/ai/SlideshowStyleWizard";
 import { EMPTY_PROJECT_CAROUSEL, type ProjectCarouselSettings } from "@/lib/carousels/types";
@@ -62,6 +62,14 @@ const KINDS: Record<ProjectKind, { heading: string; sizeKeys?: string[]; size: S
     firstPlatform: "youtube_thumbnail",
   },
 };
+
+const PICK: ShellStep = { id: "kind", title: "What do you want to make?", sub: "Pick one. The next steps are set up for it, and you land in the AI studio when you finish." };
+const KIND_CARDS: { kind: ProjectKind; label: string; hint: string; icon: typeof ImageIcon }[] = [
+  { kind: "ads", label: "Ads", hint: "Scroll-stopping single-image ads", icon: ImageIcon },
+  { kind: "carousels", label: "Carousels", hint: "Swipeable multi-slide posts", icon: LayoutGrid },
+  { kind: "slideshows", label: "Slideshows", hint: "TikTok photo slideshows", icon: Smartphone },
+  { kind: "thumbnails", label: "Thumbnails", hint: "YouTube thumbnails", icon: Images },
+];
 
 const DEFAULT_STEPS: ShellStep[] = [
   BUSINESS,
@@ -126,13 +134,17 @@ function ColourBox({ label, value, onChange, disabled }: { label: string; value:
 
 export default function OnboardingModal({ isOpen, onClose, kind, openChat }: { isOpen: boolean; onClose: () => void; kind?: ProjectKind; openChat?: boolean }) {
   if (!isOpen) return null;
-  return <Wizard onClose={onClose} kind={kind} openChat={openChat ?? !!kind} />;
+  // No kind given (New project): the wizard starts by asking what to make, and ends in the AI studio.
+  return <Wizard onClose={onClose} kindProp={kind} openChat={openChat ?? true} />;
 }
 
-function Wizard({ onClose, kind, openChat }: { onClose: () => void; kind?: ProjectKind; openChat: boolean }) {
+function Wizard({ onClose, kindProp, openChat }: { onClose: () => void; kindProp?: ProjectKind; openChat: boolean }) {
   const router = useRouter();
+  const [kind, setKind] = useState<ProjectKind | undefined>(kindProp);
+  const needPicker = kindProp === undefined;
   const K = kind ? KINDS[kind] : null;
-  const STEPS: ShellStep[] = K ? [BUSINESS, K.size, K.extra!, ...(K.style ? [STYLE] : [])] : DEFAULT_STEPS;
+  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, K.extra!, ...(K.style ? [STYLE] : [])] : DEFAULT_STEPS;
+  const STEPS: ShellStep[] = needPicker ? [PICK, ...KIND_STEPS] : KIND_STEPS;
   const [adPackId, setAdPackId] = useState("");
   const [thumbPackId, setThumbPackId] = useState("");
   const [carouselS, setCarouselS] = useState<ProjectCarouselSettings>(EMPTY_PROJECT_CAROUSEL);
@@ -195,7 +207,7 @@ function Wizard({ onClose, kind, openChat }: { onClose: () => void; kind?: Proje
 
   const sid = STEPS[i].id;
   const lastStep = i === STEPS.length - 1;
-  const canContinue = sid === "business" ? brandName.trim().length > 0 : sid === "size" ? !!platform : true;
+  const canContinue = sid === "kind" ? !!kind : sid === "business" ? brandName.trim().length > 0 : sid === "size" ? !!platform : true;
 
   async function create() {
     if (!platform) return;
@@ -284,6 +296,22 @@ function Wizard({ onClose, kind, openChat }: { onClose: () => void; kind?: Proje
       onClose={onClose}
       wide={sid !== "business"}
     >
+      {sid === "kind" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {KIND_CARDS.map((c) => (
+            <button
+              key={c.kind}
+              type="button"
+              onClick={() => { setKind(c.kind); setPlatform(KINDS[c.kind].firstPlatform); }}
+              className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${kind === c.kind ? "border-gray-900 bg-gray-50" : "border-gray-200 hover:border-gray-400"}`}
+            >
+              <span className={`w-11 h-11 shrink-0 rounded-xl flex items-center justify-center ${kind === c.kind ? "bg-[#A3F76B]" : "bg-gray-100"}`}><c.icon size={20} /></span>
+              <span><span className="block text-[15px] font-semibold text-gray-900">{c.label}</span><span className="block text-xs text-gray-500 mt-0.5">{c.hint}</span></span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {sid === "business" && (
         <div className="space-y-5">
           <LInput label="Business or brand name" value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder="e.g. Bean & Brew Coffee" autoFocus />

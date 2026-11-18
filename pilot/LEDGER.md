@@ -73,3 +73,9 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0025 — Project card icon +20%
 - Icon tile 32px -> 38.4px (`w-[38.4px] h-[38.4px]`), glyph 16 -> 19. Measured 38.39px in the export.
+
+## PRJ-0026 — New project starts with a type picker
+- Request: "New project" did nothing useful; it should start by choosing what to make and follow that path. Answers: type picker first; all four types; finish in the AI studio.
+- `OnboardingModal` with no `kind` now opens with step "What do you want to make?" (Ads / Carousels / Slideshows / Thumbnails), then runs that kind's own steps (business, size, kind settings, style) and opens `/ai?channel=<id>` at the end (`openChat` defaults to true). Affects the header's New project, the Projects page and QuickCreate; the four "Make …" entries still skip the picker.
+- Verified in the export: picker shows, Continue disabled until a card is chosen, Carousels -> business -> "Default carousel size" -> "Carousel style".
+- Not tested: the final create call against the real API (the rig pins it).
