@@ -51,3 +51,7 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0019 — Comment mode no longer activates the element
 - Comment mode only cancelled `click`, so the page still saw pointerdown/mousedown/mouseup (menus, buttons using those). Now rig.html swallows pointerdown/up, mousedown/up, dblclick, auxclick, contextmenu, touchstart/end and submit (capture, stopImmediatePropagation) while comment mode is on. Verified: clicking "Create project" in comment mode gave 0 events to the app, no menu opened, comment popup appeared.
+
+## PRJ-0020 — Send to Claude (no copy/paste)
+- Comments panel has a "Send to Claude" button: each unsent comment is written to the artifact's shared db at `inbox/<id>` ({page, world, width, selector, element, note, status:"new"}) and marked "✓ sent". Falls back to Copy all if the db is unreachable. Artifact declares `db` and `user`.
+- Limit: an artifact cannot start a Claude task by itself here (wake is `not_armed: no_address` for this session), so Claude reads the inbox when the user says "go" in chat. Not tested end-to-end in the claude.ai viewer.

@@ -51,7 +51,7 @@ body.cv #zc{display:flex}#zc button{height:30px;min-width:30px;border-radius:999
 <div id="chl"></div><div id="pins"></div><div id="toast" class="mono" style="position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:80;background:#0d0d0d;color:#e8e8e8;border:1px solid #333;border-radius:8px;padding:8px 14px;font-size:12px;display:none"></div>
 <div id="pop"><div class="t" id="pt"></div><textarea id="pta" placeholder="What's wrong or what should change?"></textarea>
 <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end"><button class="btn sm" id="pc" type="button">Cancel</button><button class="btn sm on" id="ps" type="button">Add</button></div></div>
-<div id="clist"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b style="font-size:13px">Comments</b><span class="mono" id="cmsg" style="color:#8c8c8c;font-size:10px"></span><button id="cc" class="btn sm" type="button" style="margin-left:auto">Copy all</button><button id="cx" class="btn sm" type="button">Clear</button><button id="ch" class="btn sm" type="button" title="Hide (Esc)">Hide ✕</button></div><div id="citems"></div>
+<div id="clist"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b style="font-size:13px">Comments</b><span class="mono" id="cmsg" style="color:#8c8c8c;font-size:10px"></span><button id="cs" class="btn sm" type="button" style="margin-left:auto;background:#A3F76B;color:#111">Send to Claude</button><button id="cc" class="btn sm" type="button">Copy all</button><button id="cx" class="btn sm" type="button">Clear</button><button id="ch" class="btn sm" type="button" title="Hide (Esc)">Hide ✕</button></div><div id="citems"></div>
 <textarea id="cfall" readonly style="display:none;width:100%;height:90px;margin-top:8px;background:#1a1a1a;color:#fff;border:1px solid #444;border-radius:8px;font:11px ui-monospace,monospace"></textarea></div>
 <div id="cv"><div id="cvw"></div></div>
 <div id="zc"><button id="zo" type="button" title="Zoom out">−</button><span id="zl" style="min-width:42px;text-align:center">40%</span><button id="zi" type="button" title="Zoom in">+</button><button id="zf" type="button" title="Fit all">Fit</button><button id="z1" type="button" title="100%">1:1</button></div>
@@ -129,7 +129,7 @@ function pins(){var box=$("pins");box.innerHTML="";var cs=ctxs();
 function render(){$("cn").textContent=CM.list.length;var b=$("citems");b.innerHTML="";
   CM.list.forEach(function(c,i){var d=document.createElement("div");d.className="it";
     d.innerHTML='<div><b>'+(i+1)+'.</b> <span></span></div><div class="m"></div>';d.firstChild.lastChild.textContent=c.note;
-    d.lastChild.textContent=c.page+" · "+c.world+" · "+(c.vw||"full")+"px — "+c.sel+(c.text?' — "'+c.text+'"':"");
+    d.lastChild.textContent=(c.sent?'✓ sent · ':'')+c.page+" · "+c.world+" · "+(c.vw||"full")+"px — "+c.sel+(c.text?' — "'+c.text+'"':"");
     var x=document.createElement("button");x.className="btn sm";x.textContent="delete";x.style.marginTop="4px";x.onclick=function(){CM.list.splice(i,1);persist();render();pins()};d.appendChild(x);b.appendChild(d)});pins()}
 function dump(){return CM.list.map(function(c,i){return (i+1)+". ["+c.page+" | world: "+c.world+" | width: "+(c.vw||"full")+"] "+c.sel+(c.text?' ("'+c.text+'")':"")+"\n   "+c.note}).join("\n")}
 $("cm").onclick=function(){CM.on=!CM.on;$("cm").className="mono"+(CM.on?" on":"");$("clist").style.display=CM.on||CM.list.length?"block":"none";$("chl").style.display="none";
@@ -138,6 +138,12 @@ $("pc").onclick=function(){CM.cur=null;$("pop").style.display="none"};
 $("ps").onclick=function(){var n=$("pta").value.trim();if(!CM.cur||!n)return;CM.list.push({page:CM.cur.page,world:CM.cur.world,vw:S.vw,sel:CM.cur.sel,text:CM.cur.text,note:n,at:new Date().toISOString()});
   CM.cur=null;$("pop").style.display="none";persist();render()};
 $("ch").onclick=function(){$("clist").style.display="none"};document.addEventListener("keydown",function(e){if(e.key==="Escape"){$("clist").style.display="none";$("pop").style.display="none";CM.cur=null}});
+var DBP=null;function getdb(){if(!DBP)DBP=(window.claude&&claude.use?claude.use("db"):Promise.resolve(null)).catch(function(){return null});return DBP}
+$("cs").onclick=function(){var todo=CM.list.filter(function(c){return !c.sent});if(!todo.length){$("cmsg").textContent="nothing new to send";return}
+  $("cmsg").textContent="sending…";
+  getdb().then(function(db){if(!db){$("cc").click();$("cmsg").textContent="can't reach Claude here — copied instead";return}
+    return Promise.all(todo.map(function(c,i){var id="c"+Date.now().toString(36)+i;c.id=id;
+      return db.collection("inbox").doc(id).set({id:id,page:c.page,world:c.world,width:c.vw||"full",selector:c.sel,element:c.text||"",note:c.note,status:"new",at:new Date().toISOString()}).then(function(){c.sent=1})})).then(function(){persist();render();$("cmsg").textContent="sent "+todo.length+" — tell Claude \"go\"";}).catch(function(){$("cmsg").textContent="send failed — use Copy all"})})};
 $("cx").onclick=function(){CM.list=[];persist();render()};
 $("cc").onclick=function(){var t=dump(),a=$("cfall");a.value=t;a.style.display="block";a.select();
   try{navigator.clipboard.writeText(t).then(function(){$("cmsg").textContent="copied"},function(){$("cmsg").textContent="select + copy below"})}catch(e){try{document.execCommand("copy");$("cmsg").textContent="copied"}catch(_){$("cmsg").textContent="select + copy below"}}};
