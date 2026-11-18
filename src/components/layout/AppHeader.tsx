@@ -115,7 +115,15 @@ export default function AppHeader() {
   useEffect(() => {
     if (!menu) return;
     const down = (e: PointerEvent) => {
-      if (!(e.target as Element | null)?.closest?.("[data-hdr-menu]")) setMenu(null);
+      if ((e.target as Element | null)?.closest?.("[data-hdr-menu]")) return;
+      // Swallow this press: close the menu only, don't also trigger what was clicked.
+      e.stopPropagation();
+      setMenu(null);
+      const types = ["mousedown", "mouseup", "click"] as const;
+      const eat = (ev: Event) => { ev.stopPropagation(); ev.preventDefault(); if (ev.type === "click") done(); };
+      const done = () => { types.forEach((t) => document.removeEventListener(t, eat, true)); clearTimeout(timer); };
+      types.forEach((t) => document.addEventListener(t, eat, true));
+      const timer = setTimeout(done, 600); // no click followed (e.g. a drag)
     };
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") setMenu(null); };
     document.addEventListener("pointerdown", down, true);
