@@ -34,7 +34,7 @@ const KINDS: Record<ProjectKind, { heading: string; sizeKeys?: string[]; size: S
     heading: "New ads project",
     sizeKeys: ["instagram_portrait", "instagram_post", "instagram_story", "facebook_portrait", "facebook", "linkedin_portrait", "linkedin_post", "pinterest", "twitter"],
     size: { id: "size", title: "Default ad size", sub: "Pick the size this project makes by default. You can still ask for another size in chat." },
-    extra: { id: "type", title: "Reference ads", sub: "Pick a ready-made pack or add your own ads. The AI copies the layout and swaps in your brand." },
+    // No template-pack step for ads for now: templates and references are chosen on the references step.
     style: true,
     firstPlatform: "instagram_portrait",
   },
@@ -145,7 +145,7 @@ function Wizard({ onClose, kindProp, openChat }: { onClose: () => void; kindProp
   const [kind, setKind] = useState<ProjectKind | undefined>(kindProp);
   const needPicker = kindProp === undefined;
   const K = kind ? KINDS[kind] : null;
-  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, K.extra!, ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
+  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, ...(K.extra ? [K.extra] : []), ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
   const STEPS: ShellStep[] = needPicker ? [PICK, ...KIND_STEPS] : KIND_STEPS;
   const [adPackId, setAdPackId] = useState("");
   const [thumbPackId, setThumbPackId] = useState("");

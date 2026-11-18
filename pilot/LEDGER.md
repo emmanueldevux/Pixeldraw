@@ -88,3 +88,7 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 ## PRJ-0028 — References and Colours/font are separate wizard steps
 - The wizard's single "Show us your style" step is now two optional steps: "Add references" (pick styles you like + upload reference images) and "Colours and font" (brand colours, tone, heading font, style notes). Applies to ads, carousels and thumbnails (slideshows have no style step). Both are skippable; the last step creates the project.
 - Verified in the export: Ads now has 5 steps (kind, business, size, template, references, colours/font = steps 1-5 after the picker count).
+
+## PRJ-0029 — Ads wizard: template-pack step removed (for now)
+- Request: the "Reference ads" step (Auto + template gallery + Add my style) is redundant; templates and reference uploads live on the references step. The ads wizard is now: business, size, references (template grid + reference images), colours and font (4 steps). Ads projects still save `adPackId: ""` so the category stays "Ads". Thumbnails, carousels and slideshows keep their own settings step. The gallery variant of `AdPackPicker` stays in the code, unused by the wizard.
+- An attempt to merge the two screens was reverted at the user's request.
