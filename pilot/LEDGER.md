@@ -55,3 +55,7 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 ## PRJ-0020 — Send to Claude (no copy/paste)
 - Comments panel has a "Send to Claude" button: each unsent comment is written to the artifact's shared db at `inbox/<id>` ({page, world, width, selector, element, note, status:"new"}) and marked "✓ sent". Falls back to Copy all if the db is unreachable. Artifact declares `db` and `user`.
 - Limit: an artifact cannot start a Claude task by itself here (wake is `not_armed: no_address` for this session), so Claude reads the inbox when the user says "go" in chat. Not tested end-to-end in the claude.ai viewer.
+
+## PRJ-0021 — Tapping a link in comment mode changed the page
+- Cause: the static build's link hook (PilotBoot, document capture) posts `pilotNav` to the rig on any anchor click and ran before the comment layer's listeners. Fix: the comment layer now listens on the iframe's `window` (runs first), and the rig ignores `pilotNav` messages while comment mode is on. Touch events are hidden from the app but not cancelled (cancelling touchend suppresses the click that opens the comment box).
+- Verified with a touch context: tapping the `/home` link in comment mode leaves the page unchanged and opens the comment box; mouse test still 0 events to the app.
