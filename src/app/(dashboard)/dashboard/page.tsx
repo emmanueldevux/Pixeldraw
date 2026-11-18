@@ -37,7 +37,21 @@ interface DashboardChannel {
   platform: string;
   updatedAt: string;
   brandName: string;
+  kind: string; // Ads / Carousels / Slideshows / Thumbnails
   _count?: { posts: number };
+}
+
+// The project's category. The wizard saves one marker per kind in the brand's advancedSettings;
+// older projects without a marker fall back to the channel's platform.
+function projectKind(platform: string, adv: Record<string, unknown> | null | undefined): string {
+  const a = adv || {};
+  if ("thumbPackId" in a) return "Thumbnails";
+  if ("carousel" in a) return "Carousels";
+  if ("characters" in a || "slideshowStyleId" in a) return "Slideshows";
+  if ("adPackId" in a) return "Ads";
+  if (platform === "youtube_thumbnail") return "Thumbnails";
+  if (platform === "tiktok") return "Slideshows";
+  return "Ads";
 }
 
 interface GeneratedFile {
@@ -96,7 +110,7 @@ export default function DashboardPage() {
         const flat: DashboardChannel[] = [];
         for (const brand of data.data || []) {
           for (const ch of brand.channels || []) {
-            flat.push({ ...ch, brandName: brand.name });
+            flat.push({ ...ch, brandName: brand.name, kind: projectKind(ch.platform, brand.advancedSettings) });
           }
         }
         setChannels(flat);
@@ -244,17 +258,17 @@ export default function DashboardPage() {
                   {channels.map((channel) => (
                     <Link key={channel.id} href={`/projects/${channel.id}`}>
                       <LightCard interactive padding="sm" className="h-full">
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start justify-between mb-10">
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
                               <FolderKanban size={16} />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold text-gray-900 truncate">{channel.name}</p>
-                              <p className="text-xs text-gray-400 truncate">{channel.brandName}</p>
+                              <p className="text-sm font-semibold text-gray-900 truncate">{channel.brandName}</p>
+                              <p className="text-xs text-gray-400 truncate">{channel.kind}</p>
                             </div>
                           </div>
-                          <Badge variant="neutral">{channel.platform}</Badge>
+                          <Badge variant="neutral">{channel.platform.split("_")[0]}</Badge>
                         </div>
 
                         <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">

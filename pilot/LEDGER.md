@@ -62,3 +62,8 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0022 — First comment sent from the rig and applied
 - Inbox comment (/dashboard, dashboard-few-files): "reduce padding here by 40 percent" on the project card. `LightCard` default `md` is p-5 (20px); this card now uses `padding="sm"` (12px, -40%). Only the dashboard project cards changed. Verified: computed padding 12px in the export. Inbox doc marked `done`.
+
+## PRJ-0023 — Four inbox comments on the dashboard project card; comments now send on Add
+- Card (src/app/(dashboard)/dashboard/page.tsx): header row `mb-10` (40px); title = project (brand) name; second line = category (Ads / Carousels / Slideshows / Thumbnails) from `projectKind()`; badge = platform before the underscore (instagram_post -> instagram).
+- Category source: the project wizard stores one marker per kind in the brand's `advancedSettings` (thumbPackId / carousel / characters|slideshowStyleId / adPackId); older projects without a marker fall back to platform (tiktok -> Slideshows, youtube_thumbnail -> Thumbnails, else Ads). The pinned worlds' brands have no advancedSettings, so the rig shows the platform fallback.
+- Rig: the comment popup's button is now "Add & send to Claude" and writes to the inbox immediately.

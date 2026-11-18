@@ -50,7 +50,7 @@ body.cv #zc{display:flex}#zc button{height:30px;min-width:30px;border-radius:999
 <div id="dock"><button id="pill" class="mono" type="button"><b>RIG</b> · <span id="pl">full</span></button><button id="cm" class="mono" type="button">COMMENT · <span id="cn">0</span></button><button id="vm" class="mono" type="button">CANVAS</button></div>
 <div id="chl"></div><div id="pins"></div><div id="toast" class="mono" style="position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:80;background:#0d0d0d;color:#e8e8e8;border:1px solid #333;border-radius:8px;padding:8px 14px;font-size:12px;display:none"></div>
 <div id="pop"><div class="t" id="pt"></div><textarea id="pta" placeholder="What's wrong or what should change?"></textarea>
-<div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end"><button class="btn sm" id="pc" type="button">Cancel</button><button class="btn sm on" id="ps" type="button">Add</button></div></div>
+<div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end"><button class="btn sm" id="pc" type="button">Cancel</button><button class="btn sm on" id="ps" type="button">Add &amp; send to Claude</button></div></div>
 <div id="clist"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b style="font-size:13px">Comments</b><span class="mono" id="cmsg" style="color:#8c8c8c;font-size:10px"></span><button id="cs" class="btn sm" type="button" style="margin-left:auto;background:#A3F76B;color:#111">Send to Claude</button><button id="cc" class="btn sm" type="button">Copy all</button><button id="cx" class="btn sm" type="button">Clear</button><button id="ch" class="btn sm" type="button" title="Hide (Esc)">Hide ✕</button></div><div id="citems"></div>
 <textarea id="cfall" readonly style="display:none;width:100%;height:90px;margin-top:8px;background:#1a1a1a;color:#fff;border:1px solid #444;border-radius:8px;font:11px ui-monospace,monospace"></textarea></div>
 <div id="cv"><div id="cvw"></div></div>
@@ -136,7 +136,7 @@ $("cm").onclick=function(){CM.on=!CM.on;$("cm").className="mono"+(CM.on?" on":""
   if(CM.on){ctxs().forEach(function(c){bind(c.ifr)});if(bad()){$("cmsg").textContent="can't reach the app frame here";}else $("cmsg").textContent="click any element"}else{CM.cur=null;$("pop").style.display="none"}}
 $("pc").onclick=function(){CM.cur=null;$("pop").style.display="none"};
 $("ps").onclick=function(){var n=$("pta").value.trim();if(!CM.cur||!n)return;CM.list.push({page:CM.cur.page,world:CM.cur.world,vw:S.vw,sel:CM.cur.sel,text:CM.cur.text,note:n,at:new Date().toISOString()});
-  CM.cur=null;$("pop").style.display="none";persist();render()};
+  CM.cur=null;$("pop").style.display="none";persist();render();$("cs").onclick()};
 $("ch").onclick=function(){$("clist").style.display="none"};document.addEventListener("keydown",function(e){if(e.key==="Escape"){$("clist").style.display="none";$("pop").style.display="none";CM.cur=null}});
 var DBP=null;function getdb(){if(!DBP)DBP=(window.claude&&claude.use?claude.use("db"):Promise.resolve(null)).catch(function(){return null});return DBP}
 $("cs").onclick=function(){var todo=CM.list.filter(function(c){return !c.sent});if(!todo.length){$("cmsg").textContent="nothing new to send";return}
