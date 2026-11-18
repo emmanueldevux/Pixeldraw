@@ -48,3 +48,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Fix: removed the three backdrops; one document `pointerdown` listener (capture) closes the open menu when the press is outside any `[data-hdr-menu]` wrapper; Esc also closes. Applies to Create project, Chat history and the bell.
 - Verified in the static export at 1280x800: canvas click closes Create project and Chat history; Esc closes; the toggle button still opens and closes.
 - Follow-up: the press that closes a header menu is now swallowed (pointerdown stopped; the matching mousedown/mouseup/click eaten once, 600ms safety timeout), so clicking the page only closes the menu. Verified: 0 page clicks seen on the closing press, the next click works normally.
+
+## PRJ-0019 — Comment mode no longer activates the element
+- Comment mode only cancelled `click`, so the page still saw pointerdown/mousedown/mouseup (menus, buttons using those). Now rig.html swallows pointerdown/up, mousedown/up, dblclick, auxclick, contextmenu, touchstart/end and submit (capture, stopImmediatePropagation) while comment mode is on. Verified: clicking "Create project" in comment mode gave 0 events to the app, no menu opened, comment popup appeared.
