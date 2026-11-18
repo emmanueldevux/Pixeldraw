@@ -67,3 +67,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Card (src/app/(dashboard)/dashboard/page.tsx): header row `mb-10` (40px); title = project (brand) name; second line = category (Ads / Carousels / Slideshows / Thumbnails) from `projectKind()`; badge = platform before the underscore (instagram_post -> instagram).
 - Category source: the project wizard stores one marker per kind in the brand's `advancedSettings` (thumbPackId / carousel / characters|slideshowStyleId / adPackId); older projects without a marker fall back to platform (tiktok -> Slideshows, youtube_thumbnail -> Thumbnails, else Ads). The pinned worlds' brands have no advancedSettings, so the rig shows the platform fallback.
 - Rig: the comment popup's button is now "Add & send to Claude" and writes to the inbox immediately.
+
+## PRJ-0024 — Three more card comments
+- Project card: second line = platform name (Instagram, TikTok, YouTube…), badge = category (Ads/Carousels/Slideshows/Thumbnails), gap under the top row 40px -> 32px (`mb-8`).

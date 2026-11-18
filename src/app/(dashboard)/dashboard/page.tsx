@@ -41,6 +41,12 @@ interface DashboardChannel {
   _count?: { posts: number };
 }
 
+const PLATFORM_NAMES: Record<string, string> = { tiktok: "TikTok", youtube: "YouTube", linkedin: "LinkedIn", twitter: "X (Twitter)" };
+function platformName(platform: string): string {
+  const w = platform.split("_")[0];
+  return PLATFORM_NAMES[w] || w.charAt(0).toUpperCase() + w.slice(1);
+}
+
 // The project's category. The wizard saves one marker per kind in the brand's advancedSettings;
 // older projects without a marker fall back to the channel's platform.
 function projectKind(platform: string, adv: Record<string, unknown> | null | undefined): string {
@@ -258,17 +264,17 @@ export default function DashboardPage() {
                   {channels.map((channel) => (
                     <Link key={channel.id} href={`/projects/${channel.id}`}>
                       <LightCard interactive padding="sm" className="h-full">
-                        <div className="flex items-start justify-between mb-10">
+                        <div className="flex items-start justify-between mb-8">
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
                               <FolderKanban size={16} />
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-semibold text-gray-900 truncate">{channel.brandName}</p>
-                              <p className="text-xs text-gray-400 truncate">{channel.kind}</p>
+                              <p className="text-xs text-gray-400 truncate">{platformName(channel.platform)}</p>
                             </div>
                           </div>
-                          <Badge variant="neutral">{channel.platform.split("_")[0]}</Badge>
+                          <Badge variant="neutral">{channel.kind}</Badge>
                         </div>
 
                         <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
