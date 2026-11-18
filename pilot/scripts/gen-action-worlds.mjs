@@ -34,6 +34,10 @@ const admCar = [{ id: "cs_1", name: "Soft studio", description: "Pastel backgrou
 const admSlide = [{ id: "ss_1", name: "Everyday candid", description: "Phone-photo look with white caption boxes.", published: true, sortOrder: 1, usageCount: 41, textStyle: "white", formats: ["single", "split"], refs: [IMG.d, IMG.e], dna: "" }];
 
 const tplFiles = fs.readdirSync(path.join(root, "public/templates")).filter((f) => /\.(jpe?g|png|webp)$/i.test(f)).sort().map((f) => ({ id: f, name: f.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim(), filename: f, publicUrl: "/templates/" + f }));
+// Ready-made packs (with categories) as the page worlds pin them, so the New project wizard has them too.
+const AD_PACKS = rd("ai-with-history").entries["fetch:GET:/api/ad-packs:"].body;
+const THUMB_PACKS = rd("ai-with-history").entries["fetch:GET:/api/ad-packs?purpose=thumbnail:"].body;
+
 // ---------- _actions : happy path for every call a click can make (partial; every signed-in/out world extends it) ----------
 const actions = {
   "fetch:GET:/api/billing/history:": ok({ events: ledger }),
@@ -68,6 +72,8 @@ const actions = {
   "fetch:POST:/api/carousel-styles:": ok({ success: true, style: { id: "cs_new", name: "My new style", description: "", mine: true, cover: IMG.d, preview: [IMG.d] } }),
   "fetch:DELETE:/api/carousel-styles:": ok({ success: true }),
   "fetch:POST:/api/carousel-styles/upload:": ok({ success: true, url: IMG.d }),
+  "fetch:GET:/api/ad-packs:": ok(AD_PACKS),
+  "fetch:GET:/api/ad-packs?purpose=thumbnail:": ok(THUMB_PACKS),
   "fetch:POST:/api/ad-packs:": ok({ success: true, pack: { id: "tpl_own2", title: "New pack", description: "", mine: true, coverImages: [IMG.a] } }),
   "fetch:DELETE:/api/ad-packs:": ok({ success: true }),
   "fetch:POST:/api/plans:": ok({ success: true, data: { id: "plan_1", items: planItems }, trimmed: 0 }),

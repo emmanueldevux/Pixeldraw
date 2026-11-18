@@ -22,6 +22,7 @@ const shape = (t: DesignTemplate, mine: boolean) => ({
   id: t.id,
   title: t.title,
   description: t.description,
+  category: t.category || "",
   mine,
   coverImages: (t.coverImages.length ? t.coverImages : t.refImages).slice(0, 4),
 });

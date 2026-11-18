@@ -341,8 +341,8 @@ function Wizard({ onClose, kindProp, openChat }: { onClose: () => void; kindProp
 
       {sid === "size" && <SizeCards value={platform} onChange={setPlatform} keys={K?.sizeKeys} />}
 
-      {sid === "type" && kind === "ads" && <AdPackPicker value={adPackId} onChange={setAdPackId} />}
-      {sid === "type" && kind === "thumbnails" && <AdPackPicker purpose="thumbnail" value={thumbPackId} onChange={setThumbPackId} />}
+      {sid === "type" && kind === "ads" && <AdPackPicker variant="gallery" value={adPackId} onChange={setAdPackId} />}
+      {sid === "type" && kind === "thumbnails" && <AdPackPicker variant="gallery" purpose="thumbnail" value={thumbPackId} onChange={setThumbPackId} />}
       {sid === "type" && kind === "carousels" && <CarouselSettings value={carouselS} onChange={setCarouselS} />}
       {sid === "type" && kind === "slideshows" && (
         <div className="space-y-6">

@@ -79,3 +79,8 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - `OnboardingModal` with no `kind` now opens with step "What do you want to make?" (Ads / Carousels / Slideshows / Thumbnails), then runs that kind's own steps (business, size, kind settings, style) and opens `/ai?channel=<id>` at the end (`openChat` defaults to true). Affects the header's New project, the Projects page and QuickCreate; the four "Make …" entries still skip the picker.
 - Verified in the export: picker shows, Continue disabled until a card is chosen, Carousels -> business -> "Default carousel size" -> "Carousel style".
 - Not tested: the final create call against the real API (the rig pins it).
+
+## PRJ-0027 — Template gallery in the New project wizard (ads and thumbnails)
+- The "Reference ads" / "Reference thumbnails" step shows the ready-made templates as cards grouped by category (your own styles first under "My styles"), with an Auto card first and a dashed "Add my style" tile below that opens the existing pack wizard. Replaces the dropdown in the wizard only; the project settings picker keeps the dropdown (`AdPackPicker variant="gallery"`).
+- `/api/ad-packs` now returns `category` per pack (the field already exists on DesignTemplate). Packs with no category fall under "More templates".
+- Rig: demo packs have categories; `_actions` pins GET /api/ad-packs (+ `?purpose=thumbnail`) so the wizard has templates outside the AI studio worlds. 48 worlds valid, 17 tests pass.

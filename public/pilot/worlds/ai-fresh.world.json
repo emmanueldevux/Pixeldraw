@@ -88,9 +88,20 @@
       "body": {
         "packs": [
           {
+            "id": "tpl_own1",
+            "title": "My weekend promos",
+            "description": "",
+            "category": "",
+            "mine": true,
+            "coverImages": [
+              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+            ]
+          },
+          {
             "id": "tpl_1",
             "title": "Colour-block product ad",
             "description": "Bold single colour with the product centred.",
+            "category": "Product launch",
             "mine": false,
             "coverImages": [
               "/templates/112548598f5ab8fc4c09207f62da0abc.jpg",
@@ -98,12 +109,43 @@
             ]
           },
           {
-            "id": "tpl_own1",
-            "title": "My weekend promos",
-            "description": "",
-            "mine": true,
+            "id": "tpl_2",
+            "title": "Hero shot",
+            "description": "Product on a soft studio backdrop.",
+            "category": "Product launch",
+            "mine": false,
             "coverImages": [
-              "/templates/2409004ccdb788fd8760aa48ae05b114.jpg"
+              "/templates/2069e417aa5289fc21b33843b87f37eb.jpg"
+            ]
+          },
+          {
+            "id": "tpl_3",
+            "title": "Big number sale",
+            "description": "Large discount number with a badge.",
+            "category": "Sale & promo",
+            "mine": false,
+            "coverImages": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
+            ]
+          },
+          {
+            "id": "tpl_4",
+            "title": "Flash sale",
+            "description": "Urgent countdown layout.",
+            "category": "Sale & promo",
+            "mine": false,
+            "coverImages": [
+              "/templates/68a06692e2f01159966dd6f9f51468d6.jpg"
+            ]
+          },
+          {
+            "id": "tpl_6",
+            "title": "Customer quote",
+            "description": "Testimonial with a portrait.",
+            "category": "Testimonial",
+            "mine": false,
+            "coverImages": [
+              "/templates/c6d151889045da73f6d8747282591c92.jpg"
             ]
           }
         ]
@@ -117,9 +159,20 @@
             "id": "tpl_5",
             "title": "Bold face thumbnail",
             "description": "High-contrast thumbnail.",
+            "category": "Reaction",
             "mine": false,
             "coverImages": [
               "/templates/c6d151889045da73f6d8747282591c92.jpg"
+            ]
+          },
+          {
+            "id": "tpl_7",
+            "title": "Big text thumbnail",
+            "description": "Huge headline over a blurred scene.",
+            "category": "Tutorial",
+            "mine": false,
+            "coverImages": [
+              "/templates/677cc0b2f67da326311a099ecf5c7e88.jpg"
             ]
           }
         ]

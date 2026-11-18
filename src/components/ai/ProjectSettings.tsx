@@ -7,7 +7,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Palette, Type, Image as ImageIcon, Languages, ShoppingBag, Plus, X, Check, Loader2, ChevronDown, Layers, Ban, UserRound } from "lucide-react";
+import { Palette, Type, Image as ImageIcon, Languages, ShoppingBag, Plus, X, Check, Loader2, ChevronDown, Layers, Ban, UserRound, Sparkles } from "lucide-react";
 import OffersBox from "./OffersBox";
 import CarouselStyleWizard from "./CarouselStyleWizard";
 import AdPackWizard from "./AdPackWizard";
@@ -765,9 +765,9 @@ export function CarouselSettings({ value, onChange }: { value: ProjectCarouselSe
 
 
 // ==================== Default reference pack for single ads ====================
-export function AdPackPicker({ value, onChange, purpose = "ad" }: { value: string; onChange: (v: string) => void; purpose?: "ad" | "thumbnail" }) {
+export function AdPackPicker({ value, onChange, purpose = "ad", variant = "select" }: { value: string; onChange: (v: string) => void; purpose?: "ad" | "thumbnail"; variant?: "select" | "gallery" }) {
   const thumb = purpose === "thumbnail";
-  const [packs, setPacks] = useState<{ id: string; title: string; description: string; coverImages: string[]; mine?: boolean }[] | null>(null);
+  const [packs, setPacks] = useState<{ id: string; title: string; description: string; category?: string; coverImages: string[]; mine?: boolean }[] | null>(null);
   const [creating, setCreating] = useState(false);
   const load = useCallback(() => {
     fetch(thumb ? "/api/ad-packs?purpose=thumbnail" : "/api/ad-packs")
@@ -784,6 +784,63 @@ export function AdPackPicker({ value, onChange, purpose = "ad" }: { value: strin
   }
   const chosen = packs?.find((p) => p.id === value);
   const AUTO = "__auto__";
+  if (variant === "gallery") {
+    // Your own styles first, then the ready-made templates grouped by category.
+    const groups: { title: string; items: NonNullable<typeof packs> }[] = [];
+    const mine = (packs || []).filter((p) => p.mine);
+    if (mine.length) groups.push({ title: "My styles", items: mine });
+    const byCat = new Map<string, NonNullable<typeof packs>>();
+    for (const p of (packs || []).filter((x) => !x.mine)) {
+      const c = (p.category || "").trim() || "More templates";
+      byCat.set(c, [...(byCat.get(c) || []), p]);
+    }
+    Array.from(byCat.keys()).sort((a, b) => (a === "More templates" ? 1 : b === "More templates" ? -1 : a.localeCompare(b))).forEach((c) => groups.push({ title: c, items: byCat.get(c)! }));
+    const card = (selected: boolean) => `relative text-left rounded-xl border-2 p-1.5 transition-colors ${selected ? "border-gray-900 bg-gray-50" : "border-gray-200 hover:border-gray-400"}`;
+    const ratio = thumb ? "aspect-video" : "aspect-[4/5]";
+    return (
+      <div>
+        <p className="mb-3 text-sm font-semibold text-gray-800">{thumb ? "Choose a thumbnail style" : "Choose a template"}</p>
+        {packs === null ? (
+          <p className="text-xs text-gray-400">Loading…</p>
+        ) : (
+          <div className="space-y-5">
+            <div className={`grid gap-2.5 ${thumb ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-3 sm:grid-cols-4"}`}>
+              <button type="button" onClick={() => onChange("")} className={card(!chosen)}>
+                <div className={`${ratio} rounded-lg bg-[#A3F76B]/30 flex items-center justify-center`}><Sparkles className="w-6 h-6 text-gray-700" /></div>
+                <p className="mt-1.5 px-0.5 text-xs font-semibold text-gray-900">Auto</p>
+                <p className="px-0.5 text-[11px] text-gray-500 leading-snug">The AI picks the best one</p>
+              </button>
+            </div>
+            {groups.length === 0 && <p className="text-xs text-gray-400">No ready-made templates yet. Add your own style below.</p>}
+            {groups.map((g) => (
+              <div key={g.title}>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{g.title}</p>
+                <div className={`grid gap-2.5 ${thumb ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-3 sm:grid-cols-4"}`}>
+                  {g.items.map((p) => (
+                    <button key={p.id} type="button" onClick={() => onChange(p.id)} className={card(value === p.id)} title={p.description || p.title}>
+                      <div className={`${ratio} rounded-lg bg-gray-100 overflow-hidden`}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {p.coverImages[0] && <img src={p.coverImages[0]} alt="" className="w-full h-full object-cover" />}
+                      </div>
+                      <p className="mt-1.5 px-0.5 text-xs font-semibold text-gray-900 truncate">{p.title}</p>
+                      {value === p.id && <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-gray-900 text-white flex items-center justify-center"><Check className="w-3 h-3" /></span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={() => setCreating(true)} className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 hover:border-gray-500 py-4 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              <Plus className="w-4 h-4" /> {thumb ? "Add my style (upload your own thumbnails)" : "Add my style (upload your own ads)"}
+            </button>
+            {chosen?.mine && <button type="button" onClick={() => removePack(chosen.id)} className="text-[11px] text-red-500 hover:underline">Delete this style</button>}
+          </div>
+        )}
+        {creating && (
+          <AdPackWizard purpose={purpose} onClose={() => setCreating(false)} onCreated={(id) => { setCreating(false); onChange(id); load(); }} />
+        )}
+      </div>
+    );
+  }
   return (
     <div>
       <label className={LABEL}>{thumb ? "Thumbnail style (reference pack)" : "Ad style (reference pack)"}</label>
