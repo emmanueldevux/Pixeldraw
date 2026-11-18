@@ -266,8 +266,8 @@ export default function DashboardPage() {
                       <LightCard interactive padding="sm" className="h-full">
                         <div className="flex items-start justify-between mb-8">
                           <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
-                              <FolderKanban size={16} />
+                            <div className="w-[38.4px] h-[38.4px] rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
+                              <FolderKanban size={19} />
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-semibold text-gray-900 truncate">{channel.brandName}</p>

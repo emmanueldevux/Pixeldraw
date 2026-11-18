@@ -70,3 +70,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0024 — Three more card comments
 - Project card: second line = platform name (Instagram, TikTok, YouTube…), badge = category (Ads/Carousels/Slideshows/Thumbnails), gap under the top row 40px -> 32px (`mb-8`).
+
+## PRJ-0025 — Project card icon +20%
+- Icon tile 32px -> 38.4px (`w-[38.4px] h-[38.4px]`), glyph 16 -> 19. Measured 38.39px in the export.
