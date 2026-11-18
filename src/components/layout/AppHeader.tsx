@@ -29,11 +29,10 @@ export const MAKE: { label: string; hint: string; icon: typeof ImageIcon; prompt
   { label: "Make thumbnails", hint: "YouTube thumbnails", icon: Images, prompt: "Make a YouTube thumbnail for ", kind: "thumbnails" },
 ];
 
-function Menu({ open, onClose, children, className = "" }: { open: boolean; onClose: () => void; children: React.ReactNode; className?: string }) {
+function Menu({ open, children, className = "" }: { open: boolean; children: React.ReactNode; className?: string }) {
   if (!open) return null;
   return (
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
       <div className={`absolute left-0 top-full mt-2 z-50 rounded-2xl border-[6px] border-gray-200 bg-white shadow-[0_16px_48px_rgba(15,23,42,0.14)] p-1.5 ${className}`}>{children}</div>
     </>
   );
@@ -111,6 +110,19 @@ export default function AppHeader() {
     go(`/ai?prompt=${encodeURIComponent(prompt)}`);
   };
 
+  // Close an open header menu on any press outside it (or Esc). A full-screen backdrop
+  // can't do this: the header's backdrop-blur makes `fixed` relative to the header bar.
+  useEffect(() => {
+    if (!menu) return;
+    const down = (e: PointerEvent) => {
+      if (!(e.target as Element | null)?.closest?.("[data-hdr-menu]")) setMenu(null);
+    };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setMenu(null); };
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", down, true); document.removeEventListener("keydown", key); };
+  }, [menu]);
+
   const submitSearch = () => {
     const t = q.trim();
     router.push(t ? `/templates?q=${encodeURIComponent(t)}` : "/templates");
@@ -121,14 +133,14 @@ export default function AppHeader() {
       <header className="absolute top-0 inset-x-0 z-40 h-[72px] flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-[rgb(209_213_219/48%)] bg-white/90 backdrop-blur-md">
         {/* ---------- left ---------- */}
         <div className="flex items-center gap-2 min-w-0">
-          <div className="relative">
+          <div className="relative" data-hdr-menu>
             <button
               onClick={() => setMenu(menu === "create" ? null : "create")}
               className={tabOn}
             >
               <Plus size={15} /> <span className="hidden sm:inline">Create project</span> <ChevronDown size={14} className="opacity-70" />
             </button>
-            <Menu open={menu === "create"} onClose={() => setMenu(null)} className="w-72">
+            <Menu open={menu === "create"} className="w-72">
               <button
                 onClick={() => { setMenu(null); requireAuth(() => setOnboarding(true)); }}
                 className="w-full text-left flex items-center gap-3 rounded-xl p-2.5 hover:bg-gray-50"
@@ -149,14 +161,14 @@ export default function AppHeader() {
             </Menu>
           </div>
 
-          <div className="relative">
+          <div className="relative" data-hdr-menu>
             <button
               onClick={() => setMenu(menu === "history" ? null : "history")}
               className={tabOff}
             >
               <History size={15} /> <span className="hidden sm:inline">Chat history</span> <ChevronDown size={14} className="text-gray-400" />
             </button>
-            <Menu open={menu === "history"} onClose={() => setMenu(null)} className="w-80 max-h-96 overflow-y-auto">
+            <Menu open={menu === "history"} className="w-80 max-h-96 overflow-y-auto">
               <button onClick={() => go("/chat")} className="w-full text-left flex items-center gap-3 rounded-xl p-2.5 hover:bg-gray-50">
                 <span className="w-8 h-8 shrink-0 rounded-lg bg-gray-100 flex items-center justify-center"><MessageSquare size={15} /></span>
                 <span className="text-sm font-semibold text-gray-900">New free chat</span>
@@ -200,13 +212,12 @@ export default function AppHeader() {
 
           <CreditsPill className="!h-10 !rounded-xl !px-4 !bg-gray-100 hover:!bg-gray-200/70" />
 
-          <div className="relative">
+          <div className="relative" data-hdr-menu>
             <button onClick={() => setMenu(menu === "bell" ? null : "bell")} aria-label="Notifications" className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-gray-600 ${soft}`}>
               <Bell size={16} />
             </button>
             {menu === "bell" && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} />
                 <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-2xl border-[6px] border-gray-200 bg-white shadow-xl p-4">
                   <p className="text-sm font-semibold text-gray-900">Notifications</p>
                   <p className="mt-1 text-xs text-gray-500">You&apos;re all caught up.</p>
