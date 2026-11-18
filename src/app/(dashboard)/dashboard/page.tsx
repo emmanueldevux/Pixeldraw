@@ -243,7 +243,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {channels.map((channel) => (
                     <Link key={channel.id} href={`/projects/${channel.id}`}>
-                      <LightCard interactive className="h-full">
+                      <LightCard interactive padding="sm" className="h-full">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">

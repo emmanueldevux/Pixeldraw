@@ -59,3 +59,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 ## PRJ-0021 — Tapping a link in comment mode changed the page
 - Cause: the static build's link hook (PilotBoot, document capture) posts `pilotNav` to the rig on any anchor click and ran before the comment layer's listeners. Fix: the comment layer now listens on the iframe's `window` (runs first), and the rig ignores `pilotNav` messages while comment mode is on. Touch events are hidden from the app but not cancelled (cancelling touchend suppresses the click that opens the comment box).
 - Verified with a touch context: tapping the `/home` link in comment mode leaves the page unchanged and opens the comment box; mouse test still 0 events to the app.
+
+## PRJ-0022 — First comment sent from the rig and applied
+- Inbox comment (/dashboard, dashboard-few-files): "reduce padding here by 40 percent" on the project card. `LightCard` default `md` is p-5 (20px); this card now uses `padding="sm"` (12px, -40%). Only the dashboard project cards changed. Verified: computed padding 12px in the export. Inbox doc marked `done`.
