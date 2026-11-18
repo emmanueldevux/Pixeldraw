@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, Eye, ImagePlus, Loader2, Plus, Trash2, X } from "lucide-react";
+import { CoverStar, ExtraPrompt } from "@/components/admin/CoverExtra";
 import { btnPrimary, btnSecondary, inputCls } from "@/components/billing/Shell";
 import { ASPECTS, CATEGORIES, missingParams, renderPrompt, type DesignTemplate, type TemplateParam, type TemplateStyle } from "@/lib/designTemplates/types";
 
@@ -296,6 +297,7 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
                 <div key={src.slice(-40) + i} className="relative w-28 aspect-[9/16] rounded-lg overflow-hidden border border-gray-200 bg-gray-100 group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={src} alt="" className="w-full h-full object-cover" />
+                  {i > 0 && <CoverStar on={false} onPick={() => set("coverImages", [src, ...draft.coverImages.filter((_, n) => n !== i)])} />}
                   {i === 0 && <span className="absolute top-1 left-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/90">Cover</span>}
                   <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 opacity-0 group-hover:opacity-100 bg-black/40">
                     <button className="text-white p-1" onClick={() => set("coverImages", move(draft.coverImages, i, -1))} aria-label="Move left"><ArrowUp size={13} className="-rotate-90" /></button>
@@ -309,6 +311,12 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
             <p className="mt-3 text-sm text-gray-400">No images yet. Until you add some, the templates page shows a styled placeholder.</p>
           )}
         </div>
+
+        {draft.kind === "pack" && (
+          <div className={box}>
+            <ExtraPrompt value={draft.prompt} onChange={(v) => set("prompt", v)} />
+          </div>
+        )}
 
         {draft.kind === "pack" ? (
           <PackEditor draft={draft} setDraft={setDraft} setMsg={setMsg} />

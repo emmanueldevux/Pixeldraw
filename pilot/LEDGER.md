@@ -98,3 +98,8 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Carousel and slideshow style editors accept multiple images or a whole folder into a tray; drag them onto Intro / Details / Outro (or reorder slideshow slides), or use Auto-sort.
 - Reference DNA is studied automatically when the images change (hand-edited DNA is kept); "Re-study" remains for a manual redo.
 - Rig fixtures for the admin worlds corrected. Verified in the export: drop from tray to slot moves the image (synthetic DnD events); Playwright's drag_to doesn't carry dataTransfer so it can't test this.
+
+## PRJ-0031 — Cover image + one extra prompt for every pack/style
+- Carousel and slideshow styles: click the star on any reference image to make it the cover shown on pickers and the templates page (default: first image). One optional "Extra prompt" box per style is added to every generation (carousel planner + each slide; slideshow plan + photo). New DB columns `coverImage` and `extraPrompt` on CarouselStyle and SlideshowStyle (run `prisma db push`).
+- Ad and thumbnail packs: star on an example image moves it to the front (the cover); "Extra prompt" box reuses the pack's `prompt` field, appended to ad and thumbnail generation.
+- Not run against the real DB/API here.

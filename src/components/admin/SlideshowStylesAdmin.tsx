@@ -8,12 +8,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FolderOpen, ImagePlus, Loader2, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { CoverStar, ExtraPrompt } from "@/components/admin/CoverExtra";
 import { btnPrimary, btnSecondary, inputCls } from "@/components/billing/Shell";
 import { FORMATS, type SlideshowStyleRec } from "@/lib/slideshow/types";
 
 type Draft = Omit<SlideshowStyleRec, "id" | "usageCount"> & { id?: string; usageCount?: number };
 
-const BLANK: Draft = { name: "New slideshow style", description: "", refs: [], dna: "", textStyle: "white", formats: [], published: false, sortOrder: 0 };
+const BLANK: Draft = { name: "New slideshow style", description: "", refs: [], dna: "", coverImage: "", extraPrompt: "", textStyle: "white", formats: [], published: false, sortOrder: 0 };
 const label = "block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5";
 
 function readFile(f: File): Promise<string> {
@@ -157,7 +158,7 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
           <button key={s.id} onClick={() => setD(structuredClone(s))} className={`w-full text-left rounded-xl border p-3 flex gap-3 items-center ${d.id === s.id ? "border-gray-900 bg-white" : "border-gray-200 bg-white/60 hover:bg-white"}`}>
             <div className="w-10 aspect-[3/4] rounded bg-gray-100 overflow-hidden shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {s.refs[0] && <img src={s.refs[0]} alt="" className="w-full h-full object-cover" />}
+              {(s.coverImage || s.refs[0]) && <img src={s.coverImage || s.refs[0]} alt="" className="w-full h-full object-cover" />}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-900 truncate">{s.name}</p>
@@ -183,6 +184,8 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
           <span className={label}>Description (shown to users)</span>
           <input className={inputCls} value={d.description} onChange={(e) => setD({ ...d, description: e.target.value })} placeholder="e.g. Real phone photos, white caption boxes, first-person tips" />
         </div>
+
+        <ExtraPrompt value={d.extraPrompt || ""} onChange={(v) => setD({ ...d, extraPrompt: v })} />
 
         <div className="grid sm:grid-cols-2 gap-5">
           <div>
@@ -245,6 +248,7 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
                   <span className="absolute bottom-1 left-1 z-10 rounded bg-black/60 px-1.5 text-[10px] font-semibold text-white">{i + 1}</span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={src} alt="" className="w-full h-full object-cover pointer-events-none" />
+                  <CoverStar on={d.coverImage ? d.coverImage === src : i === 0} onPick={() => setD({ ...d, coverImage: src })} />
                   <button onClick={() => setD({ ...d, refs: d.refs.filter((_, n) => n !== i) })} className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100" aria-label="Remove">
                     <X size={13} />
                   </button>

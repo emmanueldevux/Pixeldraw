@@ -126,7 +126,7 @@ async function finish(url: string, spec: ThumbSpec): Promise<string> {
 }
 
 export async function generateThumbnail(opts: {
-  pack?: Pick<DesignTemplate, "refImages" | "refDnas" | "packDna"> | null;
+  pack?: (Pick<DesignTemplate, "refImages" | "refDnas" | "packDna"> & { prompt?: string }) | null;
   packId?: string;
   brief: string;
   spec: ThumbSpec;
@@ -168,6 +168,7 @@ export async function generateThumbnail(opts: {
       : "Create a fitting main subject (a person with a strong expression, a product, or a striking scene) for the topic. Make it look like a real photograph.",
     "",
     pack?.packDna ? `THE PACK'S LOOK (follow it):\n${pack.packDna}\n` : "",
+    pack?.prompt?.trim() ? `EXTRA INSTRUCTION FROM THE PACK AUTHOR:\n${pack.prompt.trim()}\n` : "",
     pack && refIndex !== null && pack.refDnas[refIndex] ? `THIS REFERENCE'S DNA:\n${pack.refDnas[refIndex]}\n` : "",
     `TOPIC: ${opts.brief}`,
     textRule,

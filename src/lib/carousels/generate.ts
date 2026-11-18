@@ -17,7 +17,7 @@ import { toFile } from "openai";
 import { getClient, withRetry, getImageQuality } from "@/lib/ai/providers/openai";
 import { compositeLogo, pickLogoPlacement, type LogoPosition } from "@/lib/ai/logoComposite";
 import { trimToAspect } from "@/lib/designTemplates/crop";
-import type { CarouselSize, CarouselStyle, SlideImage, SlotKey } from "./types";
+import { withExtra, type CarouselSize, type CarouselStyle, type SlideImage, type SlotKey } from "./types";
 import type { PlannedSlide, StyledPlan } from "./planner";
 
 export interface GeneratedStyledSlide {
@@ -138,7 +138,7 @@ export function logoPlacementFor(logoUrl?: string | null, logoPosition?: LogoPos
 /** Render one slide. Never throws: a failed slide comes back with imageUrl "". */
 export async function renderStyledSlide(ctx: RenderContext, slide: PlannedSlide, anchor?: string): Promise<GeneratedStyledSlide> {
   const slot = slide.role as SlotKey;
-  const dna = { intro: ctx.style.introDna, details: ctx.style.detailsDna, outro: ctx.style.outroDna }[slot];
+  const dna = withExtra({ intro: ctx.style.introDna, details: ctx.style.detailsDna, outro: ctx.style.outroDna }[slot], ctx.style.extraPrompt);
   const userImg = ctx.userImages?.find(
     (u) => u.target === slide.slideNumber || u.target === slide.role || (u.target === "details" && slide.role === "details"),
   )?.dataUrl;

@@ -10,7 +10,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listOwnStyles, listStyles } from "@/lib/carousels/store";
-import { isUsable, type CarouselStyle } from "@/lib/carousels/types";
+import { isUsable, styleCover, type CarouselStyle } from "@/lib/carousels/types";
 import { studySlot } from "@/lib/carousels/dna";
 import { withUsage } from "@/lib/billing/usage";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
@@ -23,7 +23,7 @@ const shape = (s: CarouselStyle, mine: boolean) => ({
   name: s.name,
   description: s.description,
   mine,
-  cover: s.introRefs[0] || null,
+  cover: styleCover(s),
   preview: [s.introRefs[0], s.detailsRefs[0], s.outroRefs[0]].filter(Boolean),
 });
 

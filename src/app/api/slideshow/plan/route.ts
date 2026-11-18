@@ -41,7 +41,7 @@ async function handlePOST(request: Request) {
       count: Number(b.count) || 6,
       voice: ctx.voice,
       character,
-      styleDna: style?.dna || "",
+      styleDna: [style?.dna, style?.extraPrompt].filter(Boolean).join("\n\nEXTRA INSTRUCTION FOR THIS STYLE:\n"),
       frameSlots: Math.max(0, Math.min(20, Number(b.frameSlots) || 0)),
     });
     await commit(user.id, auth, [{ key: "chat.text" }], { ref: `slideshow-plan:${Date.now()}`, note: "Slideshow plan" }).catch((e) => console.error("[SLIDESHOW] billing failed:", e));

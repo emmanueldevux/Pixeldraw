@@ -42,7 +42,7 @@ async function handlePOST(request: Request) {
     throw e;
   }
   try {
-    const raw = await renderPhoto({ scene, person, character, styleDna: style?.dna || "", landscape });
+    const raw = await renderPhoto({ scene, person, character, styleDna: [style?.dna, style?.extraPrompt].filter(Boolean).join("\n\nEXTRA INSTRUCTION FOR THIS STYLE:\n"), landscape });
     const finished = landscape ? await finishHalf(raw.url) : await finishSlide(raw.url, aspect);
     const url = await persistImage(finished, "slideshow");
     const c = await commit(user.id, auth, [{ key: useChar ? "image.edit" : "image.openai" }], { ref: randomUUID(), producedImage: true, note: "Slideshow photo" }).catch((e) => {

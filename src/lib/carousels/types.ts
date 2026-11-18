@@ -27,9 +27,15 @@ export interface CarouselStyle {
   detailsDna: string;
   outroRefs: string[];
   outroDna: string;
+  coverImage?: string;
+  extraPrompt?: string;
   usageCount: number;
   ownerId?: string | null;
 }
+
+/** A slot's DNA plus the style's one extra prompt (if any). */
+export const withExtra = (dna: string, extra?: string) => (extra?.trim() ? `${dna}\n\nEXTRA INSTRUCTION FOR THIS STYLE:\n${extra.trim()}` : dna);
+export const styleCover = (s: { coverImage?: string; introRefs: string[] }) => s.coverImage || s.introRefs[0] || null;
 
 export const refsKey = (s: SlotKey) => `${s}Refs` as const;
 export const dnaKey = (s: SlotKey) => `${s}Dna` as const;
@@ -75,6 +81,8 @@ export function cleanStyleInput(raw: Record<string, unknown>) {
     detailsDna: s(raw.detailsDna, 8000),
     outroRefs: list(raw.outroRefs),
     outroDna: s(raw.outroDna, 8000),
+    coverImage: s(raw.coverImage, 3_000_000),
+    extraPrompt: s(raw.extraPrompt, 2000),
   };
 }
 

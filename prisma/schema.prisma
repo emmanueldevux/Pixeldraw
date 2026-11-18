@@ -407,6 +407,8 @@ model CarouselStyle {
   detailsDna  String   @default("") @db.Text
   outroRefs   String[] @default([])
   outroDna    String   @default("") @db.Text
+  coverImage  String   @default("") @db.Text // the one image shown for this pack on the templates page
+  extraPrompt String   @default("") @db.Text // optional extra instruction added to every generation
   usageCount  Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -421,6 +423,8 @@ model SlideshowStyle {
   description String   @default("")
   refs        String[] @default([])      // example slides (urls)
   dna         String   @default("") @db.Text // studied: photo look, scenes, caption voice, pacing
+  coverImage  String   @default("") @db.Text // the one image shown for this pack on the templates page
+  extraPrompt String   @default("") @db.Text // optional extra instruction added to every generation
   textStyle   String   @default("white") // default caption look: "white" | "dark" | "plain"
   formats     String[] @default([])      // "list" | "story" | "travel" | "split" (empty = all)
   published   Boolean  @default(false)

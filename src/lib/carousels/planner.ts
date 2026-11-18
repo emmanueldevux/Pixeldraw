@@ -68,7 +68,7 @@ ${style.detailsDna || "Visual on top, bold heading, 2-3 short body lines."}
 
 === OUTRO DNA (slide ${total}) ===
 ${style.outroDna || "Centred call to action, one icon, a short follow line."}
-
+${style.extraPrompt?.trim() ? `\n=== EXTRA INSTRUCTION FOR THIS STYLE ===\n${style.extraPrompt.trim()}\n` : ""}
 STRUCTURE:
 1. INTRO: earn the first swipe. A title that grabs, a subtitle that promises what they get (e.g. "5 frameworks to…"), plus any small labels the intro DNA uses (author credit, name tag for the visual, swipe cue).
 2. DETAILS: exactly ${detailCount} slides. Each makes ONE clear point with a short heading and a short body. Mark 1-2 key phrases per body with **bold** or *italic* the way the details DNA uses emphasis. Each opens with a fresh angle and leaves a reason to swipe on; never two slides that read the same. Number them if the topic is a list.

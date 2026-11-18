@@ -115,7 +115,7 @@ async function asFile(src: string, name: string) {
 }
 
 export async function generatePackAd(opts: {
-  pack: Pick<DesignTemplate, "refImages" | "refDnas" | "packDna">;
+  pack: Pick<DesignTemplate, "refImages" | "refDnas" | "packDna"> & { prompt?: string };
   packId?: string; // enables the learning loop (layouts people keep redoing are avoided)
   brief: string; // what the ad is for (user's request, or the chat's drafted brief)
   headline?: string;
@@ -146,6 +146,7 @@ export async function generatePackAd(opts: {
     opts.compositionNote ? `${opts.compositionNote}\n` : "",
     "THE PACK'S DESIGN DNA (shared style, follow it):",
     opts.pack.packDna || "(follow the reference closely)",
+    opts.pack.prompt?.trim() ? `\nEXTRA INSTRUCTION FROM THE PACK AUTHOR:\n${opts.pack.prompt.trim()}` : "",
     "",
     "THIS LAYOUT'S DNA:",
     opts.pack.refDnas[refIndex] || "(follow the reference closely)",

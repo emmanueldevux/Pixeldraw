@@ -23,7 +23,7 @@ const shape = (s: SlideshowStyleRec, mine: boolean) => ({
   textStyle: s.textStyle,
   formats: s.formats,
   mine,
-  cover: s.refs[0] || null,
+  cover: s.coverImage || s.refs[0] || null,
   preview: s.refs.slice(0, 3),
 });
 

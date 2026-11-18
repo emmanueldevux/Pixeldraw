@@ -8,8 +8,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FolderOpen, ImagePlus, Loader2, Plus, Sparkles, Trash2, Wand2, X } from "lucide-react";
+import { CoverStar, ExtraPrompt } from "@/components/admin/CoverExtra";
 import { btnPrimary, btnSecondary, inputCls } from "@/components/billing/Shell";
-import { SLOTS, SLOT_LABEL, isUsable, type CarouselStyle, type SlotKey } from "@/lib/carousels/types";
+import { SLOTS, SLOT_LABEL, isUsable, styleCover, type CarouselStyle, type SlotKey } from "@/lib/carousels/types";
 
 type Draft = Omit<CarouselStyle, "id" | "usageCount"> & { id?: string; usageCount?: number };
 
@@ -24,6 +25,8 @@ const BLANK: Draft = {
   detailsDna: "",
   outroRefs: [],
   outroDna: "",
+  coverImage: "",
+  extraPrompt: "",
 };
 
 const label = "block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5";
@@ -218,7 +221,7 @@ export default function CarouselStylesAdmin({ setMsg }: { setMsg: (m: string | n
           >
             <div className="w-10 aspect-[4/5] rounded bg-gray-100 overflow-hidden shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {s.introRefs[0] && <img src={s.introRefs[0]} alt="" className="w-full h-full object-cover" />}
+              {styleCover(s) && <img src={styleCover(s)!} alt="" className="w-full h-full object-cover" />}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-900 truncate">{s.name}</p>
@@ -243,6 +246,7 @@ export default function CarouselStylesAdmin({ setMsg }: { setMsg: (m: string | n
           <span className={label}>Description (shown to users when they pick a style)</span>
           <input className={inputCls} value={d.description} onChange={(e) => setD({ ...d, description: e.target.value })} placeholder="e.g. Clean editorial, serif titles, line illustrations" />
         </div>
+        <ExtraPrompt value={d.extraPrompt || ""} onChange={(v) => setD({ ...d, extraPrompt: v })} />
         {d.published && !isUsable(d) && (
           <p className="text-sm text-amber-700">Every slot needs at least one reference before users can get this style.</p>
         )}
@@ -302,6 +306,8 @@ export default function CarouselStylesAdmin({ setMsg }: { setMsg: (m: string | n
             onDna={(v) => { edited.current.add(slot); setDna(slot, v); }}
             onDropRef={(src, from) => moveRef(src, from, slot)}
             onDropFiles={(f) => void uploadFiles(sortedImages(f), slot)}
+            cover={d.coverImage || ""}
+            onCover={(src) => setD((cur) => (cur ? { ...cur, coverImage: src } : cur))}
           />
         ))}
 
@@ -324,6 +330,8 @@ function SlotEditor(p: {
   onDna: (v: string) => void;
   onDropRef: (src: string, from: SlotKey | "tray") => void;
   onDropFiles: (f: File[]) => void;
+  cover: string;
+  onCover: (src: string) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const uploading = p.busy === `upload:${p.slot}`;
@@ -371,6 +379,7 @@ function SlotEditor(p: {
             <div key={src.slice(-40) + i} draggable onDragStart={(e) => e.dataTransfer.setData(DRAG, JSON.stringify({ src, from: p.slot }))} className="relative w-24 aspect-[4/5] rounded-lg overflow-hidden border border-gray-200 bg-gray-100 group cursor-grab">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" className="w-full h-full object-cover pointer-events-none" />
+              <CoverStar on={p.cover ? p.cover === src : p.slot === "intro" && i === 0} onPick={() => p.onCover(src)} />
               <button onClick={() => p.onRemove(i)} className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100" aria-label="Remove">
                 <X size={13} />
               </button>

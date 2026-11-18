@@ -51,6 +51,8 @@ export interface SlideshowStyleRec {
   description: string;
   refs: string[];
   dna: string;
+  coverImage?: string;
+  extraPrompt?: string;
   textStyle: CaptionLook;
   formats: string[];
   published: boolean;
@@ -68,6 +70,8 @@ export function cleanStyleInput(raw: Record<string, unknown>) {
     description: s(raw.description, 400).trim(),
     refs: list(raw.refs).map((u) => s(u, 3000)).filter((u) => u.length > 8).slice(0, 12),
     dna: s(raw.dna, 6000),
+    coverImage: s(raw.coverImage, 3_000_000),
+    extraPrompt: s(raw.extraPrompt, 2000),
     textStyle: (["white", "dark", "plain"] as const).includes(raw.textStyle as CaptionLook) ? (raw.textStyle as CaptionLook) : ("white" as const),
     formats: list(raw.formats).map((f) => s(f, 12)).filter((f) => ["list", "story", "travel", "split"].includes(f)),
     published: raw.published === true,
