@@ -104,7 +104,7 @@ function TemplatesInner() {
                   <div
                     key={t.id}
                     onClick={() => setOpen(t)}
-                    className="relative break-inside-avoid rounded-2xl overflow-hidden group cursor-pointer bg-gray-100"
+                    className="relative break-inside-avoid rounded-2xl overflow-hidden group cursor-pointer bg-gray-100 border border-gray-200"
                   >
                     {t.coverImages[0] ? (
                       // Cover image: full width, natural height (no cropping).

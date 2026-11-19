@@ -141,3 +141,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
   - Existing project: the pack is saved into its settings (`adPackId` / `thumbPackId`, merged with what's there) and the AI studio opens on that project.
   - New project: the project setup wizard runs (business, size, references, colours), the template step is skipped because it's preset, and it ends in the AI studio.
 - Either way the work lives under Projects. The older written-prompt templates (1-3) keep the previous popup. Not tested against the real API.
+
+## PRJ-0042 — Light gray border on template cards
+- Template cards on the templates page have a 1px light gray border (`border-gray-200`).
