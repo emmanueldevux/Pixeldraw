@@ -17,11 +17,12 @@ export function isAdRequest(text: string, platform?: string): boolean {
   return /\b(ads?|adverts?|advertisements?|advertising|promo(?:tion)?|banner)\b/i.test(text);
 }
 
-/** The user wants a fresh idea rather than a reference-led layout. */
+/** The user explicitly asks for a different style of ad ("a different layout", "surprise me").
+ *  A plain "make an ad" or "make another one" is NOT this: it stays on the simple path
+ *  (reference pack + composition). */
 export function wantsNewFormat(text: string): boolean {
-  return /\b(another|more|different|new|fresh|unique|creative|surprise|variation|variations|variety)\b/i.test(text) &&
-    /\b(format|layout|style|idea|concept|version|angle|one|ad|ads)\b/i.test(text) ||
-    /surprise me|something (different|new|else)|try (a )?(new|different)/i.test(text);
+  return /\b(different|new|fresh|unique|another|creative|unusual)\s+(format|layout|style|look|design|kind of ad|type of ad)\b/i.test(text) ||
+    /surprise me|something (different|new|else|creative)|try (a )?(new|different) (format|layout|style|kind)/i.test(text);
 }
 
 /** Concept lines from earlier replies in this chat: "Concept: persona · angle · format". */
