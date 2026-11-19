@@ -143,4 +143,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Either way the work lives under Projects. The older written-prompt templates (1-3) keep the previous popup. Not tested against the real API.
 
 ## PRJ-0042 — Light gray border on template cards
-- Template cards on the templates page have a 1px light gray border (`border-gray-200`).
+- Template cards on the templates page have a 1px light gray border (`border-gray-300`).
