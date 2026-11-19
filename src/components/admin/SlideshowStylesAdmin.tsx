@@ -75,12 +75,12 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
     return j;
   }
 
-  async function save() {
+  async function save(publish?: boolean) {
     if (!d) return;
     setSaving(true);
     setMsg(null);
     try {
-      const j = await post({ action: "save", id: d.id, style: d });
+      const j = await post({ action: "save", id: d.id, style: publish === undefined ? d : { ...d, published: publish } });
       setMsg(`"${j.style.name}" saved.`);
       await load(j.style.id);
     } catch (e) {
@@ -172,11 +172,18 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <input className={`${inputCls} max-w-md text-lg font-bold`} value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} />
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-800 mr-2">
-              <input type="checkbox" checked={d.published} onChange={(e) => setD({ ...d, published: e.target.checked })} /> Published
-            </label>
             {d.id && <button className={btnSecondary} onClick={remove} aria-label="Delete"><Trash2 size={15} /></button>}
-            <button className={btnPrimary} onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+            {d.published ? (
+              <>
+                <button className={btnSecondary} onClick={() => void save(false)} disabled={saving}>Unpublish</button>
+                <button className={btnPrimary} onClick={() => void save()} disabled={saving}>{saving ? "Saving…" : "Save changes"}</button>
+              </>
+            ) : (
+              <>
+                <button className={btnSecondary} onClick={() => void save()} disabled={saving}>{saving ? "Saving…" : "Save draft"}</button>
+                <button className={btnPrimary} onClick={() => void save(true)} disabled={saving}>Publish</button>
+              </>
+            )}
           </div>
         </div>
 
@@ -265,7 +272,7 @@ export default function SlideshowStylesAdmin({ setMsg }: { setMsg: (m: string | 
         </div>
 
         <div className="flex justify-end">
-          <button className={btnPrimary} onClick={save} disabled={saving}>{saving ? "Saving…" : "Save style"}</button>
+          <button className={btnPrimary} onClick={() => void save()} disabled={saving}>{saving ? "Saving…" : d.published ? "Save changes" : "Save draft"}</button>
         </div>
       </div>
     </div>

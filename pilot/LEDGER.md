@@ -129,3 +129,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0038 — One-click Publish in the template editor
 - The "Published" checkbox is replaced by buttons: a draft shows "Save draft" and "Publish" (saves and publishes in one click); a published template shows "Unpublish" and "Save changes". Carousels and slideshows still use the checkbox.
+
+## PRJ-0039 — Publish / Unpublish buttons for carousel and slideshow styles
+- Same as templates: draft -> "Save draft" + "Publish"; published -> "Unpublish" + "Save changes". Checkbox removed.
