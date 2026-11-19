@@ -303,7 +303,7 @@ export default function FreeChatPage() {
           <Sparkles className="text-[#7C3AED] mb-4" size={40} strokeWidth={1.3} />
           <h1
             aria-label="Make an ad for your brand"
-            className="text-[32px] md:text-[40px] font-bold text-gray-900 tracking-[-0.02em] text-center flex flex-wrap items-center justify-center gap-x-[0.3em] gap-y-2"
+            className="text-[32px] md:text-[40px] font-bold text-gray-900 tracking-[-0.02em] text-center flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-x-[0.3em] gap-y-2"
           >
             <span>Make an ad for my</span>
             <TypedBrand />
