@@ -379,6 +379,10 @@ model DesignTemplate {
   tags          String[] @default([])
   aspect        String   @default("9:16")
   coverImages   String[] @default([])
+  kind          String   @default("prompt") // "prompt" = written recipe, "pack" = reference images + studied DNA
+  refImages     String[] @default([])
+  packDna       String   @default("") @db.Text
+  refDnas       String[] @default([])
   prompt        String   @db.Text
   params        Json
   styles        Json
