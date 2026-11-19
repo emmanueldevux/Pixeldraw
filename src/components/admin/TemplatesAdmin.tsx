@@ -80,7 +80,7 @@ const BLANK_PACK = (): Draft => ({
   needsProduct: false,
 });
 
-export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) => void }) {
+export default function TemplatesAdmin({ setMsg, scope }: { setMsg: (m: string | null) => void; scope?: "Ads" | "Thumbnails" }) {
   const [list, setList] = useState<DesignTemplate[] | null>(null);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("All");
@@ -94,10 +94,13 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
     const r = await fetch("/api/admin/templates");
     const d = await r.json();
     if (!r.ok) return setMsg(d.error || "Could not load templates");
-    setList(d.templates);
-    const pick = d.templates.find((t: DesignTemplate) => t.id === selectId) || d.templates[0];
+    const all: DesignTemplate[] = d.templates;
+    setList(all);
+    const mine = scope ? all.filter((t) => t.category === scope) : all;
+    const pick = mine.find((t) => t.id === selectId) || mine[0];
     if (pick) setDraft(structuredClone(pick));
-  }, [setMsg]);
+    else setDraft(scope === "Thumbnails" ? { ...BLANK_PACK(), category: scope, title: "New thumbnail pack" } : { ...structuredClone(BLANK), category: scope || "" });
+  }, [setMsg, scope]);
 
   useEffect(() => {
     load();
@@ -131,6 +134,7 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
 
   const allCats = TYPE_CATEGORIES;
   const filtered = (list || []).filter((t) => {
+    if (scope && t.category !== scope) return false;
     const hay = `${t.title} ${t.category} ${t.tags.join(" ")}`.toLowerCase();
     if (q && !hay.includes(q.toLowerCase())) return false;
     if (filter === "All") return true;
@@ -188,20 +192,20 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
     <div className="mt-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
       {/* List */}
       <div className="space-y-2">
-        <button className={`${btnSecondary} w-full inline-flex items-center justify-center gap-1.5`} onClick={() => setDraft(structuredClone(BLANK))}>
-          <Plus size={15} /> New template
-        </button>
-        <button className={`${btnSecondary} w-full inline-flex items-center justify-center gap-1.5`} onClick={() => setDraft(BLANK_PACK())}>
-          <ImagePlus size={15} /> New reference pack
+        {scope !== "Thumbnails" && <button className={`${btnSecondary} w-full inline-flex items-center justify-center gap-1.5`} onClick={() => setDraft({ ...structuredClone(BLANK), category: scope || "" })}>
+          <Plus size={15} /> {scope === "Ads" ? "New static ad" : "New template"}
+        </button>}
+        <button className={`${btnSecondary} w-full inline-flex items-center justify-center gap-1.5`} onClick={() => setDraft({ ...BLANK_PACK(), category: scope || "", title: scope === "Thumbnails" ? "New thumbnail pack" : "New reference pack" })}>
+          <ImagePlus size={15} /> {scope === "Thumbnails" ? "New thumbnail pack" : "New reference pack"}
         </button>
         <input className={inputCls} placeholder="Search templates…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <div className="flex flex-wrap gap-1.5">
+        {!scope && <div className="flex flex-wrap gap-1.5">
           {["All", "Unclassified", "Recommended", ...allCats].map((c) => (
             <button key={c} onClick={() => setFilter(c)} className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${filter === c ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"}`}>
               {c}{c === "Unclassified" && unclassified ? ` (${unclassified})` : ""}
             </button>
           ))}
-        </div>
+        </div>}
         {filtered.map((t) => (
           <div
             key={t.id}
@@ -214,14 +218,14 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
               {t.published ? "Published" : "Draft"} · used {t.usageCount}×
             </p>
             <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-              <select
+              {scope ? <span className="flex-1" /> : <select
                 className={`flex-1 min-w-0 rounded-lg border px-2 py-1 text-xs ${t.category ? "border-gray-200 text-gray-800" : "border-amber-300 bg-amber-50 text-amber-800"}`}
                 value={t.category}
                 onChange={(e) => quick(t, { category: e.target.value })}
               >
                 <option value="">Pick a category…</option>
                 {allCats.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              </select>}
               <button
                 title="Recommended"
                 onClick={() => quick(t, { tags: withRec(t.tags, !isRec(t.tags)) })}
@@ -253,13 +257,13 @@ export default function TemplatesAdmin({ setMsg }: { setMsg: (m: string | null) 
             <div className="sm:col-span-2"><span className={label}>Title</span><input className={inputCls} value={draft.title} onChange={(e) => set("title", e.target.value)} /></div>
             <div className="sm:col-span-2"><span className={label}>Description (shown to users)</span><textarea className={`${inputCls} h-20`} value={draft.description} onChange={(e) => set("description", e.target.value)} /></div>
             <div className="sm:col-span-2">
-              <span className={label}>Category (the tab it appears under)</span>
-              <div className="flex flex-wrap items-center gap-2">
+              {!scope && <span className={label}>Category (the tab it appears under)</span>}
+              {!scope && <div className="flex flex-wrap items-center gap-2">
                 {allCats.map((c) => (
                   <button key={c} type="button" onClick={() => set("category", c)} className={`px-3 py-1.5 rounded-lg border text-sm font-medium ${draft.category === c ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"}`}>{c}</button>
                 ))}
                 
-              </div>
+              </div>}
               <label className="mt-3 flex items-center gap-2 text-sm font-medium text-gray-800">
                 <input type="checkbox" checked={isRec(draft.tags)} onChange={(e) => set("tags", withRec(draft.tags, e.target.checked))} /> Recommended (also shows in the Recommended tab)
               </label>

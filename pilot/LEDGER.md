@@ -103,3 +103,8 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Carousel and slideshow styles: click the star on any reference image to make it the cover shown on pickers and the templates page (default: first image). One optional "Extra prompt" box per style is added to every generation (carousel planner + each slide; slideshow plan + photo). New DB columns `coverImage` and `extraPrompt` on CarouselStyle and SlideshowStyle (run `prisma db push`).
 - Ad and thumbnail packs: star on an example image moves it to the front (the cover); "Extra prompt" box reuses the pack's `prompt` field, appended to ad and thumbnail generation.
 - Not run against the real DB/API here.
+
+## PRJ-0032 — Admin tabs: Static ads and Thumbnails; start applies DB columns
+- The admin "Templates" tab is replaced by "Static ads" (category Ads: templates and reference packs) and "Thumbnails" (thumbnail reference packs). Each tab lists only its own category, creates new items in it, and hides the category picker. Carousels and Slideshows unchanged.
+- `npm start` now runs `prisma db push --skip-generate` first (additive only, no `--accept-data-loss`) so the new coverImage/extraPrompt columns exist; their absence made the Carousels tab spin forever.
+- Rig admin worlds not updated for the renamed tabs.

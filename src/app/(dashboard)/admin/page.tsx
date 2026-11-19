@@ -32,7 +32,7 @@ interface FoundUser {
   profile: (OnboardingAnswers & { completedAt: string | null; skippedAt: string | null }) | null;
 }
 
-type Tab = "pricing" | "plans" | "settings" | "users" | "activity" | "templates" | "carousels" | "slideshows";
+type Tab = "pricing" | "plans" | "settings" | "users" | "activity" | "ads" | "thumbnails" | "carousels" | "slideshows";
 
 async function post(body: unknown) {
   const res = await fetch("/api/admin/billing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -74,7 +74,7 @@ export default function AdminPage() {
   const cv = data.settings.creditValueCents;
   const tabs: { id: Tab; label: string }[] = [
     { id: "pricing", label: "AI prices" }, { id: "plans", label: "Plans" }, { id: "settings", label: "Settings" },
-    { id: "users", label: "Users" }, { id: "activity", label: "Activity" }, { id: "templates", label: "Templates" }, { id: "carousels", label: "Carousels" }, { id: "slideshows", label: "Slideshows" },
+    { id: "users", label: "Users" }, { id: "activity", label: "Activity" }, { id: "ads", label: "Static ads" }, { id: "thumbnails", label: "Thumbnails" }, { id: "carousels", label: "Carousels" }, { id: "slideshows", label: "Slideshows" },
   ];
 
   const run = async (fn: () => Promise<unknown>, ok: string) => {
@@ -83,7 +83,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-full bg-[#F9F9FB]">
-      <div className={`${tab === "templates" || tab === "carousels" || tab === "slideshows" ? "max-w-none" : "max-w-5xl"} mx-auto px-5 sm:px-8 py-8`}>
+      <div className={`${tab === "ads" || tab === "thumbnails" || tab === "carousels" || tab === "slideshows" ? "max-w-none" : "max-w-5xl"} mx-auto px-5 sm:px-8 py-8`}>
         <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
         <p className="text-sm text-gray-500 mt-1">1 credit sells for {usd(cv)} (change under Settings). Users pay real AI cost × your markup (AI prices).</p>
         <div className="mt-4 flex gap-5 border-b border-gray-200 overflow-x-auto">
@@ -128,7 +128,8 @@ export default function AdminPage() {
 
         {tab === "settings" && <SettingsForm settings={data.settings} onSave={(s) => run(() => post({ action: "saveSettings", settings: s }), "Settings saved.")} />}
         {tab === "users" && <UsersPanel setMsg={setMsg} />}
-        {tab === "templates" && <TemplatesAdmin setMsg={setMsg} />}
+        {tab === "ads" && <TemplatesAdmin key="ads" scope="Ads" setMsg={setMsg} />}
+        {tab === "thumbnails" && <TemplatesAdmin key="thumbs" scope="Thumbnails" setMsg={setMsg} />}
         {tab === "carousels" && <CarouselStylesAdmin setMsg={setMsg} />}
         {tab === "slideshows" && <SlideshowStylesAdmin setMsg={setMsg} />}
 
