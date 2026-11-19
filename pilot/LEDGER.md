@@ -209,3 +209,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Header menu (hamburger) button: light grey bg + border, same as the other header buttons; header is shared so it applies on every page.
 - Reverted the mobile .uxlly-content 12px side padding; back to the original 1.5rem.
 - Header hamburger: no border/padding/bg; icon lines stretched wider (28px).
+- Header hamburger reverted to the original (w-8 h-8, hover bg only, 18px icon).
