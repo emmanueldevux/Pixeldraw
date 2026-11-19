@@ -271,7 +271,6 @@ export default function TemplatesAdmin({ setMsg, scope }: { setMsg: (m: string |
             <div className="sm:col-span-2"><span className={label}>Tags (help users find it in search; press Enter or comma)</span><TagInput tags={draft.tags.filter((t) => t.toLowerCase() !== "recommended")} onChange={(t) => set("tags", isRec(draft.tags) ? withRec(t, true) : t)} /></div>
             <div><span className={label}>Order on the templates page</span><input className={inputCls} type="number" value={draft.sortOrder} onChange={(e) => set("sortOrder", Number(e.target.value))} /></div>
             <div className="flex flex-col justify-end gap-2 text-sm text-gray-800">
-              <label className="flex items-center gap-2"><input type="checkbox" checked={draft.useBrandBrain} onChange={(e) => set("useBrandBrain", e.target.checked)} /> Write words in the project&apos;s brand voice</label>
             </div>
           </div>
         </div>

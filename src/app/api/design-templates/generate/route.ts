@@ -67,11 +67,9 @@ async function handlePOST(request: Request) {
       applyProjectNegative((sg as unknown as { advancedSettings?: unknown } | null)?.advancedSettings);
       if (sg?.headingFont) brandFont = sg.headingFont;
       if (sg) brandColours = brandColoursText({ primary: sg.primaryColor, secondary: sg.secondaryColor, accent: sg.accentColor, background: sg.backgroundColor });
-      if (template.useBrandBrain) {
-        // Builds the brain on first use if the background build never ran.
-        const brain = await ensureBrain(body.brandId).catch(() => null);
-        if (brain && !isEmptyBrain(brain.data)) { brandNote = brainImageNote(brain.data); brainForCraft = brain.data; }
-      }
+      // Always write in the project's brand voice. Builds the brain on first use if the background build never ran.
+      const brain = await ensureBrain(body.brandId).catch(() => null);
+      if (brain && !isEmptyBrain(brain.data)) { brandNote = brainImageNote(brain.data); brainForCraft = brain.data; }
     }
   }
 

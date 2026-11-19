@@ -236,7 +236,7 @@ export default function UseTemplateModal({ template, onClose }: { template: Publ
                 )}
 
                 {/* Project (brand voice) */}
-                {template.useBrandBrain && projects.length > 0 && (
+                {projects.length > 0 && (
                   <div>
                     <p className="text-sm font-semibold text-gray-900 mb-2">Brand voice from</p>
                     <select className={input} value={brandId} onChange={(e) => setBrandId(e.target.value)}>

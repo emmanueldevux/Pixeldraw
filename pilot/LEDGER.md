@@ -123,3 +123,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0036 — Product photo is always optional
 - Removed the "Users must upload a product photo" checkbox. The Use-template popup never requires a photo (label says optional) and the generate API no longer rejects a missing one. The stored `needsProduct` value is ignored except for the cost estimate.
+
+## PRJ-0037 — Brand voice and colours are always applied
+- Removed the "Write words in the project's brand voice" checkbox. When a project is picked, every template now uses its brand brain (wording) and brand colours; the project picker always shows. `useBrandBrain` is no longer read.
