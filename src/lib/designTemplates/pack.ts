@@ -145,6 +145,7 @@ export async function generatePackAd(opts: {
     opts.productImage
       ? "IMAGE 2 is the brand's real product. Put it where the reference's product/subject sits, reproduced exactly (same shape, colours, label, every printed word spelled correctly)."
       : "Choose a product, subject or scene that fits the brief, placed where the reference's product/subject sits.",
+    "HOW THE PRODUCT IS USED: the reference may show its subject interacting with its product in a particular way (holding it in the mouth, in the hand, wearing it). Keep the reference's framing, crop, scale and the product's position in the layout, but change the interaction to how THIS product is really used, so it looks natural and true to size: a bed or mat (the animal or person lies or sits on it), a bowl (eating or drinking from it), a collar or clothing (wearing it), a leash or lead (held or clipped on), a bag or box (standing beside it or holding it with both arms), a toy or brush (holding it as in the reference). Never force a product into a mouth or a hand if that is not how it is used, and keep realistic proportions.",
     "",
     opts.compositionNote
       ? `${opts.compositionNote}\nThe reference still sets the look (style, colours, type, decoration); only the text position above overrides its text layout.\n`
