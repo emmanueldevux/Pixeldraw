@@ -314,7 +314,7 @@ export default function FreeChatPage() {
           </div>
 
           {/* Quick templates — width matches the chat input below */}
-          <div className="w-full max-w-3xl mt-9 grid gap-2 sm:gap-3 grid-cols-4">
+          <div className="w-full max-w-3xl mt-9 grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-4">
             <button
               type="button"
               onClick={() => uploadRef.current?.click()}
@@ -324,12 +324,12 @@ export default function FreeChatPage() {
               <span className="text-[8px] sm:text-[10px] font-medium text-gray-600 text-center leading-tight px-1">Add reference</span>
             </button>
 
-            {templates.map((t) => (
+            {templates.map((t, i) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => pickTemplate(t)}
-                className="aspect-square rounded-xl overflow-hidden relative cursor-pointer border border-gray-200 group p-0 sm:p-[25px] bg-[#B5B6B8]"
+                className={`aspect-square rounded-xl overflow-hidden relative cursor-pointer border border-gray-200 group p-0 sm:p-[25px] bg-[#B5B6B8] ${i >= 2 ? "hidden sm:block" : ""}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={t.publicUrl} alt={t.name} className="w-full h-full object-cover object-top sm:object-contain sm:mb-[10px] sm:rounded-[10px]" />
