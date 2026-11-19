@@ -183,3 +183,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - /chat tiles: 4 per row on mobile, smaller padding/text.
 - /chat tiles mobile: no padding, image fills tile, aligned to top.
 - /chat tiles mobile: only 3 shown (Add reference + 2), 3 columns.
+- /chat tiles mobile: 30px bottom padding.
