@@ -16,6 +16,7 @@ import { db } from "@/lib/db";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
 import { insufficientResponse } from "@/lib/billing/http";
 import { getTemplate, bumpUsage } from "@/lib/designTemplates/store";
+import { PLATFORM_PRESETS } from "@/lib/platforms";
 import { ASPECTS, ASPECT_TO_SIZE, brandColoursText, renderPrompt, type DesignTemplate } from "@/lib/designTemplates/types";
 import { openaiTemplateImage } from "@/lib/ai/providers/openai";
 import { trimToAspect } from "@/lib/designTemplates/crop";
@@ -50,10 +51,20 @@ async function handlePOST(request: Request) {
   let brainForCraft: import("@/lib/brain/types").BrainData | null = null;
   let brandColours: string | null = null;
   let brandFont: string | null = null;
+  let projectAspect: DesignTemplate["aspect"] | null = null;
   if (typeof body?.brandId === "string" && body.brandId) {
     const owned = await db.brand.findFirst({ where: { id: body.brandId, userId }, include: { styleGuide: true } });
     if (owned) {
       const sg = owned.styleGuide;
+      // The format comes from the size the user already picked for the project (e.g. Instagram portrait).
+      const preset = (PLATFORM_PRESETS as Record<string, { width: number; height: number } | undefined>)[owned.platform];
+      if (preset) {
+        const ratio = preset.width / preset.height;
+        projectAspect = ASPECTS.reduce((best, a) => {
+          const [w, h] = a.split(":").map(Number);
+          return Math.abs(w / h - ratio) < Math.abs(Number(best.split(":")[0]) / Number(best.split(":")[1]) - ratio) ? a : best;
+        }, ASPECTS[0]) as DesignTemplate["aspect"];
+      }
       applyProjectNegative((sg as unknown as { advancedSettings?: unknown } | null)?.advancedSettings);
       if (sg?.headingFont) brandFont = sg.headingFont;
       if (sg) brandColours = brandColoursText({ primary: sg.primaryColor, secondary: sg.secondaryColor, accent: sg.accentColor, background: sg.backgroundColor });
@@ -69,8 +80,8 @@ async function handlePOST(request: Request) {
   if (isPack && !template.refImages.length) return NextResponse.json({ error: "This template has no reference ads yet" }, { status: 400 });
   if (isPack && !(values.Brief || "").trim()) return NextResponse.json({ error: "Tell us what the ad is for" }, { status: 400 });
   const prompt = isPack ? "" : renderPrompt(template, values, styleKey, brandNote, brandColours);
-  // The user picks the format; the template's own value is only the default.
-  const aspect = ((ASPECTS as readonly string[]).includes(body?.aspect) ? body.aspect : template.aspect) as DesignTemplate["aspect"];
+  // Format: the project's chosen size, else the template's default.
+  const aspect = projectAspect || template.aspect;
   const size = ASPECT_TO_SIZE[aspect];
   const billingKey = productImage ? "image.edit" : "image.openai";
   const ref = randomUUID();

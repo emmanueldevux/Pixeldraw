@@ -115,5 +115,5 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - API: `listUsers`, `setDisabled` actions on /api/admin/billing. The old find-by-email box is replaced by the search field.
 - Not run against the real DB (needs the column; `npm start` applies it).
 
-## PRJ-0034 — Format is chosen by the user, not the admin
-- Removed the Format dropdown from the template editor. The "Use template" popup now has a Format picker (9:16, 4:5, 1:1, 16:9) defaulting to the template's stored value; the generate API takes `aspect` from the request (validated) and falls back to the template's. Templates keep a stored default (9:16, packs 4:5).
+## PRJ-0034 — Format comes from the project size (no one picks it)
+- Removed the Format dropdown from the template editor and no picker is shown to users. When a template runs for a project, the format is derived from the size the user already chose for it (e.g. Instagram portrait -> 4:5, story/TikTok -> 9:16, Twitter/YouTube/LinkedIn post -> 16:9, square -> 1:1). With no project it falls back to the template's stored default (9:16, packs 4:5).

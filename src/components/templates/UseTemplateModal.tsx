@@ -11,7 +11,7 @@ import { ArrowLeft, Download, ImagePlus, Loader2, RefreshCw, Sparkles, X } from 
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { useBilling } from "@/components/billing/BillingProvider";
 import { formatCredits } from "@/lib/billing/units";
-import { ASPECTS, type PublicTemplate } from "@/lib/designTemplates/types";
+import type { PublicTemplate } from "@/lib/designTemplates/types";
 
 const input = "w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-gray-900";
 const chip = (on: boolean) =>
@@ -48,7 +48,6 @@ export default function UseTemplateModal({ template, onClose }: { template: Publ
   const [product, setProduct] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const [styleKey, setStyleKey] = useState<string | null>(null);
-  const [aspect, setAspect] = useState<string>(template.aspect);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
@@ -104,7 +103,7 @@ export default function UseTemplateModal({ template, onClose }: { template: Publ
       const res = await fetch("/api/design-templates/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId: template.id, productImage: product, values, styleKey, aspect, brandId: brandId || null }),
+        body: JSON.stringify({ templateId: template.id, productImage: product, values, styleKey, brandId: brandId || null }),
       });
       const d = await res.json().catch(() => ({}));
       if (res.status === 402) {
@@ -236,16 +235,6 @@ export default function UseTemplateModal({ template, onClose }: { template: Publ
                     )}
                   </div>
                 )}
-
-                {/* Format: the user picks it */}
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-2">Format</p>
-                  <div className="flex flex-wrap gap-2">
-                    {ASPECTS.map((a) => (
-                      <button key={a} type="button" className={chip(aspect === a)} onClick={() => setAspect(a)}>{a}</button>
-                    ))}
-                  </div>
-                </div>
 
                 {/* Project (brand voice) */}
                 {template.useBrandBrain && projects.length > 0 && (
