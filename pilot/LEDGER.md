@@ -172,3 +172,7 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Header on mobile: two-line menu button on the left (opens the sidebar as a drawer, closes on navigate or backdrop tap) then the logo; credits on the right; all items smaller (h-8, smaller text), "credits" word and bell hidden on mobile.
 - /ai: a Settings button on the right of the project bar (below lg) opens the project settings as a right drawer; the right panel was a fixed 380px that overflowed phones. The project picker button has no padding or border on mobile and sits flush left.
 - Not checked in a browser (no export rebuild).
+
+## PRJ-0050 — Mobile round 2 (5 rig comments)
+- /ai: Settings is a bottom sheet that slides up (below lg) with a Cancel button; X kept.
+- /chat mobile: "Discover and remix ideas" hidden; heading group ("Make an ad for…") moved to the bottom; Chat history button hidden; Create project moved to the right end after credits/bell (desktop unchanged).

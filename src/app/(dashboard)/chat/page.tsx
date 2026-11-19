@@ -299,7 +299,8 @@ export default function FreeChatPage() {
       <div className="flex flex-col h-full overflow-y-auto bg-[#FFFFFF]">
         {hiddenUpload}
         <main className="flex flex-col items-center justify-center px-4 pt-14 min-h-[calc(100%-40px)]">
-<Sparkles className="text-[#7C3AED] mb-4" size={40} strokeWidth={1.3} />
+<div className="flex flex-col items-center order-last mt-10 sm:order-none sm:mt-0">
+          <Sparkles className="text-[#7C3AED] mb-4" size={40} strokeWidth={1.3} />
           <h1
             aria-label="Make an ad for your brand"
             className="text-[32px] md:text-[40px] font-bold text-gray-900 tracking-[-0.02em] text-center flex flex-wrap items-center justify-center gap-x-[0.3em] gap-y-2"
@@ -310,6 +311,7 @@ export default function FreeChatPage() {
           <p className="mt-3 mb-4 text-sm text-gray-500 text-center">
             Create high-quality social media posts. Describe anything, or add a reference with +.
           </p>
+          </div>
 
           {/* Quick templates — width matches the chat input below */}
           <div className="w-full max-w-3xl mt-9 grid gap-3 grid-cols-2 sm:grid-cols-4">
@@ -345,7 +347,7 @@ export default function FreeChatPage() {
         </main>
 
         {/* Discover and remix ideas — only shows on the landing, hidden while chatting */}
-        <div className="w-full max-w-5xl mx-auto px-4 pb-16">
+        <div className="hidden sm:block w-full max-w-5xl mx-auto px-4 pb-16">
           <GallerySection />
         </div>
       </div>

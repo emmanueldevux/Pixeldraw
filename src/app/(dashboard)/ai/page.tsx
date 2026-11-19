@@ -1093,7 +1093,7 @@ function AIStudioPageInner() {
 
         {/* RIGHT SIDEBAR (a drawer below lg) */}
         {rightOpen && <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" onClick={() => setRightOpen(false)} aria-hidden />}
-        <div className={`${rightOpen ? "flex fixed inset-y-0 right-0 z-50 w-[min(380px,92vw)] shadow-2xl" : "hidden"} lg:flex lg:static lg:z-20 lg:w-[380px] lg:shadow-[-4px_0_24px_rgba(0,0,0,0.02)] shrink-0 bg-white border-l border-gray-200 flex-col h-full`}>
+        <div className={`flex fixed inset-x-0 bottom-0 z-50 h-[88vh] rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out ${rightOpen ? "translate-y-0" : "translate-y-full pointer-events-none"} lg:translate-y-0 lg:pointer-events-auto lg:static lg:z-20 lg:h-full lg:rounded-none lg:w-[380px] lg:shadow-[-4px_0_24px_rgba(0,0,0,0.02)] shrink-0 bg-white border-l border-gray-200 flex-col`}>
           <button type="button" onClick={() => setRightOpen(false)} aria-label="Close settings" className="lg:hidden absolute top-3 right-3 z-10 w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100"><X size={16} /></button>
           <div className="p-4 border-b border-gray-100">
             <div className="flex bg-[#F5F5F7] p-1 rounded-xl border border-gray-200">
@@ -1148,6 +1148,9 @@ function AIStudioPageInner() {
               </div>
             </div>
           )}
+          <div className="lg:hidden shrink-0 border-t border-gray-200 p-3">
+            <button type="button" onClick={() => setRightOpen(false)} className="w-full h-11 rounded-xl border border-gray-300 bg-white text-sm font-semibold text-gray-800 hover:bg-gray-50 active:bg-gray-100">Cancel</button>
+          </div>
         </div>
       </div>
     </div>

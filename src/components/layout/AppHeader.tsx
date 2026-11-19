@@ -137,6 +137,36 @@ export default function AppHeader({ onMenu }: { onMenu?: () => void }) {
     router.push(t ? `/templates?q=${encodeURIComponent(t)}` : "/templates");
   };
 
+  const createMenu = (mobile: boolean) => (
+    <div className={`relative ${mobile ? "sm:hidden" : "hidden sm:block"}`} data-hdr-menu>
+    <button
+      onClick={() => setMenu(menu === "create" ? null : "create")}
+      className={tabOn}
+    >
+      <Plus size={15} /> <span className="hidden sm:inline">Create project</span> <ChevronDown size={14} className="opacity-70" />
+    </button>
+    <Menu open={menu === "create"} className={`w-72 ${mobile ? "!left-auto !right-0" : ""}`}>
+      <button
+        onClick={() => { setMenu(null); requireAuth(() => setOnboarding(true)); }}
+        className="w-full text-left flex items-center gap-3 rounded-xl p-2.5 hover:bg-gray-50"
+      >
+        <span className="w-9 h-9 shrink-0 rounded-xl bg-[#A3F76B] flex items-center justify-center"><FolderPlus size={16} /></span>
+        <span><span className="block text-sm font-semibold text-gray-900">New project</span><span className="block text-xs text-gray-500">Set up a brand and start creating</span></span>
+      </button>
+      <p className="px-2.5 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Start making</p>
+      {MAKE.map((m) => (
+        <div key={m.label} className="flex items-center gap-1 rounded-xl hover:bg-gray-50">
+          <button onClick={() => { setMenu(null); requireAuth(() => setProjKind(m.kind)); }} className="flex-1 min-w-0 text-left flex items-center gap-3 p-2.5">
+            <span className="w-9 h-9 shrink-0 rounded-xl bg-gray-100 flex items-center justify-center"><m.icon size={16} /></span>
+            <span><span className="block text-sm font-semibold text-gray-900">{m.label}</span><span className="block text-xs text-gray-500">Set up a project</span></span>
+          </button>
+          <button onClick={() => makeThing(m.prompt)} title="Make one now, without a project" className="mr-1.5 shrink-0 h-7 px-2.5 rounded-lg border border-gray-200 bg-white text-[11px] font-medium text-gray-600 hover:border-gray-900 hover:text-gray-900">Quick</button>
+        </div>
+      ))}
+    </Menu>
+  </div>
+  );
+
   return (
     <>
       <header className="absolute top-0 inset-x-0 z-40 h-[72px] flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-6 border-b border-[rgb(209_213_219/48%)] bg-white/90 backdrop-blur-md">
@@ -149,35 +179,9 @@ export default function AppHeader({ onMenu }: { onMenu?: () => void }) {
           <Link href="/home" className="lg:hidden shrink-0 mr-1" aria-label="MakeSocial home">
             <Image src="/templates/images/makesocial-logo.png" alt="MakeSocial" width={128} height={32} priority className="h-[17px] w-auto object-contain" />
           </Link>
-          <div className="relative" data-hdr-menu>
-            <button
-              onClick={() => setMenu(menu === "create" ? null : "create")}
-              className={tabOn}
-            >
-              <Plus size={15} /> <span className="hidden sm:inline">Create project</span> <ChevronDown size={14} className="opacity-70" />
-            </button>
-            <Menu open={menu === "create"} className="w-72">
-              <button
-                onClick={() => { setMenu(null); requireAuth(() => setOnboarding(true)); }}
-                className="w-full text-left flex items-center gap-3 rounded-xl p-2.5 hover:bg-gray-50"
-              >
-                <span className="w-9 h-9 shrink-0 rounded-xl bg-[#A3F76B] flex items-center justify-center"><FolderPlus size={16} /></span>
-                <span><span className="block text-sm font-semibold text-gray-900">New project</span><span className="block text-xs text-gray-500">Set up a brand and start creating</span></span>
-              </button>
-              <p className="px-2.5 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Start making</p>
-              {MAKE.map((m) => (
-                <div key={m.label} className="flex items-center gap-1 rounded-xl hover:bg-gray-50">
-                  <button onClick={() => { setMenu(null); requireAuth(() => setProjKind(m.kind)); }} className="flex-1 min-w-0 text-left flex items-center gap-3 p-2.5">
-                    <span className="w-9 h-9 shrink-0 rounded-xl bg-gray-100 flex items-center justify-center"><m.icon size={16} /></span>
-                    <span><span className="block text-sm font-semibold text-gray-900">{m.label}</span><span className="block text-xs text-gray-500">Set up a project</span></span>
-                  </button>
-                  <button onClick={() => makeThing(m.prompt)} title="Make one now, without a project" className="mr-1.5 shrink-0 h-7 px-2.5 rounded-lg border border-gray-200 bg-white text-[11px] font-medium text-gray-600 hover:border-gray-900 hover:text-gray-900">Quick</button>
-                </div>
-              ))}
-            </Menu>
-          </div>
+          {createMenu(false)}
 
-          <div className="relative" data-hdr-menu>
+          <div className="relative hidden sm:block" data-hdr-menu>
             <button
               onClick={() => setMenu(menu === "history" ? null : "history")}
               className={tabOff}
@@ -241,6 +245,7 @@ export default function AppHeader({ onMenu }: { onMenu?: () => void }) {
               </>
             )}
           </div>
+          {createMenu(true)}
         </div>
       </header>
 
