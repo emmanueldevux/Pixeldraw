@@ -16,7 +16,7 @@ import { db } from "@/lib/db";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
 import { insufficientResponse } from "@/lib/billing/http";
 import { getTemplate, bumpUsage } from "@/lib/designTemplates/store";
-import { ASPECT_TO_SIZE, brandColoursText, renderPrompt } from "@/lib/designTemplates/types";
+import { ASPECTS, ASPECT_TO_SIZE, brandColoursText, renderPrompt, type DesignTemplate } from "@/lib/designTemplates/types";
 import { openaiTemplateImage } from "@/lib/ai/providers/openai";
 import { trimToAspect } from "@/lib/designTemplates/crop";
 import { ensureBrain } from "@/lib/brain/generate";
@@ -69,7 +69,9 @@ async function handlePOST(request: Request) {
   if (isPack && !template.refImages.length) return NextResponse.json({ error: "This template has no reference ads yet" }, { status: 400 });
   if (isPack && !(values.Brief || "").trim()) return NextResponse.json({ error: "Tell us what the ad is for" }, { status: 400 });
   const prompt = isPack ? "" : renderPrompt(template, values, styleKey, brandNote, brandColours);
-  const size = ASPECT_TO_SIZE[template.aspect];
+  // The user picks the format; the template's own value is only the default.
+  const aspect = ((ASPECTS as readonly string[]).includes(body?.aspect) ? body.aspect : template.aspect) as DesignTemplate["aspect"];
+  const size = ASPECT_TO_SIZE[aspect];
   const billingKey = productImage ? "image.edit" : "image.openai";
   const ref = randomUUID();
   let auth;
@@ -88,7 +90,7 @@ async function handlePOST(request: Request) {
           brief: values.Brief.slice(0, 1500),
           headline: (values.Headline || "").trim().slice(0, 120) || undefined,
           size,
-          aspect: template.aspect,
+          aspect,
           colours: brandColours,
           font: brandFont,
           brandNote: [brandNote, adCraftNote(values.Brief || "", brainForCraft)].filter(Boolean).join("\n\n"),
@@ -109,7 +111,7 @@ async function handlePOST(request: Request) {
     bumpUsage(template.id);
     // OpenAI renders 2:3 portrait; trim to the template's exact format (e.g. 4:5).
     // (9:16 stays at OpenAI's 2:3 portrait: trimming the sides could cut text.)
-    const imageUrl = template.aspect !== "4:5" || isPack ? res.url : await trimToAspect(res.url, template.aspect).catch((e) => {
+    const imageUrl = aspect !== "4:5" || isPack ? res.url : await trimToAspect(res.url, aspect).catch((e) => {
       console.warn("[TEMPLATES] trim failed, returning untrimmed:", e);
       return res.url;
     });
@@ -121,7 +123,7 @@ async function handlePOST(request: Request) {
       imageUrls: [imageUrl],
       meta: { templateId: template.id, kind: template.kind, values, styleKey },
     });
-    return NextResponse.json({ imageUrl: saved.imageUrls[0], generationId: saved.id, aspect: template.aspect, chargedMilli, free: auth.free });
+    return NextResponse.json({ imageUrl: saved.imageUrls[0], generationId: saved.id, aspect, chargedMilli, free: auth.free });
   } catch (e) {
     console.error("[TEMPLATES] generation failed:", e);
     return NextResponse.json({ error: "The design couldn't be generated. You were not charged. Try again." }, { status: 502 });

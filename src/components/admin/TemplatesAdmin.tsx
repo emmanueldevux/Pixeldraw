@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, Eye, ImagePlus, Loader2, Plus, Trash2, X } from "lucide-react";
 import { CoverStar, ExtraPrompt } from "@/components/admin/CoverExtra";
 import { btnPrimary, btnSecondary, inputCls } from "@/components/billing/Shell";
-import { ASPECTS, CATEGORIES, missingParams, renderPrompt, type DesignTemplate, type TemplateParam, type TemplateStyle } from "@/lib/designTemplates/types";
+import { CATEGORIES, missingParams, renderPrompt, type DesignTemplate, type TemplateParam, type TemplateStyle } from "@/lib/designTemplates/types";
 
 const label = "block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5";
 const box = "rounded-xl border border-gray-200 bg-white p-5";
@@ -267,12 +267,6 @@ export default function TemplatesAdmin({ setMsg, scope }: { setMsg: (m: string |
               <label className="mt-3 flex items-center gap-2 text-sm font-medium text-gray-800">
                 <input type="checkbox" checked={isRec(draft.tags)} onChange={(e) => set("tags", withRec(draft.tags, e.target.checked))} /> Recommended (also shows in the Recommended tab)
               </label>
-            </div>
-            <div>
-              <span className={label}>Format</span>
-              <select className={inputCls} value={draft.aspect} onChange={(e) => set("aspect", e.target.value as Draft["aspect"])}>
-                {ASPECTS.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
             </div>
             <div className="sm:col-span-2"><span className={label}>Tags (help users find it in search; press Enter or comma)</span><TagInput tags={draft.tags.filter((t) => t.toLowerCase() !== "recommended")} onChange={(t) => set("tags", isRec(draft.tags) ? withRec(t, true) : t)} /></div>
             <div><span className={label}>Order on the templates page</span><input className={inputCls} type="number" value={draft.sortOrder} onChange={(e) => set("sortOrder", Number(e.target.value))} /></div>
