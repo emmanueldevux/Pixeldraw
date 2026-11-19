@@ -215,3 +215,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - PRJ: mobile header logo 17px -> 21px
 - PRJ: credits pill 'N free' badge radius reduced
 - PRJ: credits pill tighter gaps on mobile
+- PRJ: mobile header logo 21px -> 16.8px (-20%)

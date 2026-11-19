@@ -177,7 +177,7 @@ export default function AppHeader({ onMenu }: { onMenu?: () => void }) {
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden><path d="M3 6h12M3 12h12" /></svg>
           </button>
           <Link href="/home" className="lg:hidden shrink-0 mr-1" aria-label="MakeSocial home">
-            <Image src="/templates/images/makesocial-logo.png" alt="MakeSocial" width={128} height={32} priority className="h-[21px] w-auto object-contain" />
+            <Image src="/templates/images/makesocial-logo.png" alt="MakeSocial" width={128} height={32} priority className="h-[16.8px] w-auto object-contain" />
           </Link>
           {createMenu(false)}
 
