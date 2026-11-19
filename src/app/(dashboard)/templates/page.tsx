@@ -107,12 +107,12 @@ function TemplatesInner() {
         <main className="flex-1">
           <div className="max-w-[1400px] mx-auto px-6 py-8">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
-              <div className="flex flex-wrap items-center gap-2 bg-gray-200/50 p-1 rounded-xl border border-gray-200">
+              <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 bg-gray-200/50 p-1 rounded-xl border border-gray-200 max-sm:w-full max-sm:overflow-x-auto max-sm:[scrollbar-width:none] max-sm:[&::-webkit-scrollbar]:hidden">
                 {tabs.map((name) => (
                   <button
                     key={name}
                     onClick={() => setActiveTab(name)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 whitespace-nowrap ${
                       tab === name ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900 hover:bg-white/50"
                     }`}
                   >
@@ -122,7 +122,7 @@ function TemplatesInner() {
                 ))}
               </div>
 
-              <label className="flex items-center gap-2 h-11 w-64 sm:w-80 rounded-xl border border-gray-300 bg-white px-3.5 focus-within:border-gray-900">
+              <label className="hidden sm:flex items-center gap-2 h-11 w-64 sm:w-80 rounded-xl border border-gray-300 bg-white px-3.5 focus-within:border-gray-900">
                 <Search size={16} className="text-gray-400" />
                 <input
                   value={q}
