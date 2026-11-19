@@ -160,3 +160,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Projects page: "or start from a template" link under Create new project (and in the empty state) opens the templates page.
 - API: POST /api/projects takes `copyBrainFrom` (a brand id the user owns).
 - Supersedes PRJ-0041's "Add it to" dropdown.
+
+## PRJ-0047 — Written templates with example images also start a project
+- Template 14 ("Premium Interior") is a written-prompt template with example images, so it still opened the old Generate popup. Any template with example images now opens the project flow, and `resolvePack` treats such a template's example images as its reference images (no studied DNA, so results are less tuned than a reference pack). Templates 1-3 have no images and keep the old popup.

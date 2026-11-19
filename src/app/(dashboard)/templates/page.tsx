@@ -172,7 +172,7 @@ function TemplatesInner() {
         </main>
       </div>
 
-      {open && (open.kind === "pack"
+      {open && ((open.kind === "pack" || open.coverImages.length > 0)
         ? <UseTemplateProject template={open} onClose={() => setOpen(null)} />
         : <UseTemplateModal template={open} onClose={() => setOpen(null)} />)}
     </div>

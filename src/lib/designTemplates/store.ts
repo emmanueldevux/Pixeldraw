@@ -117,7 +117,9 @@ export async function resolvePack(
   const usable = (t: DesignTemplate | null) =>
     !!t && t.kind === "pack" && t.refImages.length > 0 && isThumbPack(t) === wantThumb && ((t.published && !t.ownerId) || (!!ctx.userId && t.ownerId === ctx.userId));
   if (packId) {
-    const t = await getTemplate(packId).catch(() => null);
+    let t = await getTemplate(packId).catch(() => null);
+    // A written template that only has example images still works as a reference pack: its images are the references.
+    if (t && t.kind !== "pack" && t.coverImages.length > 0) t = { ...t, kind: "pack", refImages: t.coverImages, refDnas: [] };
     if (usable(t)) return t;
   }
   const own = (ctx.userId ? await listOwnPacks(ctx.userId).catch(() => []) : []).filter((t) => isThumbPack(t) === wantThumb);
