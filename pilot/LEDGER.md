@@ -210,3 +210,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Reverted the mobile .uxlly-content 12px side padding; back to the original 1.5rem.
 - Header hamburger: no border/padding/bg; icon lines stretched wider (28px).
 - Header hamburger reverted to the original (w-8 h-8, hover bg only, 18px icon).
+- Header hamburger: light grey bg + border again (kept, 18px icon).

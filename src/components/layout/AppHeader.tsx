@@ -173,7 +173,7 @@ export default function AppHeader({ onMenu }: { onMenu?: () => void }) {
         {/* ---------- left ---------- */}
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           {/* Mobile: menu (two lines) then the logo. The sidebar is a drawer below the lg breakpoint. */}
-          <button type="button" onClick={onMenu} aria-label="Open menu" className="lg:hidden w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-gray-800 hover:bg-gray-100 active:bg-gray-200 transition-colors">
+          <button type="button" onClick={onMenu} aria-label="Open menu" className="lg:hidden w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-gray-800 bg-gray-100 border border-gray-200 hover:bg-gray-200/70 active:bg-gray-200 transition-colors">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden><path d="M3 6h12M3 12h12" /></svg>
           </button>
           <Link href="/home" className="lg:hidden shrink-0 mr-1" aria-label="MakeSocial home">
