@@ -144,14 +144,14 @@ export default function TemplatesAdmin({ setMsg, scope }: { setMsg: (m: string |
   });
   const unclassified = (list || []).filter((t) => !t.category).length;
 
-  async function save() {
+  async function save(publish?: boolean) {
     if (!draft) return;
     setSaving(true);
     setMsg(null);
     const r = await fetch("/api/admin/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "save", id: draft.id, template: draft }),
+      body: JSON.stringify({ action: "save", id: draft.id, template: publish === undefined ? draft : { ...draft, published: publish } }),
     });
     const d = await r.json();
     setSaving(false);
@@ -243,11 +243,18 @@ export default function TemplatesAdmin({ setMsg, scope }: { setMsg: (m: string |
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-bold text-gray-900">{draft.id ? `Template ${draft.number}` : draft.kind === "pack" ? "New reference pack" : "New template"}{draft.kind === "pack" ? " · Reference pack" : ""}</h2>
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-800 mr-2">
-              <input type="checkbox" checked={draft.published} onChange={(e) => set("published", e.target.checked)} /> Published
-            </label>
             {draft.id && <button className={btnSecondary} onClick={remove}><Trash2 size={15} /></button>}
-            <button className={btnPrimary} onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+            {draft.published ? (
+              <>
+                <button className={btnSecondary} onClick={() => save(false)} disabled={saving}>Unpublish</button>
+                <button className={btnPrimary} onClick={() => save()} disabled={saving}>{saving ? "Saving…" : "Save changes"}</button>
+              </>
+            ) : (
+              <>
+                <button className={btnSecondary} onClick={() => save()} disabled={saving}>{saving ? "Saving…" : "Save draft"}</button>
+                <button className={btnPrimary} onClick={() => save(true)} disabled={saving}>Publish</button>
+              </>
+            )}
           </div>
         </div>
 
@@ -416,7 +423,7 @@ export default function TemplatesAdmin({ setMsg, scope }: { setMsg: (m: string |
         )}
 
         <div className="flex justify-end">
-          <button className={btnPrimary} onClick={save} disabled={saving}>{saving ? "Saving…" : "Save template"}</button>
+          <button className={btnPrimary} onClick={() => save()} disabled={saving}>{saving ? "Saving…" : draft.published ? "Save changes" : "Save draft"}</button>
         </div>
       </div>
 

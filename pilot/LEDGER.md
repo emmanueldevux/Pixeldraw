@@ -126,3 +126,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0037 — Brand voice and colours are always applied
 - Removed the "Write words in the project's brand voice" checkbox. When a project is picked, every template now uses its brand brain (wording) and brand colours; the project picker always shows. `useBrandBrain` is no longer read.
+
+## PRJ-0038 — One-click Publish in the template editor
+- The "Published" checkbox is replaced by buttons: a draft shows "Save draft" and "Publish" (saves and publishes in one click); a published template shows "Unpublish" and "Save changes". Carousels and slideshows still use the checkbox.
