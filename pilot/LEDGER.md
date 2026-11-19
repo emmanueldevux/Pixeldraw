@@ -195,3 +195,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - New src/lib/ai/adFormats.ts: 37 named formats (layouts in canvas %), namedFormat(), candidateFormats() (8, repeatable, skips formats used in the chat, mixes graphic/photo), 24 hook styles with a 6-style shortlist.
 - adDirector: named format -> use exactly it; else pick from shortlist; copy rules (outcome-led, so-what test, concrete lines, full set for multi-packs).
 - chat route: named format or "something new" skips packs and uses the library; explicit packs and reference ads still win.
+- Revised PRJ-0053: the ad pack stays ON for look. A named/shortlisted format now supplies the LAYOUT only (generatePackAd layoutOverride); reference ads still win entirely.

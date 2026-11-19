@@ -59,6 +59,7 @@ export function adDirectorRule(opts: { inventFormat: boolean; previous: string[]
         "2. FORMAT. Invent a format built from blocks: hook + product (always) plus 0 to 4 more (subline, callouts, pills, badge, list, table, diagram, chart, timeline, before/after, comparison, faux phone UI such as a text thread, notes app, search bar or lock screen, a metaphor made literal, a real photo scene). Total 2 to 6 blocks. Push past a centered product with a headline: explain the benefit visually. Give the format a 2 to 4 word name and lay it out by areas with percentages (for example: hook top 12%, product centered at 55% height).",
       );
     }
+    L.push("   A reference pack may supply the visual STYLE separately (type feel, colour treatment, decoration, finish), so spend this step on the layout and the content, and keep the Design notes short.");
     L.push("   Photo-led formats look like a real iPhone shot (handheld, casual, slightly grainy, no glare, no polished skin). Graphic-led formats put the real product cutout on a background you design. Block counts: a block holds many sub-items but counts once.");
     if (opts.previous.length) L.push(`   Already used in this chat. Do NOT repeat these formats or angles:\n${opts.previous.map((p) => `   - ${p}`).join("\n")}`);
   } else {

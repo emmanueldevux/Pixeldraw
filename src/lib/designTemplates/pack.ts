@@ -126,6 +126,7 @@ export async function generatePackAd(opts: {
   brandNote?: string; // brainImageNote(...) + adCraftNote(...)
   matchHint?: string; // short brand/mood line that helps pick the layout
   productImage?: string | null;
+  layoutOverride?: string; // a named format's layout: the reference then teaches the LOOK only
   compositionNote?: string; // user-fixed text position (wins over the reference's text layout)
 }): Promise<{ url: string; refIndex: number }> {
   let refIndex = await pickReference(opts.pack, opts.brief, opts.matchHint || "");
@@ -138,7 +139,9 @@ export async function generatePackAd(opts: {
   const trim45 = opts.aspect === "4:5";
   const prompt = [
     "Create one finished, professional social media ad.",
-    "IMAGE 1 is the REFERENCE AD. Rebuild its exact layout: the same composition, positions, type hierarchy, badges, shapes, decorative elements, lighting and finish. Replace everything brand-specific with the new brand below. Never copy its brand name, logo, product, prices or words.",
+    opts.layoutOverride
+      ? "IMAGE 1 is the STYLE REFERENCE. Copy its LOOK exactly: typography style and hierarchy feel, how emphasis is shown, badges and shapes, decorative elements, colour treatment, lighting and finish. Do NOT copy its layout. Build this layout instead, and fill it with the brand below. Never copy the reference's brand name, logo, product, prices or words.\nLAYOUT TO USE: " + opts.layoutOverride
+      : "IMAGE 1 is the REFERENCE AD. Rebuild its exact layout: the same composition, positions, type hierarchy, badges, shapes, decorative elements, lighting and finish. Replace everything brand-specific with the new brand below. Never copy its brand name, logo, product, prices or words.",
     opts.productImage
       ? "IMAGE 2 is the brand's real product. Put it where the reference's product/subject sits, reproduced exactly (same shape, colours, label, every printed word spelled correctly)."
       : "Choose a product, subject or scene that fits the brief, placed where the reference's product/subject sits.",
@@ -150,8 +153,8 @@ export async function generatePackAd(opts: {
     opts.pack.packDna || "(follow the reference closely)",
     opts.pack.prompt?.trim() ? `\nEXTRA INSTRUCTION FROM THE PACK AUTHOR:\n${opts.pack.prompt.trim()}` : "",
     "",
-    "THIS LAYOUT'S DNA:",
-    opts.pack.refDnas[refIndex] || "(follow the reference closely)",
+    opts.layoutOverride ? "" : "THIS LAYOUT'S DNA:",
+    opts.layoutOverride ? "" : opts.pack.refDnas[refIndex] || "(follow the reference closely)",
     "",
     "WHAT THIS AD IS FOR:",
     opts.brief,
@@ -162,7 +165,7 @@ export async function generatePackAd(opts: {
     opts.font ? `Typography: set headlines in ${opts.font} (or its closest match); keep the reference's weights, case and hierarchy.` : "",
     opts.brandNote || "",
     "",
-    "RULES: Keep the reference's text density; never crowd the ad. Every word spelled correctly. Only use prices, discounts, codes and claims that appear in the brief or brand context; never invent them. No watermarks, no extra logos." +
+    "RULES: Keep the reference's text density (the layout above may use more or fewer text slots: keep it clean); never crowd the ad. Every word spelled correctly. Only use prices, discounts, codes and claims that appear in the brief or brand context; never invent them. No watermarks, no extra logos." +
       (trim45 ? " The image will be trimmed to 4:5: keep the top 9% and bottom 9% as plain background with no text." : "") +
       " Output only the finished ad.",
   ]

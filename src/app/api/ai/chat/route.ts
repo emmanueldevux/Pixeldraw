@@ -37,7 +37,7 @@ import { getRandomTemplateAsBase64 } from "@/lib/templates";
 import { randomUUID } from "crypto";
 import { parseComposition, compositionDirective, compositeLogoForComposition, type CompositionSpot } from "@/lib/ai/composition";
 import { isAdRequest, wantsNewFormat, previousConcepts, adDirectorRule } from "@/lib/ai/adDirector";
-import { namedFormat, candidateFormats, candidateStyles } from "@/lib/ai/adFormats";
+import { namedFormat, candidateFormats, candidateStyles, AD_FORMATS } from "@/lib/ai/adFormats";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
 import { insufficientResponse } from "@/lib/billing/http";
 import { imageKey } from "@/lib/billing/pricing";
@@ -226,10 +226,10 @@ async function handlePOST(request: Request) {
     const composition = adReq ? parseComposition(((loadedBrand?.styleGuide as unknown as { advancedSettings?: { composition?: string } } | null)?.advancedSettings)?.composition) : "auto";
     const compLogo = composition !== "auto" && !!loadedBrand?.logo;
     const compNote = compositionDirective(composition, compLogo);
-    // Format library: a format the user names (or a request for something new) skips the pack
-    // and builds from a repeatable shortlist of 37 named formats; explicit packs and reference ads still win.
+    // Format library: a format the user names (or a request for something new) picks the LAYOUT from a
+    // repeatable shortlist of 37 named formats. The ad pack still teaches the LOOK; a reference ad still wins.
     const named = adReq ? namedFormat(askText) : null;
-    const inventFormat = adReq && !explicitPack && !refAd && (!!named || wantsNewFormat(askText));
+    const inventFormat = adReq && !refAd && (!!named || wantsNewFormat(askText));
     const prevConcepts = previousConcepts(messages as AIMessage[]);
     const variantSeed = `${askText}|${(messages as AIMessage[]).length}`;
     const formatShortlist = inventFormat && !named ? candidateFormats({ previous: prevConcepts, hasProductPhoto: !!productImage, seed: variantSeed }) : [];
@@ -354,7 +354,7 @@ async function handlePOST(request: Request) {
           }
         }
         // No references of the project's own → the project's ad pack (admin reference packs).
-        if (!thumbReq && (!inventFormat || refAd) && refs.length === 0 && (lookupId || freeChat || refAd) && process.env.OPENAI_API_KEY) {
+        if (!thumbReq && refs.length === 0 && (lookupId || freeChat || refAd) && process.env.OPENAI_API_KEY) {
           const adv = ((loadedBrand?.styleGuide as unknown as { advancedSettings?: { adPackId?: string } } | null)?.advancedSettings) || {};
           const brain = lookupId ? await getBrain(lookupId).catch(() => null) : null;
           const lastUser = [...(messages as AIMessage[])].reverse().find((m) => m.role === "user");
@@ -362,6 +362,11 @@ async function handlePOST(request: Request) {
           const brainOk = !!brain && !isEmptyBrain(brain.data);
           const matchHint = brainOk ? [brain!.data.business.industry, brain!.data.voice.oneLine, moodFromVoice(brain!.data)].filter(Boolean).join("; ") : "";
           const pack = refPack || (await resolvePack(adv.adPackId, { userId: uid, brief: userAsk, hint: matchHint }).catch(() => null));
+          // The layout comes from the chosen format (named, or the one the director put in its Concept line);
+          // for a custom format the director's own composition notes in the brief carry it.
+          const conceptFormat = (response.content.match(/^\s*Concept:\s*(.+)$/im)?.[1] || "").toLowerCase();
+          const libFormat = named || AD_FORMATS.find((f) => conceptFormat.includes(f.name.toLowerCase())) || null;
+          const formatLayoutText = libFormat ? `${libFormat.name}: ${libFormat.layout}` : "the layout in the design notes below (the format the assistant chose); ignore the reference's own layout";
           if (pack) {
             const sgAny = loadedBrand?.styleGuide as unknown as Record<string, string | null> | null;
             const sizeFor: Record<string, string> = { instagram_portrait: "1080x1350", facebook_portrait: "1080x1350", linkedin_portrait: "1080x1350", instagram_story: "1080x1920", instagram_reel: "1080x1920", tiktok: "1080x1920", snapchat: "1080x1920", pinterest: "1000x1500", twitter: "1600x900", linkedin_post: "1200x627", facebook: "1200x630", youtube_thumbnail: "1280x720" };
@@ -378,6 +383,7 @@ async function handlePOST(request: Request) {
                 matchHint,
                 productImage: productImage || null,
                 compositionNote: compNote || undefined,
+                layoutOverride: inventFormat ? formatLayoutText : undefined,
               });
               packImage = out.url;
               if (pack.id) packUsed = { id: pack.id, refIndex: out.refIndex };
