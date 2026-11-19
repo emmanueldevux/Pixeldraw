@@ -24,10 +24,19 @@ function TemplatesInner() {
   const [open, setOpen] = useState<T | null>(null);
 
   useEffect(() => {
-    fetch("/api/design-templates")
-      .then((r) => r.json())
-      .then((d) => setTemplates(d.templates || []))
-      .catch(() => setTemplates([]));
+    // Ads/thumbnail templates plus the admin's published carousel and slideshow styles, all shown as templates.
+    const asCard = (s: { id: string; name: string; description?: string; cover?: string | null }, category: string, aspect: string, n: number): T =>
+      ({
+        id: s.id, number: n, title: s.name, description: s.description || "", category, tags: [], aspect, coverImages: s.cover ? [s.cover] : [],
+        kind: "pack", refImages: [], styles: [], needsProduct: false, useBrandBrain: true, published: true, sortOrder: 0, usageCount: 0,
+      }) as unknown as T;
+    const j = (u: string): Promise<any> => fetch(u).then((r) => (r.ok ? r.json() : {})).catch(() => ({})); // eslint-disable-line @typescript-eslint/no-explicit-any
+    Promise.all([j("/api/design-templates"), j("/api/carousel-styles"), j("/api/slideshow/styles")]).then(([d, c, s]) => {
+      const base: T[] = d.templates || [];
+      const car = ((c.styles || []) as { id: string; name: string; description?: string; cover?: string | null; mine?: boolean }[]).filter((x) => !x.mine).map((x, i) => asCard(x, "Carousels", "4:5", 100 + i));
+      const sl = ((s.styles || []) as { id: string; name: string; description?: string; cover?: string | null; mine?: boolean }[]).filter((x) => !x.mine).map((x, i) => asCard(x, "Slideshows", "3:4", 200 + i));
+      setTemplates([...base, ...car, ...sl]);
+    });
   }, []);
 
   const isRec = (t: T) => t.tags.some((x) => x.toLowerCase() === "recommended");
@@ -130,7 +139,7 @@ function TemplatesInner() {
         </main>
       </div>
 
-      {open && (open.kind === "pack" && (open.category === "Ads" || open.category === "Thumbnails")
+      {open && (open.kind === "pack" && ["Ads", "Thumbnails", "Carousels", "Slideshows"].includes(open.category)
         ? <UseTemplateProject template={open} onClose={() => setOpen(null)} />
         : <UseTemplateModal template={open} onClose={() => setOpen(null)} />)}
     </div>

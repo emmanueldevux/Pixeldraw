@@ -273,7 +273,7 @@ export function Placeholder({ template }: { template: PublicTemplate }) {
     <div className="w-full aspect-[9/16] max-h-[70vh] rounded-xl overflow-hidden relative flex flex-col justify-end p-5 text-white"
       style={{ background: "radial-gradient(120% 90% at 80% 10%, #ff9a5a 0%, #e5484d 35%, #5b1a7a 75%, #1b0b2e 100%)" }}>
       <Sparkles className="absolute top-5 left-5 opacity-80" size={22} />
-      <p className="text-xs font-semibold uppercase tracking-widest opacity-80">Template {template.number}</p>
+      <p className="text-xs font-semibold uppercase tracking-widest opacity-80">{template.number >= 100 ? template.category.replace(/s$/, "") : `Template ${template.number}`}</p>
       <p className="mt-1 text-2xl font-black leading-tight">{template.title}</p>
       {template.styles.length > 0 && <p className="mt-2 text-xs opacity-80">{template.styles.length} ad styles · AI picks the best one</p>}
     </div>

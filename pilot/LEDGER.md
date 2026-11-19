@@ -147,3 +147,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0043 — Carousel admin: one way to add images
 - Removed the per-slot "Add references" buttons. Images are added in one place ("Add many at once": choose images or a folder, or drop them), then dragged onto Intro / Details / Outro (or Auto-sort). Dropping files straight onto a slot still works.
+
+## PRJ-0044 — Carousel and slideshow styles show on the templates page
+- The templates page now also lists the admin's published carousel styles (tab Carousels) and slideshow styles (tab Slideshows), using each style's cover image. "Use template" opens the same "Add it to a project" box: existing project (the style is saved into it) or a new project (wizard with the style preselected; the carousel style step is skipped, slideshows still ask for the character). A carousel style only appears once it has references for intro, details and outro.

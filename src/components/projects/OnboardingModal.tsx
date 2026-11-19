@@ -145,14 +145,14 @@ function Wizard({ onClose, kindProp, openChat, presetPackId }: { onClose: () => 
   const [kind, setKind] = useState<ProjectKind | undefined>(kindProp);
   const needPicker = kindProp === undefined;
   const K = kind ? KINDS[kind] : null;
-  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, ...(K.extra && !presetPackId ? [K.extra] : []), ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
+  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, ...(K.extra && !(presetPackId && kind !== "slideshows") ? [K.extra] : []), ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
   const STEPS: ShellStep[] = needPicker ? [PICK, ...KIND_STEPS] : KIND_STEPS;
   // Coming from a template: it is already chosen, so the template step is skipped.
   const [adPackId, setAdPackId] = useState(kindProp === "ads" ? presetPackId || "" : "");
   const [thumbPackId, setThumbPackId] = useState(kindProp === "thumbnails" ? presetPackId || "" : "");
-  const [carouselS, setCarouselS] = useState<ProjectCarouselSettings>(EMPTY_PROJECT_CAROUSEL);
+  const [carouselS, setCarouselS] = useState<ProjectCarouselSettings>(kindProp === "carousels" && presetPackId ? { ...EMPTY_PROJECT_CAROUSEL, styleId: presetPackId } : EMPTY_PROJECT_CAROUSEL);
   const [characters, setCharacters] = useState<Character[]>([]);
-  const [slideshowStyleId, setSlideshowStyleId] = useState("");
+  const [slideshowStyleId, setSlideshowStyleId] = useState(kindProp === "slideshows" ? presetPackId || "" : "");
   const [i, setI] = useState(0);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
