@@ -172,7 +172,7 @@ function TemplatesInner() {
         </main>
       </div>
 
-      {open && (open.kind === "pack" && ["Ads", "Thumbnails", "Carousels", "Slideshows"].includes(open.category)
+      {open && (open.kind === "pack"
         ? <UseTemplateProject template={open} onClose={() => setOpen(null)} />
         : <UseTemplateModal template={open} onClose={() => setOpen(null)} />)}
     </div>

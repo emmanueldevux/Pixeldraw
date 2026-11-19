@@ -134,13 +134,13 @@ function ColourBox({ label, value, onChange, disabled }: { label: string; value:
   );
 }
 
-export default function OnboardingModal({ isOpen, onClose, kind, openChat, presetPackId }: { isOpen: boolean; onClose: () => void; kind?: ProjectKind; openChat?: boolean; presetPackId?: string }) {
+export default function OnboardingModal({ isOpen, onClose, kind, openChat, presetPackId, templateName }: { isOpen: boolean; onClose: () => void; kind?: ProjectKind; openChat?: boolean; presetPackId?: string; templateName?: string }) {
   if (!isOpen) return null;
   // No kind given (New project): the wizard starts by asking what to make, and ends in the AI studio.
-  return <Wizard onClose={onClose} kindProp={kind} openChat={openChat ?? true} presetPackId={presetPackId} />;
+  return <Wizard onClose={onClose} kindProp={kind} openChat={openChat ?? true} presetPackId={presetPackId} templateName={templateName} />;
 }
 
-function Wizard({ onClose, kindProp, openChat, presetPackId }: { onClose: () => void; kindProp?: ProjectKind; openChat: boolean; presetPackId?: string }) {
+function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { onClose: () => void; kindProp?: ProjectKind; openChat: boolean; presetPackId?: string; templateName?: string }) {
   const router = useRouter();
   const [kind, setKind] = useState<ProjectKind | undefined>(kindProp);
   const needPicker = kindProp === undefined;
@@ -159,6 +159,31 @@ function Wizard({ onClose, kindProp, openChat, presetPackId }: { onClose: () => 
   const [status, setStatus] = useState("");
 
   const [brandName, setBrandName] = useState("");
+  // Started from a template: the name is optional (defaults to the template's name) and the user can borrow
+  // the brand brain, colours and font of one of their existing projects instead of typing details.
+  const fromTemplate = !!presetPackId;
+  const [brainFrom, setBrainFrom] = useState("");
+  const [brainSources, setBrainSources] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (!fromTemplate) return;
+    fetch("/api/projects").then((r) => (r.ok ? r.json() : { data: [] })).then((d) => setBrainSources((d.data || []).map((b: { id: string; name?: string; brandName?: string }) => ({ id: b.id, name: b.name || b.brandName || "Project" })))).catch(() => {});
+  }, [fromTemplate]);
+  async function pickBrain(id: string) {
+    setBrainFrom(id);
+    if (!id) return;
+    try {
+      const j = await fetch(`/api/projects/style?brandId=${id}`).then((r) => r.json());
+      const d = j?.data;
+      if (d) {
+        if (d.primaryColor) setPrimary(d.primaryColor);
+        if (d.secondaryColor) setSecondary(d.secondaryColor);
+        if (d.accentColor) setAccent(d.accentColor);
+        if (d.headingFont) setFont(d.headingFont);
+        if (d.tone) setTone(d.tone);
+      }
+    } catch { /* the brain still copies on create */ }
+  }
+  const finalName = () => brandName.trim() || templateName?.trim() || "My project";
   const [offering, setOffering] = useState("");
   const [website, setWebsite] = useState("");
   const [logo, setLogo] = useState<File | null>(null);
@@ -210,7 +235,7 @@ function Wizard({ onClose, kindProp, openChat, presetPackId }: { onClose: () => 
 
   const sid = STEPS[i].id;
   const lastStep = i === STEPS.length - 1;
-  const canContinue = sid === "kind" ? !!kind : sid === "business" ? brandName.trim().length > 0 : sid === "size" ? !!platform : true;
+  const canContinue = sid === "kind" ? !!kind : sid === "business" ? (fromTemplate || brandName.trim().length > 0) : sid === "size" ? !!platform : true;
 
   async function create() {
     if (!platform) return;
@@ -225,8 +250,9 @@ function Wizard({ onClose, kindProp, openChat, presetPackId }: { onClose: () => 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          brandName: brandName.trim(),
-          channelName: `${brandName.trim()} · ${preset.name}`,
+          brandName: finalName(),
+          channelName: `${finalName()} · ${preset.name}`,
+          copyBrainFrom: brainFrom || undefined,
           platform,
           channelDescription: description,
           referenceImages: referenceBase64,
@@ -287,7 +313,7 @@ function Wizard({ onClose, kindProp, openChat, presetPackId }: { onClose: () => 
       index={i}
       done={done}
       doneTitle="Project created"
-      doneText={`"${brandName}" is ready. Open AI Studio to start making content. Your brand brain is being built in the background.`}
+      doneText={`"${finalName()}" is ready. Open AI Studio to start making content. Your brand brain is being built in the background.`}
       doneAction={<LButton variant="lime" size="lg" onClick={onClose}>Start creating</LButton>}
       busy={busy}
       continueDisabled={!canContinue}
@@ -317,7 +343,17 @@ function Wizard({ onClose, kindProp, openChat, presetPackId }: { onClose: () => 
 
       {sid === "business" && (
         <div className="space-y-5">
-          <LInput label="Business or brand name" value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder="e.g. Bean & Brew Coffee" autoFocus />
+          {fromTemplate && brainSources.length > 0 && (
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <span className="mb-1.5 block text-sm font-semibold text-gray-800">Use an existing project&apos;s brain <span className="font-normal text-gray-400">(optional)</span></span>
+              <select className="w-full h-12 rounded-xl border border-gray-200 bg-white px-3 text-sm" value={brainFrom} onChange={(e) => void pickBrain(e.target.value)}>
+                <option value="">No, I&apos;ll add details myself</option>
+                {brainSources.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <span className="mt-1.5 block text-xs text-gray-500">Copies that project&apos;s brand voice, audience, colours and font, so you can skip the details below.</span>
+            </label>
+          )}
+          <LInput label={fromTemplate ? "Project name (optional)" : "Business or brand name"} value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder={fromTemplate && templateName ? templateName : "e.g. Bean & Brew Coffee"} autoFocus />
           <LTextarea label="What do you sell or offer?" value={offering} onChange={(e) => setOffering(e.target.value)} rows={3} placeholder="e.g. Specialty coffee, pastries and beans for home brewing, in Lagos" />
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-gray-800">Website <span className="font-normal text-gray-400">(optional)</span></span>

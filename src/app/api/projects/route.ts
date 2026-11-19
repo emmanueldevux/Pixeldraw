@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     const {
       brandName, channelName, platform, channelDescription,
       referenceImages, logoBase64, styleNotes,
-      primaryColor, secondaryColor, accentColor, backgroundColor, tone, headingFont,
+      primaryColor, secondaryColor, accentColor, backgroundColor, tone, headingFont, copyBrainFrom,
     } = await request.json();
 
     // Persist the logo separately from style references — it's never
@@ -137,7 +137,19 @@ export async function POST(request: Request) {
 
     // Build the brand brain in the background (audience, voice, positioning…).
     // If this gets cut short, the first template run builds it instead.
-    import("@/lib/brain/generate").then((m) => m.generateBrain(brand.id)).catch((e) => console.warn("[BRAIN] background build failed:", e));
+    // Started from a template with "use an existing project's brain": copy that brain instead of building one.
+    let copied = false;
+    if (typeof copyBrainFrom === "string" && copyBrainFrom) {
+      const src = await db.brand.findFirst({ where: { id: copyBrainFrom, userId: session.user.id }, select: { id: true } });
+      const brain = src ? await db.brandBrain.findUnique({ where: { brandId: src.id } }).catch(() => null) : null;
+      if (brain) {
+        await db.brandBrain
+          .create({ data: { brandId: brand.id, status: brain.status, data: brain.data as never, edited: brain.edited, generatedAt: brain.generatedAt } })
+          .then(() => { copied = true; })
+          .catch((e: unknown) => console.warn("[BRAIN] copy failed:", e));
+      }
+    }
+    if (!copied) import("@/lib/brain/generate").then((m) => m.generateBrain(brand.id)).catch((e) => console.warn("[BRAIN] background build failed:", e));
 
     return NextResponse.json({ success: true, data: { brand, channel } });
   } catch (error) {

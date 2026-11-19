@@ -117,6 +117,9 @@ export default function ProjectsPage() {
                 <Plus size={18} />
                 Create your first project
               </button>
+              <Link href="/templates" className="mt-3 text-sm font-medium text-gray-500 hover:text-gray-900 hover:underline">
+                or start from a template
+              </Link>
             </div>
           </div>
         )}
@@ -126,6 +129,7 @@ export default function ProjectsPage() {
           <div className="p-6 md:p-8 max-w-[1400px] mx-auto w-full">
             <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-x-6 gap-y-7">
               {/* ---- Create New Project ---- */}
+              <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() => requireAuth(() => setShowOnboarding(true))}
@@ -144,6 +148,10 @@ export default function ProjectsPage() {
                   Create new project
                 </h3>
               </button>
+              <Link href="/templates" className="px-1 text-sm font-medium text-gray-500 hover:text-gray-900 underline-offset-2 hover:underline">
+                or start from a template
+              </Link>
+              </div>
 
               {/* ---- Existing Projects ---- */}
               {channels.map((channel, index) => {

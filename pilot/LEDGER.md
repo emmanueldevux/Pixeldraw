@@ -153,3 +153,10 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0045 — Image slider on carousel and slideshow cards
 - Carousel and slideshow cards on the templates page cycle through their images (cover, then intro/details/outro or the example slides). Dots sit bottom-centre; left and right arrows appear mid-height on hover. Arrows are white with a black border and turn black on hover; dots are white with a black border, the active one is a wider pill, inactive ones brighten and grow on hover. Clicking an arrow or dot doesn't open the template.
+
+## PRJ-0046 — Using a template always creates a new project (replaces the "add to project" box)
+- Flow: pick a template -> project setup opens with that template as the reference pack -> optional name and details, or "Use an existing project's brain" (copies that project's brand brain on create, and pre-fills its colours, font and tone) -> confirm creates a NEW project -> opens the AI studio on it. The project shows under Projects.
+- Name is optional here (defaults to the template's name). Works for Ads, Thumbnails, Carousels and Slideshows reference packs/styles; the older written-prompt templates keep the old popup.
+- Projects page: "or start from a template" link under Create new project (and in the empty state) opens the templates page.
+- API: POST /api/projects takes `copyBrainFrom` (a brand id the user owns).
+- Supersedes PRJ-0041's "Add it to" dropdown.
