@@ -340,11 +340,10 @@ function SlotEditor(p: {
   cover: string;
   onCover: (src: string) => void;
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
   const uploading = p.busy === `upload:${p.slot}`;
   const studying = p.busy === `study:${p.slot}`;
   const hint: Record<SlotKey, string> = {
-    intro: "Slide 1, the scroll-stopper. Add 3+ so intros vary between carousels.",
+    intro: "Slide 1, the scroll-stopper. Drag 3+ here so intros vary between carousels.",
     details: "The middle slides. All details pages share one layout; only text and visual change.",
     outro: "The last slide, the closing call to action.",
   };
@@ -368,16 +367,13 @@ function SlotEditor(p: {
           <p className="text-xs text-gray-500">{hint[p.slot]}</p>
         </div>
         <div className="flex gap-2">
-          <button className={`${btnSecondary} inline-flex items-center gap-1.5`} onClick={() => fileRef.current?.click()} disabled={!!p.busy}>
-            {uploading ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />} Add references
-          </button>
+          {uploading && <span className="inline-flex items-center gap-1.5 text-xs text-gray-500"><Loader2 size={14} className="animate-spin" /> Adding…</span>}
           {(studying || p.dna) && (
             <button className={`${btnSecondary} inline-flex items-center gap-1.5`} onClick={p.onStudy} disabled={!!p.busy || p.refs.length === 0} title="Rewrite the DNA from the current references">
               {studying ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} {studying ? "Studying…" : "Re-study"}
             </button>
           )}
         </div>
-        <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { p.onUpload(e.target.files); e.target.value = ""; }} />
       </div>
 
       {p.refs.length > 0 ? (
@@ -394,7 +390,7 @@ function SlotEditor(p: {
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-gray-400">No references yet. Drag images here or press Add references.</p>
+        <p className="mt-3 text-sm text-gray-400">No references yet. Drag images here from "Add many at once" above.</p>
       )}
 
       <div className="mt-4">

@@ -144,3 +144,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0042 — Light gray border on template cards
 - Template cards on the templates page have a 1px light gray border (`border-gray-300`).
+
+## PRJ-0043 — Carousel admin: one way to add images
+- Removed the per-slot "Add references" buttons. Images are added in one place ("Add many at once": choose images or a folder, or drop them), then dragged onto Intro / Details / Outro (or Auto-sort). Dropping files straight onto a slot still works.
