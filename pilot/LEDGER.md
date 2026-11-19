@@ -175,6 +175,7 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0050 — Mobile round 2 (5 rig comments)
 - /ai: Settings is a bottom sheet that slides up (below lg) with a Cancel button; X kept.
-- /chat mobile: "Discover and remix ideas" hidden; heading group ("Make an ad for…") moved to the bottom; Chat history button hidden; Create project moved to the right end after credits/bell (desktop unchanged).
+- /chat mobile: "Discover and remix ideas" hidden; Chat history button hidden; Create project moved to the right end after credits/bell (desktop unchanged).
 
 ## PRJ-0051 — /dashboard stat cards 2 per row on mobile, smaller icon/text/padding.
+- Revised: heading back on top; composer pinned to the bottom of the screen on mobile.

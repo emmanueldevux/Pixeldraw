@@ -298,8 +298,8 @@ export default function FreeChatPage() {
     return (
       <div className="flex flex-col h-full overflow-y-auto bg-[#FFFFFF]">
         {hiddenUpload}
-        <main className="flex flex-col items-center justify-center px-4 pt-14 min-h-[calc(100%-40px)]">
-<div className="flex flex-col items-center order-last mt-10 sm:order-none sm:mt-0">
+        <main className="flex flex-col items-center justify-center px-4 pt-14 max-sm:pb-44 min-h-[calc(100%-40px)]">
+<div className="flex flex-col items-center">
           <Sparkles className="text-[#7C3AED] mb-4" size={40} strokeWidth={1.3} />
           <h1
             aria-label="Make an ad for your brand"
@@ -343,7 +343,7 @@ export default function FreeChatPage() {
           </div>
 
           {/* Composer */}
-          <div className="w-full max-w-4xl mt-10">{composer}</div>
+          <div className="w-full max-w-4xl mt-10 max-sm:fixed max-sm:bottom-0 max-sm:inset-x-0 max-sm:z-30 max-sm:mt-0 max-sm:px-4 max-sm:pt-2 max-sm:pb-3 max-sm:bg-white/95 max-sm:backdrop-blur">{composer}</div>
         </main>
 
         {/* Discover and remix ideas — only shows on the landing, hidden while chatting */}
