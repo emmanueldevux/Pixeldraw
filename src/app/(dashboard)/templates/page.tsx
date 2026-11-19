@@ -6,14 +6,45 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Search, Sparkles, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Search, Sparkles, X } from "lucide-react";
 import UseTemplateProject from "@/components/templates/UseTemplateProject";
 import UseTemplateModal, { Placeholder } from "@/components/templates/UseTemplateModal";
 import type { PublicTemplate } from "@/lib/designTemplates/types";
 
 type T = PublicTemplate & { typicalMilli?: number };
 
-const ASPECT_CLASS: Record<string, string> = { "9:16": "aspect-[9/16]", "4:5": "aspect-[4/5]", "1:1": "aspect-square", "16:9": "aspect-video" };
+const ASPECT_CLASS: Record<string, string> = { "3:4": "aspect-[3/4]", "9:16": "aspect-[9/16]", "4:5": "aspect-[4/5]", "1:1": "aspect-square", "16:9": "aspect-video" };
+
+/** Swipeable images for carousel and slideshow cards: arrows on hover, dots at the bottom. */
+function CardSlider({ images, title, aspectClass }: { images: string[]; title: string; aspectClass: string }) {
+  const [i, setI] = useState(0);
+  const n = images.length;
+  const go = (e: React.MouseEvent, d: number) => { e.stopPropagation(); setI((cur) => (cur + d + n) % n); };
+  const arrow = "absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border border-black text-black flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-black hover:text-white hover:scale-110 active:scale-95";
+  return (
+    <div className={`relative w-full ${aspectClass} overflow-hidden`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={images[i]} alt={title} className="absolute inset-0 w-full h-full object-cover" />
+      {n > 1 && (
+        <>
+          <button type="button" aria-label="Previous image" onClick={(e) => go(e, -1)} className={`${arrow} left-3`}><ChevronLeft size={18} /></button>
+          <button type="button" aria-label="Next image" onClick={(e) => go(e, 1)} className={`${arrow} right-3`}><ChevronRight size={18} /></button>
+          <div className="absolute bottom-3 inset-x-0 z-10 flex justify-center gap-1.5">
+            {images.map((_, d) => (
+              <button
+                key={d}
+                type="button"
+                aria-label={`Go to image ${d + 1}`}
+                onClick={(e) => { e.stopPropagation(); setI(d); }}
+                className={`h-2 rounded-full border border-black transition-all duration-200 ${d === i ? "w-5 bg-white" : "w-2 bg-white/60 hover:bg-white hover:scale-125"}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 function TemplatesInner() {
   const [templates, setTemplates] = useState<T[] | null>(null);
@@ -25,16 +56,16 @@ function TemplatesInner() {
 
   useEffect(() => {
     // Ads/thumbnail templates plus the admin's published carousel and slideshow styles, all shown as templates.
-    const asCard = (s: { id: string; name: string; description?: string; cover?: string | null }, category: string, aspect: string, n: number): T =>
+    const asCard = (s: { id: string; name: string; description?: string; cover?: string | null; preview?: string[] }, category: string, aspect: string, n: number): T =>
       ({
-        id: s.id, number: n, title: s.name, description: s.description || "", category, tags: [], aspect, coverImages: s.cover ? [s.cover] : [],
+        id: s.id, number: n, title: s.name, description: s.description || "", category, tags: [], aspect, coverImages: Array.from(new Set([s.cover, ...(s.preview || [])].filter(Boolean) as string[])),
         kind: "pack", refImages: [], styles: [], needsProduct: false, useBrandBrain: true, published: true, sortOrder: 0, usageCount: 0,
       }) as unknown as T;
     const j = (u: string): Promise<any> => fetch(u).then((r) => (r.ok ? r.json() : {})).catch(() => ({})); // eslint-disable-line @typescript-eslint/no-explicit-any
     Promise.all([j("/api/design-templates"), j("/api/carousel-styles"), j("/api/slideshow/styles")]).then(([d, c, s]) => {
       const base: T[] = d.templates || [];
-      const car = ((c.styles || []) as { id: string; name: string; description?: string; cover?: string | null; mine?: boolean }[]).filter((x) => !x.mine).map((x, i) => asCard(x, "Carousels", "4:5", 100 + i));
-      const sl = ((s.styles || []) as { id: string; name: string; description?: string; cover?: string | null; mine?: boolean }[]).filter((x) => !x.mine).map((x, i) => asCard(x, "Slideshows", "3:4", 200 + i));
+      const car = ((c.styles || []) as { id: string; name: string; description?: string; cover?: string | null; preview?: string[]; mine?: boolean }[]).filter((x) => !x.mine).map((x, i) => asCard(x, "Carousels", "4:5", 100 + i));
+      const sl = ((s.styles || []) as { id: string; name: string; description?: string; cover?: string | null; preview?: string[]; mine?: boolean }[]).filter((x) => !x.mine).map((x, i) => asCard(x, "Slideshows", "3:4", 200 + i));
       setTemplates([...base, ...car, ...sl]);
     });
   }, []);
@@ -115,7 +146,9 @@ function TemplatesInner() {
                     onClick={() => setOpen(t)}
                     className="relative break-inside-avoid rounded-2xl overflow-hidden group cursor-pointer bg-gray-100 border border-gray-300"
                   >
-                    {t.coverImages[0] ? (
+                    {t.coverImages.length > 0 && (t.category === "Carousels" || t.category === "Slideshows") ? (
+                      <CardSlider images={t.coverImages} title={t.title} aspectClass={ASPECT_CLASS[t.aspect] || "aspect-[4/5]"} />
+                    ) : t.coverImages[0] ? (
                       // Cover image: full width, natural height (no cropping).
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={t.coverImages[0]} alt={t.title} className="block w-full h-auto transition-transform duration-500 group-hover:scale-105" />

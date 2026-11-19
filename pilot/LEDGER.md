@@ -150,3 +150,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0044 — Carousel and slideshow styles show on the templates page
 - The templates page now also lists the admin's published carousel styles (tab Carousels) and slideshow styles (tab Slideshows), using each style's cover image. "Use template" opens the same "Add it to a project" box: existing project (the style is saved into it) or a new project (wizard with the style preselected; the carousel style step is skipped, slideshows still ask for the character). A carousel style only appears once it has references for intro, details and outro.
+
+## PRJ-0045 — Image slider on carousel and slideshow cards
+- Carousel and slideshow cards on the templates page cycle through their images (cover, then intro/details/outro or the example slides). Dots sit bottom-centre; left and right arrows appear mid-height on hover. Arrows are white with a black border and turn black on hover; dots are white with a black border, the active one is a wider pill, inactive ones brighten and grow on hover. Clicking an arrow or dot doesn't open the template.
