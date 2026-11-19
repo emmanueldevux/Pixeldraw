@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -105,15 +106,19 @@ const getIcon = (label: string) => {
 const isPathActive = (pathname: string, href: string) =>
   pathname === href.split("?")[0] || pathname.startsWith(href.split("?")[0] + "/");
 
-export function Sidebar() {
+export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClose?: () => void } = {}) {
   const { data: session } = useSession();
   const billing = useBilling();
   const pathname = usePathname();
   const email = session?.user?.email || "Loading…";
 
+  // Below lg the sidebar is a drawer opened from the header's menu button; the drawer closes when you navigate.
+  useEffect(() => { onClose?.(); }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
+    <>
+    {mobileOpen && <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden" onClick={onClose} aria-hidden />}
     <aside
-      className="hidden lg:flex lg:w-64 shrink-0 bg-[#FFFFFF] border-r border-gray-200/80 flex-col justify-between h-screen sticky top-0 px-3.5 py-4 select-none z-30 font-[family-name:var(--font-helvetica)]"
+      className={`${mobileOpen ? "flex fixed left-0 top-0 z-50 w-64 shadow-2xl" : "hidden"} lg:flex lg:sticky lg:z-30 lg:shadow-none lg:w-64 shrink-0 bg-[#FFFFFF] border-r border-gray-200/80 flex-col justify-between h-screen top-0 px-3.5 py-4 select-none font-[family-name:var(--font-helvetica)]`}
     >
       {/* Top Section */}
       <div className="flex flex-col gap-4">
@@ -132,6 +137,7 @@ export function Sidebar() {
           <button
             type="button"
             aria-label="Collapse navigation"
+            onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
           >
             {Icons.menu_open}
@@ -255,5 +261,6 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

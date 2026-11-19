@@ -29,7 +29,7 @@ export function CreditsPill({ className = "" }: { className?: string }) {
     >
       <Coins size={15} className="text-gray-500" />
       <span>{formatCredits(Math.max(0, overview.balanceMilli))}</span>
-      <span className="font-medium text-gray-500">credits</span>
+      <span className="font-medium text-gray-500 hidden sm:inline">credits</span>
       {freeLeft > 0 && (
         <span className="ml-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-[#A3F76B] text-gray-900">{freeLeft} free</span>
       )}

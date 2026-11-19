@@ -9,6 +9,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Bell, ChevronDown, FolderPlus, History, Image as ImageIcon, LayoutGrid, MessageSquare, Plus, Search, Images, Smartphone, X } from "lucide-react";
@@ -39,11 +40,11 @@ function Menu({ open, children, className = "" }: { open: boolean; children: Rea
 }
 
 const soft = "bg-gray-100 border border-gray-200 text-gray-800 hover:bg-gray-200/70";
-const btn = "inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-medium transition-colors";
+const btn = "inline-flex items-center gap-1.5 sm:gap-2 h-8 sm:h-10 px-2.5 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-colors";
 const tabOn = `${btn} bg-gray-900 text-white hover:bg-black border border-gray-900`;
 const tabOff = `${btn} ${soft}`;
 
-export default function AppHeader() {
+export default function AppHeader({ onMenu }: { onMenu?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -138,9 +139,16 @@ export default function AppHeader() {
 
   return (
     <>
-      <header className="absolute top-0 inset-x-0 z-40 h-[72px] flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-[rgb(209_213_219/48%)] bg-white/90 backdrop-blur-md">
+      <header className="absolute top-0 inset-x-0 z-40 h-[72px] flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-6 border-b border-[rgb(209_213_219/48%)] bg-white/90 backdrop-blur-md">
         {/* ---------- left ---------- */}
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          {/* Mobile: menu (two lines) then the logo. The sidebar is a drawer below the lg breakpoint. */}
+          <button type="button" onClick={onMenu} aria-label="Open menu" className="lg:hidden w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-gray-800 hover:bg-gray-100 active:bg-gray-200 transition-colors">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden><path d="M3 6h12M3 12h12" /></svg>
+          </button>
+          <Link href="/home" className="lg:hidden shrink-0 mr-1" aria-label="MakeSocial home">
+            <Image src="/templates/images/makesocial-logo.png" alt="MakeSocial" width={128} height={32} priority className="h-[17px] w-auto object-contain" />
+          </Link>
           <div className="relative" data-hdr-menu>
             <button
               onClick={() => setMenu(menu === "create" ? null : "create")}
@@ -205,7 +213,7 @@ export default function AppHeader() {
         </div>
 
         {/* ---------- right: search · credits · bell ---------- */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <label className="hidden md:flex items-center gap-2 h-10 w-56 lg:w-72 rounded-xl border-2 border-gray-300 bg-gray-50 px-3.5 focus-within:border-gray-900">
             <Search size={15} className="text-gray-400" />
             <input
@@ -218,9 +226,9 @@ export default function AppHeader() {
             {q && <button type="button" onClick={() => setQ("")} className="text-gray-400 hover:text-gray-700"><X size={14} /></button>}
           </label>
 
-          <CreditsPill className="!h-10 !rounded-xl !px-4 !bg-gray-100 hover:!bg-gray-200/70" />
+          <CreditsPill className="!h-8 sm:!h-10 !rounded-lg sm:!rounded-xl !px-2.5 sm:!px-4 !text-xs sm:!text-sm !bg-gray-100 hover:!bg-gray-200/70" />
 
-          <div className="relative" data-hdr-menu>
+          <div className="relative hidden sm:block" data-hdr-menu>
             <button onClick={() => setMenu(menu === "bell" ? null : "bell")} aria-label="Notifications" className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-gray-600 ${soft}`}>
               <Bell size={16} />
             </button>

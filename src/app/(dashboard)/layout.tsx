@@ -37,11 +37,11 @@ export default function DashboardLayout({
       <div className="flex h-screen bg-[#FFFFFF] overflow-hidden">
 
         {/* Render the sidebar globally */}
-        <Sidebar />
+        <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Main Content Area - flex-1 makes it take up the remaining space */}
         <main className="relative flex-1 min-w-0 overflow-hidden">
-          <Suspense fallback={null}><AppHeader /></Suspense>
+          <Suspense fallback={null}><AppHeader onMenu={() => setSidebarOpen(true)} /></Suspense>
           <div className="h-full overflow-y-auto pt-[72px]">
             {children}
           </div>

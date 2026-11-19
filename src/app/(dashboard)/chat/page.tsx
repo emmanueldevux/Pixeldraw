@@ -312,7 +312,7 @@ export default function FreeChatPage() {
           </p>
 
           {/* Quick templates — width matches the chat input below */}
-          <div className="w-full max-w-3xl mt-9 grid gap-3" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
+          <div className="w-full max-w-3xl mt-9 grid gap-3 grid-cols-2 sm:grid-cols-4">
             <button
               type="button"
               onClick={() => uploadRef.current?.click()}

@@ -13,7 +13,7 @@ import { useSearchParams } from "next/navigation";
 import { TIKTOK_SETUP_KEY, type TikTokSetup } from "@/components/ai/TikTokWizard";
 import ProjectSettings from "@/components/ai/ProjectSettings";
 import CanvasLogo, { type CanvasLogoData } from "@/components/ai/CanvasLogo";
-import { ChevronDown, FolderKanban, Download, Pencil, MessageCircle, Loader2, Sparkles, X, Send } from "lucide-react";
+import { ChevronDown, FolderKanban, SlidersHorizontal, Download, Pencil, MessageCircle, Loader2, Sparkles, X, Send } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import TikTokSlideEditor, { type TikTokDisclosure } from "@/components/ai/TikTokSlideEditor";
 import SlideshowWizard, { type SlideshowResult } from "@/components/ai/SlideshowWizard";
@@ -349,6 +349,7 @@ function AIStudioPageInner() {
   // ==================== Project State ====================
   const [channels, setChannels] = useState<ProjectChannel[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<ProjectChannel | null>(null);
+  const [rightOpen, setRightOpen] = useState(false); // project settings drawer on small screens
   const [showProjectPicker, setShowProjectPicker] = useState(false);
 
   // ==================== Right Panel State ====================
@@ -929,12 +930,12 @@ function AIStudioPageInner() {
       )}
       {clarify && <ClarifyModal questions={clarify.questions} onSubmit={clarify.onSubmit} onCancel={() => setClarify(null)} />}
 
-      <header className="h-11 flex items-center px-6 border-b border-gray-200/50 bg-white shrink-0 z-30">
+      <header className="h-11 flex items-center justify-between px-3 sm:px-6 border-b border-gray-200/50 bg-white shrink-0 z-30">
         <div className="flex items-center gap-4">
           <div className="relative">
             <button
               onClick={() => setShowProjectPicker(!showProjectPicker)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors max-w-[220px]"
+              className="flex items-center gap-2 px-0 sm:px-3 py-1.5 rounded-lg border border-transparent sm:border-gray-200 text-xs font-medium text-gray-700 sm:hover:bg-gray-50 transition-colors max-w-[220px]"
             >
               <FolderKanban size={12} className="text-gray-400 shrink-0" />
               <span className="truncate">
@@ -977,6 +978,14 @@ function AIStudioPageInner() {
           </div>
         </div>
 
+        {/* Small screens: project settings open as a drawer from the right. */}
+        <button
+          type="button"
+          onClick={() => setRightOpen(true)}
+          className="lg:hidden inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+        >
+          <SlidersHorizontal size={13} className="text-gray-500" /> Settings
+        </button>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -1082,8 +1091,10 @@ function AIStudioPageInner() {
           </div>
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <div className="w-[380px] shrink-0 bg-white border-l border-gray-200 flex flex-col h-full shadow-[-4px_0_24px_rgba(0,0,0,0.02)] z-20">
+        {/* RIGHT SIDEBAR (a drawer below lg) */}
+        {rightOpen && <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" onClick={() => setRightOpen(false)} aria-hidden />}
+        <div className={`${rightOpen ? "flex fixed inset-y-0 right-0 z-50 w-[min(380px,92vw)] shadow-2xl" : "hidden"} lg:flex lg:static lg:z-20 lg:w-[380px] lg:shadow-[-4px_0_24px_rgba(0,0,0,0.02)] shrink-0 bg-white border-l border-gray-200 flex-col h-full`}>
+          <button type="button" onClick={() => setRightOpen(false)} aria-label="Close settings" className="lg:hidden absolute top-3 right-3 z-10 w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100"><X size={16} /></button>
           <div className="p-4 border-b border-gray-100">
             <div className="flex bg-[#F5F5F7] p-1 rounded-xl border border-gray-200">
               <button

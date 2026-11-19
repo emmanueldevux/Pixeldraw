@@ -166,3 +166,9 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0048 — Template flow: copy a project's style and you're done
 - From a template the references step is gone (the template is the style). The "brain" picker is now "Use an existing project's style". Choosing one copies its voice, audience, colours, font and size, hides the detail fields, and the wizard is a single step: optional name, then Create project (it opens the AI studio). Without a project selected the steps are: details, size, (slideshows: character), colours and font. Slideshows from a template no longer ask for a style again.
+
+## PRJ-0049 — Mobile fixes from rig comments (4)
+- /chat landing: reference/template tiles are 2 per row on mobile (4 from sm).
+- Header on mobile: two-line menu button on the left (opens the sidebar as a drawer, closes on navigate or backdrop tap) then the logo; credits on the right; all items smaller (h-8, smaller text), "credits" word and bell hidden on mobile.
+- /ai: a Settings button on the right of the project bar (below lg) opens the project settings as a right drawer; the right panel was a fixed 380px that overflowed phones. The project picker button has no padding or border on mobile and sits flush left.
+- Not checked in a browser (no export rebuild).
