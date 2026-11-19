@@ -201,3 +201,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Smarter product interaction: packs/director adapt the reference pose to how the product is really used (bed = lie on it, bowl = eat from it...), realistic scale.
 - Project settings: Offers moved below Style references and Colors.
 - Project settings now per project kind (kind saved at creation, inferred for older projects): Single ads / composition only for ads, Thumbnails only for thumbnails, Characters only for slideshows, Carousel only for carousels. "Add a character" is a dotted button "Add character sheet".
+
+## PRJ-0054 — Positive prompt
+- Project settings: new "Positive prompt" box under Negative. Saved as advancedSettings.positivePrompt, applied with the negative via applyProjectNegative (usage.ts) and appended to every image call as "ALWAYS INCLUDE (brand rules)" next to "NEVER INCLUDE (brand rules)" (openai + together providers).

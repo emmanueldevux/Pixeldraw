@@ -3,7 +3,7 @@
 // FREE unlimited image generation via FLUX.1 Schnell
 // ============================================================
 
-import { recordUsage, currentNegative } from "@/lib/billing/usage";
+import { recordUsage, brandRulesText } from "@/lib/billing/usage";
 import type {
   ImageGenerationRequest,
   ImageGenerationResponse,
@@ -42,7 +42,7 @@ export async function togetherGenerateImage(
     },
     body: JSON.stringify({
       model,
-      prompt: currentNegative() ? `${request.prompt}\n\nNEVER INCLUDE (brand rules): ${currentNegative()}` : request.prompt,
+      prompt: brandRulesText() ? `${request.prompt}\n\n${brandRulesText()}` : request.prompt,
       width: dims.width,
       height: dims.height,
       steps: 4,

@@ -23,6 +23,8 @@ export interface UsageRecorder {
   entries: UsageEntry[];
   /** The project's negative prompt for this request (appended to every image call). */
   negative?: string;
+  /** The project's positive prompt: what every image should include (appended to every image call). */
+  positive?: string;
 }
 
 const als = new AsyncLocalStorage<UsageRecorder>();
@@ -44,9 +46,29 @@ export function setNegativePrompt(text: unknown) {
   rec.negative = typeof text === "string" && text.trim() ? text.trim().slice(0, 600) : undefined;
 }
 
-/** Read the project's negative prompt from StyleGuide.advancedSettings and apply it to this request. */
+/** Set the project's positive prompt for the rest of this request (also clears). */
+export function setPositivePrompt(text: unknown) {
+  const rec = als.getStore();
+  if (!rec) return;
+  rec.positive = typeof text === "string" && text.trim() ? text.trim().slice(0, 600) : undefined;
+}
+
+/** Read the project's negative and positive prompts from StyleGuide.advancedSettings and apply them to this request. */
 export function applyProjectNegative(advancedSettings: unknown) {
-  setNegativePrompt((advancedSettings as { negativePrompt?: unknown } | null | undefined)?.negativePrompt);
+  const adv = advancedSettings as { negativePrompt?: unknown; positivePrompt?: unknown } | null | undefined;
+  setNegativePrompt(adv?.negativePrompt);
+  setPositivePrompt(adv?.positivePrompt);
+}
+
+export function currentPositive(): string | undefined {
+  return als.getStore()?.positive;
+}
+
+/** The brand rules appended to every image prompt: what to always include and what to never include. */
+export function brandRulesText(): string {
+  const pos = currentPositive();
+  const neg = currentNegative();
+  return [pos ? `ALWAYS INCLUDE (brand rules): ${pos}` : "", neg ? `NEVER INCLUDE (brand rules): ${neg}` : ""].filter(Boolean).join("\n");
 }
 
 export function currentNegative(): string | undefined {

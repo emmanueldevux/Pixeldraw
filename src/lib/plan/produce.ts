@@ -26,7 +26,7 @@ import { chooseRefs, logoPlacementFor } from "@/lib/carousels/generate";
 import { createCarouselTask, runCarouselStep } from "@/lib/carousels/task";
 import { saveGeneration, persistImage } from "@/lib/generations";
 import { authorize, commit, meterFollowUp } from "@/lib/billing/meter";
-import { setNegativePrompt, applyProjectNegative } from "@/lib/billing/usage";
+import { setNegativePrompt, setPositivePrompt, applyProjectNegative } from "@/lib/billing/usage";
 import type { ImageSize } from "@/types";
 
 const SIZE_PX: Record<string, string> = { "4:5": "1080x1350", "1:1": "1080x1080", "9:16": "1080x1920" };
@@ -262,6 +262,7 @@ export async function produceItem(itemId: string): Promise<ProduceResult> {
   const brand = await loadBrand(item.brandId);
   if (!brand) throw new Error("Project not found");
   setNegativePrompt(undefined);
+  setPositivePrompt(undefined);
   applyProjectNegative(adv(brand));
   // Balance check first: nothing runs if they can't afford a post.
   await authorize(item.userId, [{ key: "chat.text" }, { key: item.format === "carousel" ? "image.edit" : "image.openai", qty: item.format === "carousel" ? 7 : 2 }], { trial: "none" });

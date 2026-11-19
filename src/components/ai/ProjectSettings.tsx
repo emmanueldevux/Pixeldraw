@@ -65,6 +65,7 @@ interface State {
   slideshowStyleId: string;
   composition: string; // "auto" or a spot: where single-ad text sits (logo goes above it)
   negativePrompt: string;
+  positivePrompt: string;
   characters: Character[];
 }
 
@@ -318,6 +319,7 @@ export default function ProjectSettings({ brandId, platform }: { brandId: string
         slideshowStyleId: typeof adv.slideshowStyleId === "string" ? adv.slideshowStyleId : "",
         composition: typeof adv.composition === "string" ? adv.composition : "auto",
         negativePrompt: typeof adv.negativePrompt === "string" ? adv.negativePrompt : "",
+        positivePrompt: typeof adv.positivePrompt === "string" ? adv.positivePrompt : "",
         characters: cleanCharacters(adv.characters),
       });
       setNewLogo(null);
@@ -384,7 +386,7 @@ export default function ProjectSettings({ brandId, platform }: { brandId: string
           headingFont: state.headingFont,
           tone: state.tone,
           referenceImages: state.referenceImages,
-          advancedSettings: { kind: state.kind, bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, slideshowStyleId: state.slideshowStyleId, composition: state.composition, negativePrompt: state.negativePrompt, characters: state.characters },
+          advancedSettings: { kind: state.kind, bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, slideshowStyleId: state.slideshowStyleId, composition: state.composition, negativePrompt: state.negativePrompt, positivePrompt: state.positivePrompt, characters: state.characters },
         }),
       });
       const logoPut = fetch("/api/projects/logo", {
@@ -607,6 +609,18 @@ export default function ProjectSettings({ brandId, platform }: { brandId: string
             className={`${FIELD} h-auto py-2.5 resize-none`}
           />
           <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">Things that should never appear. Applied to every ad, carousel and template made for this project.</p>
+        </Section>
+
+        {/* ===== Positive prompt ===== */}
+        <Section icon={<Sparkles size={15} />} title="Positive prompt">
+          <textarea
+            value={state.positivePrompt}
+            onChange={(e) => patch({ positivePrompt: e.target.value.slice(0, 600) })}
+            rows={3}
+            placeholder="e.g. always show real people, warm natural light, rounded shapes, one bold accent colour"
+            className={`${FIELD} h-auto py-2.5 resize-none`}
+          />
+          <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">Things that should always be in the picture. Applied to every ad, carousel and template made for this project.</p>
         </Section>
 
         {/* ===== Carousel ===== */}

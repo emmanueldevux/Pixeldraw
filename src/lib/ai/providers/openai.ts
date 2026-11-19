@@ -21,7 +21,7 @@ import { pickCreativeDirection, pickVisualSubject } from "@/lib/ai/creativeDirec
 import { compositeLogo, pickLogoPlacementForComposition, type LogoPosition } from "@/lib/ai/logoComposite";
 import { getFontStyleDescriptor } from "@/lib/fonts";
 import type { LayoutArchetype } from "@/types";
-import { recordOpenAIImage, recordOpenAIText, currentNegative } from "@/lib/billing/usage";
+import { recordOpenAIImage, recordOpenAIText, brandRulesText } from "@/lib/billing/usage";
 import { imageOutTokens } from "@/lib/billing/metered";
 
 export function getClient(): OpenAI {
@@ -45,11 +45,11 @@ function instrument(client: OpenAI): OpenAI {
   for (const method of ["generate", "edit"] as const) {
     const orig = (client.images[method] as (...a: unknown[]) => Promise<unknown>).bind(client.images);
     (client.images as unknown as Record<string, unknown>)[method] = async (...args: unknown[]) => {
-      // The project's negative prompt rides along on every image this request makes.
-      const neg = currentNegative();
+      // The project's positive and negative prompts ride along on every image this request makes.
+      const rules = brandRulesText();
       const req = args[0] as { prompt?: string } | undefined;
-      if (neg && req && typeof req.prompt === "string" && !req.prompt.includes("NEVER INCLUDE (brand rules)")) {
-        args[0] = { ...req, prompt: `${req.prompt}\n\nNEVER INCLUDE (brand rules): ${neg}` };
+      if (rules && req && typeof req.prompt === "string" && !req.prompt.includes("(brand rules)")) {
+        args[0] = { ...req, prompt: `${req.prompt}\n\n${rules}` };
       }
       const res = await orig(...args);
       const body = args[0] as { model?: string; size?: string; quality?: string; image?: unknown };
