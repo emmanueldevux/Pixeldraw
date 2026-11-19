@@ -105,16 +105,17 @@ function TemplatesInner() {
                     onClick={() => setOpen(t)}
                     className="relative break-inside-avoid rounded-2xl overflow-hidden group cursor-pointer bg-gray-100"
                   >
-                    <div className={`relative w-full ${ASPECT_CLASS[t.aspect] || "aspect-[9/16]"}`}>
-                      {t.coverImages[0] ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={t.coverImages[0]} alt={t.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      ) : (
+                    {t.coverImages[0] ? (
+                      // Cover image: full width, natural height (no cropping).
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={t.coverImages[0]} alt={t.title} className="block w-full h-auto transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                      <div className={`relative w-full ${ASPECT_CLASS[t.aspect] || "aspect-[9/16]"}`}>
                         <div className="absolute inset-0 [&>div]:!max-h-none [&>div]:h-full [&>div]:rounded-none">
                           <Placeholder template={t} />
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100">
                       <span className="flex items-center gap-2 px-4 py-2 bg-[#CCFF00] text-black text-sm font-semibold rounded-full shadow-lg">
                         <Sparkles size={16} /> Use template

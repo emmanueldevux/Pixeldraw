@@ -132,3 +132,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0039 — Publish / Unpublish buttons for carousel and slideshow styles
 - Same as templates: draft -> "Save draft" + "Publish"; published -> "Unpublish" + "Save changes". Checkbox removed.
+
+## PRJ-0040 — Template cards: image at full width, natural height
+- Cards with a cover image now show it at width 100% and height auto (no cropping, so each card is as tall as its image). Cards without an image keep the placeholder at the template's shape.
