@@ -95,7 +95,6 @@ export default function UseTemplateModal({ template, onClose }: { template: Publ
       requireAuth(() => {});
       return;
     }
-    if (template.needsProduct && !product) return setErr("Upload a photo of your product first.");
     if (template.kind === "pack" && !(values.Brief || "").trim()) return setErr("Tell us what the ad is for.");
     setBusy(true);
     setErr(null);
@@ -183,7 +182,7 @@ export default function UseTemplateModal({ template, onClose }: { template: Publ
 
                 {/* Product */}
                 <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-2">Product photo{template.needsProduct ? "" : " (optional)"}</p>
+                  <p className="text-sm font-semibold text-gray-900 mb-2">Product photo (optional)</p>
                   {product ? (
                     <div className="flex items-center gap-3 rounded-xl border border-gray-200 p-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

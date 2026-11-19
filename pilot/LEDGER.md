@@ -120,3 +120,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0035 — Fix: "Invalid prisma.designTemplate.create()" when saving a template
 - Cause: the DesignTemplate model in prisma/schema.prisma had no `kind`, `refImages`, `packDna` or `refDnas` columns, but the code saves them, so Prisma rejected every new template. Added the four columns (defaults keep existing rows valid). `npm start` applies them with `prisma db push`.
+
+## PRJ-0036 — Product photo is always optional
+- Removed the "Users must upload a product photo" checkbox. The Use-template popup never requires a photo (label says optional) and the generate API no longer rejects a missing one. The stored `needsProduct` value is ignored except for the cost estimate.

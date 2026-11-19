@@ -37,7 +37,6 @@ async function handlePOST(request: Request) {
   if (!template || !template.published) return NextResponse.json({ error: "Template not found" }, { status: 404 });
 
   const productImage = typeof body?.productImage === "string" && body.productImage.startsWith("data:image") ? body.productImage : null;
-  if (template.needsProduct && !productImage) return NextResponse.json({ error: "Upload a photo of your product first" }, { status: 400 });
   if (productImage && productImage.length > 14_000_000) return NextResponse.json({ error: "That photo is too large. Use one under 10 MB." }, { status: 400 });
 
   const values: Record<string, string> = {};
