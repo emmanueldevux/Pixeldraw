@@ -26,6 +26,7 @@ import type { PlatformKey } from "@/types";
 export type ProjectKind = "ads" | "carousels" | "slideshows" | "thumbnails";
 
 const BUSINESS: ShellStep = { id: "business", title: "Tell us about the business", sub: "This is what the AI writes from, so be specific. You can change it later in project settings." };
+const TEMPLATE_START: ShellStep = { id: "business", title: "Set up your project", sub: "Add your details, or copy the style of a project you already have." };
 const REFS: ShellStep = { id: "refs", title: "Add references", sub: "Optional. Pick styles you like or upload designs to copy the feel from." };
 const LOOK: ShellStep = { id: "look", title: "Colours and font", sub: "Optional. Set your brand colours, tone and heading font." };
 
@@ -145,7 +146,12 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
   const [kind, setKind] = useState<ProjectKind | undefined>(kindProp);
   const needPicker = kindProp === undefined;
   const K = kind ? KINDS[kind] : null;
-  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, ...(K.extra && !(presetPackId && kind !== "slideshows") ? [K.extra] : []), ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
+  // From a template the template IS the style (no references step), and picking an existing project's style
+  // skips everything else: the new project copies it.
+  const [brainFrom, setBrainFrom] = useState("");
+  const KIND_STEPS: ShellStep[] = presetPackId && K
+    ? brainFrom ? [TEMPLATE_START] : [TEMPLATE_START, K.size, ...(K.extra && kind === "slideshows" ? [K.extra] : []), ...(K.style ? [LOOK] : [])]
+    : K ? [BUSINESS, K.size, ...(K.extra && !(presetPackId && kind !== "slideshows") ? [K.extra] : []), ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
   const STEPS: ShellStep[] = needPicker ? [PICK, ...KIND_STEPS] : KIND_STEPS;
   // Coming from a template: it is already chosen, so the template step is skipped.
   const [adPackId, setAdPackId] = useState(kindProp === "ads" ? presetPackId || "" : "");
@@ -162,15 +168,17 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
   // Started from a template: the name is optional (defaults to the template's name) and the user can borrow
   // the brand brain, colours and font of one of their existing projects instead of typing details.
   const fromTemplate = !!presetPackId;
-  const [brainFrom, setBrainFrom] = useState("");
-  const [brainSources, setBrainSources] = useState<{ id: string; name: string }[]>([]);
+  const [brainSources, setBrainSources] = useState<{ id: string; name: string; platforms: string[] }[]>([]);
   useEffect(() => {
     if (!fromTemplate) return;
-    fetch("/api/projects").then((r) => (r.ok ? r.json() : { data: [] })).then((d) => setBrainSources((d.data || []).map((b: { id: string; name?: string; brandName?: string }) => ({ id: b.id, name: b.name || b.brandName || "Project" })))).catch(() => {});
+    fetch("/api/projects").then((r) => (r.ok ? r.json() : { data: [] })).then((d) => setBrainSources((d.data || []).map((b: { id: string; name?: string; brandName?: string; channels?: { platform: string }[] }) => ({ id: b.id, name: b.name || b.brandName || "Project", platforms: (b.channels || []).map((c) => c.platform) })))).catch(() => {});
   }, [fromTemplate]);
   async function pickBrain(id: string) {
     setBrainFrom(id);
     if (!id) return;
+    // Keep the new project the same size as the one it copies, when that fits this kind of project.
+    const fit = (brainSources.find((s) => s.id === id)?.platforms || []).find((p) => (kind === "thumbnails" ? p === "youtube_thumbnail" : kind === "slideshows" ? p === "tiktok" : p !== "youtube_thumbnail" && p !== "tiktok"));
+    if (fit && fit in PLATFORM_PRESETS) setPlatform(fit as PlatformKey);
     try {
       const j = await fetch(`/api/projects/style?brandId=${id}`).then((r) => r.json());
       const d = j?.data;
@@ -345,15 +353,16 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
         <div className="space-y-5">
           {fromTemplate && brainSources.length > 0 && (
             <label className="block rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <span className="mb-1.5 block text-sm font-semibold text-gray-800">Use an existing project&apos;s brain <span className="font-normal text-gray-400">(optional)</span></span>
+              <span className="mb-1.5 block text-sm font-semibold text-gray-800">Use an existing project&apos;s style <span className="font-normal text-gray-400">(optional)</span></span>
               <select className="w-full h-12 rounded-xl border border-gray-200 bg-white px-3 text-sm" value={brainFrom} onChange={(e) => void pickBrain(e.target.value)}>
                 <option value="">No, I&apos;ll add details myself</option>
                 {brainSources.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
-              <span className="mt-1.5 block text-xs text-gray-500">Copies that project&apos;s brand voice, audience, colours and font, so you can skip the details below.</span>
+              <span className="mt-1.5 block text-xs text-gray-500">Copies that project&apos;s voice, audience, colours and font. Nothing else to fill in.</span>
             </label>
           )}
           <LInput label={fromTemplate ? "Project name (optional)" : "Business or brand name"} value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder={fromTemplate && templateName ? templateName : "e.g. Bean & Brew Coffee"} autoFocus />
+          {!brainFrom && <>
           <LTextarea label="What do you sell or offer?" value={offering} onChange={(e) => setOffering(e.target.value)} rows={3} placeholder="e.g. Specialty coffee, pastries and beans for home brewing, in Lagos" />
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-gray-800">Website <span className="font-normal text-gray-400">(optional)</span></span>
@@ -375,6 +384,7 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
             </label>
             <p className="mt-1 text-xs text-gray-500">Placed exactly as-is on every design. Never redrawn.</p>
           </div>
+          </>}
         </div>
       )}
 
@@ -386,7 +396,7 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
       {sid === "type" && kind === "slideshows" && (
         <div className="space-y-6">
           <CharacterSheet characters={characters} onChange={setCharacters} />
-          <SlideshowStylePick value={slideshowStyleId} onChange={setSlideshowStyleId} />
+          {!fromTemplate && <SlideshowStylePick value={slideshowStyleId} onChange={setSlideshowStyleId} />}
         </div>
       )}
 

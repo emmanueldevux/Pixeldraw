@@ -163,3 +163,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0047 — Written templates with example images also start a project
 - Template 14 ("Premium Interior") is a written-prompt template with example images, so it still opened the old Generate popup. Any template with example images now opens the project flow, and `resolvePack` treats such a template's example images as its reference images (no studied DNA, so results are less tuned than a reference pack). Templates 1-3 have no images and keep the old popup.
+
+## PRJ-0048 — Template flow: copy a project's style and you're done
+- From a template the references step is gone (the template is the style). The "brain" picker is now "Use an existing project's style". Choosing one copies its voice, audience, colours, font and size, hides the detail fields, and the wizard is a single step: optional name, then Create project (it opens the AI studio). Without a project selected the steps are: details, size, (slideshows: character), colours and font. Slideshows from a template no longer ask for a style again.
