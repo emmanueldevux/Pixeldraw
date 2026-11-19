@@ -49,9 +49,15 @@ interface Slot {
   scene: string;
   person: PlannedSlide["person"];
   frame?: string;
+  foot?: { url: string; view: string }; // a saved footage image: already stored, no upload, no credits
   url?: string;
   view?: string;
   state: "wait" | "work" | "ok" | "fail";
+}
+
+function readFootage(v: unknown): { url: string; view: string }[] {
+  if (!Array.isArray(v)) return [];
+  return v.filter((x): x is { url: string; view: string } => !!x && typeof x.url === "string" && typeof x.view === "string");
 }
 
 async function pool<T>(items: T[], n: number, fn: (x: T) => Promise<void>, stop: () => boolean) {
@@ -89,6 +95,7 @@ export default function SlideshowWizard({
   const [count, setCount] = useState(6);
   const [aspect, setAspect] = useState<SlideshowAspect>("3:4");
   const [frames, setFrames] = useState<string[]>([]);
+  const [footage, setFootage] = useState<{ url: string; view: string }[]>([]); // the project's saved free footage
   const [modal, setModal] = useState<"" | "char" | "style" | "video">("");
 
   // running
@@ -102,6 +109,7 @@ export default function SlideshowWizard({
     fetch("/api/slideshow/styles").then((r) => r.json()).then((d) => setStyles(d.styles || [])).catch(() => setStyles([]));
   useEffect(() => {
     if (brandId) fetch(`/api/slideshow/character?brandId=${encodeURIComponent(brandId)}`).then((r) => r.json()).then((d) => setCharacters(d.characters || [])).catch(() => {});
+    if (brandId) fetch(`/api/projects/style?brandId=${encodeURIComponent(brandId)}`).then((r) => r.json()).then((d) => setFootage(readFootage(d?.data?.advancedSettings?.slideshowFootage))).catch(() => {});
     loadStyles();
   }, [brandId]);
 
@@ -110,7 +118,7 @@ export default function SlideshowWizard({
 
   const perSlide = format === "split" ? 2 : 1;
   const photoSlots = count * perSlide;
-  const frameUse = Math.min(frames.length, photoSlots);
+  const frameUse = Math.min(frames.length + footage.length, photoSlots);
   const aiPhotos = photoSlots - frameUse;
   const character = characters.find((c) => c.id === characterId) || null;
   const style = styles.find((s) => s.id === styleId) || null;
@@ -162,9 +170,19 @@ export default function SlideshowWizard({
         all.push({ slide: idx, half: 0, scene: p.scene, person: p.person, state: "wait" });
         if (p.kind === "split") all.push({ slide: idx, half: 1, scene: p.scene2, person: p.person, state: "wait" });
       });
+      // Free photos first: frames picked from a video in this run, then the project's saved footage (shuffled, so each slideshow differs).
+      const freePool: ({ frame: string } | { foot: { url: string; view: string } })[] = [
+        ...frames.map((f) => ({ frame: f })),
+        ...[...footage].sort(() => Math.random() - 0.5).map((f) => ({ foot: f })),
+      ];
       let fi = 0;
       for (const idx of slotOrder(plan.slides.length)) {
-        for (const s of all.filter((x) => x.slide === idx)) if (fi < frames.length) s.frame = frames[fi++];
+        for (const s of all.filter((x) => x.slide === idx)) {
+          if (fi >= freePool.length) continue;
+          const a = freePool[fi++];
+          if ("frame" in a) s.frame = a.frame;
+          else s.foot = a.foot;
+        }
       }
       setSlots([...all]);
       const bump = () => setSlots([...all]);
@@ -181,7 +199,11 @@ export default function SlideshowWizard({
           bump();
           for (let attempt = 0; attempt < 2 && s.state !== "ok" && !stop(); attempt++) {
             try {
-              if (s.frame) {
+              if (s.foot) {
+                s.url = s.foot.url;
+                s.view = s.foot.view;
+                s.state = "ok";
+              } else if (s.frame) {
                 const up = await uploadData(s.frame);
                 s.url = up.url;
                 s.view = up.viewUrl;
@@ -411,6 +433,7 @@ export default function SlideshowWizard({
                   ))}
                 </div>
               )}
+              {footage.length > 0 && <p className="text-xs text-emerald-700 mb-2">{footage.length} saved footage image{footage.length > 1 ? "s" : ""} from your project settings will fill photo slots first (free).</p>}
               <LButton variant="secondary" icon={<Film className="w-4 h-4" />} onClick={() => setModal("video")}>{frames.length ? "Change frames" : "Choose a video"}</LButton>
             </div>
           </div>
@@ -425,7 +448,7 @@ export default function SlideshowWizard({
                 ["Slides", `${count} slides, ${aspect}`],
                 ["Character", character ? character.name : "None"],
                 ["Style", style ? style.name : "Default"],
-                ["Photos", `${aiPhotos} made by AI${frameUse ? `, ${frameUse} from your video (free)` : ""}`],
+                ["Photos", `${aiPhotos} made by AI${frameUse ? `, ${frameUse} from your video and saved footage (free)` : ""}`],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-3 px-4 py-2.5">
                   <span className="w-24 shrink-0 text-gray-500">{k}</span>

@@ -12,6 +12,8 @@ import OffersBox from "./OffersBox";
 import CarouselStyleWizard from "./CarouselStyleWizard";
 import AdPackWizard from "./AdPackWizard";
 import CharacterWizard from "./CharacterWizard";
+import VideoFramePicker from "./VideoFramePicker";
+import { resizePhoto, uploadData } from "@/lib/slideshow/frames";
 import { cleanCharacters, type Character } from "@/lib/slideshow/types";
 import { EMPTY_PROJECT_CAROUSEL, readProjectCarousel, type ProjectCarouselSettings } from "@/lib/carousels/types";
 
@@ -67,6 +69,7 @@ interface State {
   negativePrompt: string;
   positivePrompt: string;
   characters: Character[];
+  slideshowFootage: Footage[];
 }
 
 const EMPTY_ECOM: EcommerceSettings = {
@@ -278,6 +281,9 @@ function inferKind(adv: Record<string, unknown>, platform?: string | null): stri
   return "ads";
 }
 
+type Footage = { url: string; view: string };
+const readFootage = (v: unknown): Footage[] => (Array.isArray(v) ? v.filter((x): x is Footage => !!x && typeof x.url === "string" && typeof x.view === "string") : []);
+
 export default function ProjectSettings({ brandId, platform }: { brandId: string | null; platform?: string | null }) {
   const [state, setState] = useState<State | null>(null);
   const [loading, setLoading] = useState(false);
@@ -321,6 +327,7 @@ export default function ProjectSettings({ brandId, platform }: { brandId: string
         negativePrompt: typeof adv.negativePrompt === "string" ? adv.negativePrompt : "",
         positivePrompt: typeof adv.positivePrompt === "string" ? adv.positivePrompt : "",
         characters: cleanCharacters(adv.characters),
+        slideshowFootage: readFootage(adv.slideshowFootage),
       });
       setNewLogo(null);
     } catch (e) {
@@ -386,7 +393,7 @@ export default function ProjectSettings({ brandId, platform }: { brandId: string
           headingFont: state.headingFont,
           tone: state.tone,
           referenceImages: state.referenceImages,
-          advancedSettings: { kind: state.kind, bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, slideshowStyleId: state.slideshowStyleId, composition: state.composition, negativePrompt: state.negativePrompt, positivePrompt: state.positivePrompt, characters: state.characters },
+          advancedSettings: { kind: state.kind, bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, slideshowStyleId: state.slideshowStyleId, composition: state.composition, negativePrompt: state.negativePrompt, positivePrompt: state.positivePrompt, characters: state.characters, slideshowFootage: state.slideshowFootage },
         }),
       });
       const logoPut = fetch("/api/projects/logo", {
@@ -605,6 +612,12 @@ export default function ProjectSettings({ brandId, platform }: { brandId: string
         )}
 
         {/* ===== Characters (TikTok slideshows) ===== */}
+        {state.kind === "slideshows" && (
+          <Section icon={<ImageIcon size={15} />} title="Your footage">
+            <FootageLibrary items={state.slideshowFootage} onChange={(slideshowFootage) => patch({ slideshowFootage })} />
+          </Section>
+        )}
+
         {state.kind === "slideshows" && (
           <Section icon={<UserRound size={15} />} title="Characters">
             <CharacterSheet characters={state.characters} onChange={(characters) => patch({ characters })} />
@@ -916,6 +929,84 @@ export function AdPackPicker({ value, onChange, purpose = "ad", variant = "selec
       <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">
         {thumb ? "Thumbnails follow your reference thumbnails: the AI picks the best one for each request. Thumbnails have no text unless you ask for it, and use your character sheet or an attached photo as the subject. Ask for a size like 16:9, 1.91:1, 3:2, 4:3 or 1:1." : "Single ads follow the pack: the AI picks the best layout for each request and swaps in your colours, fonts and product. On Auto it chooses the best pack for the request (your own packs first, if you made any). If you've added your own reference images above, those are used instead."}
       </p>
+    </div>
+  );
+}
+
+// ==================== Free footage for slideshows ====================
+// Images (many at once) or frames from a video, kept with the project. Slideshows fill their photo slots
+// with these first, so no credits are spent on those photos. Frames are cut in the browser (the video is never uploaded).
+const MAX_FOOTAGE = 40;
+export function FootageLibrary({ items, onChange }: { items: Footage[]; onChange: (f: Footage[]) => void }) {
+  const pick = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState("");
+  const [err, setErr] = useState("");
+  const [video, setVideo] = useState(false);
+  const room = MAX_FOOTAGE - items.length;
+
+  async function addImages(files: FileList | null) {
+    if (!files?.length) return;
+    setErr("");
+    const list = Array.from(files).filter((f) => f.type.startsWith("image/")).slice(0, room);
+    const next = [...items];
+    try {
+      for (let i = 0; i < list.length; i++) {
+        setBusy(`Adding ${i + 1} of ${list.length}…`);
+        const up = await uploadData(await resizePhoto(list[i], 1280));
+        next.push({ url: up.url, view: up.viewUrl });
+        onChange([...next]);
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't add that image");
+    }
+    setBusy("");
+    if (pick.current) pick.current.value = "";
+  }
+
+  async function addFrames(frames: string[]) {
+    setVideo(false);
+    setErr("");
+    const list = frames.slice(0, room);
+    const next = [...items];
+    try {
+      for (let i = 0; i < list.length; i++) {
+        setBusy(`Adding frame ${i + 1} of ${list.length}…`);
+        const up = await uploadData(list[i]);
+        next.push({ url: up.url, view: up.viewUrl });
+        onChange([...next]);
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't add those frames");
+    }
+    setBusy("");
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] text-zinc-400 leading-relaxed">Free photos for your slideshows. Slides use these first, so no credits are spent on them. Add many images, or pick frames from a video (the video stays on your device).</p>
+      {items.length > 0 && (
+        <div className="grid grid-cols-4 gap-1.5">
+          {items.map((f, k) => (
+            <div key={f.url + k} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-zinc-200 bg-zinc-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={f.view} alt="" className="w-full h-full object-cover" />
+              <button type="button" onClick={() => onChange(items.filter((_, j) => j !== k))} className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center" aria-label="Remove"><X size={10} /></button>
+            </div>
+          ))}
+        </div>
+      )}
+      <input ref={pick} type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={(e) => addImages(e.target.files)} />
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" disabled={!!busy || room <= 0} onClick={() => pick.current?.click()} className="h-11 rounded-xl border-2 border-dashed border-zinc-300 flex items-center justify-center gap-1.5 text-[13px] font-semibold text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 transition-colors disabled:opacity-50">
+          <Plus className="w-4 h-4" /> Add images
+        </button>
+        <button type="button" disabled={!!busy || room <= 0} onClick={() => setVideo(true)} className="h-11 rounded-xl border-2 border-dashed border-zinc-300 flex items-center justify-center gap-1.5 text-[13px] font-semibold text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 transition-colors disabled:opacity-50">
+          <Plus className="w-4 h-4" /> Add a video
+        </button>
+      </div>
+      <p className="text-[11px] text-zinc-400">{busy ? busy : `${items.length} of ${MAX_FOOTAGE} saved${items.length ? ". Remember to press Save settings." : "."}`}</p>
+      {err && <p className="text-[11px] text-red-500">{err}</p>}
+      {video && <VideoFramePicker ratio={3 / 4} want={Math.min(24, Math.max(room, 1))} onClose={() => setVideo(false)} onPick={addFrames} />}
     </div>
   );
 }
