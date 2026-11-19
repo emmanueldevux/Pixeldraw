@@ -181,3 +181,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Revised: heading back on top; composer pinned to the bottom of the screen on mobile.
 - Heading on mobile: "Make an ad for my" on line 1, the typed brand on its own line below.
 - /chat tiles: 4 per row on mobile, smaller padding/text.
+- /chat tiles mobile: no padding, image fills tile, aligned to top.

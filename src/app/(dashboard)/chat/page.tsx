@@ -329,10 +329,10 @@ export default function FreeChatPage() {
                 key={t.id}
                 type="button"
                 onClick={() => pickTemplate(t)}
-                className="aspect-square rounded-xl overflow-hidden relative cursor-pointer border border-gray-200 group p-1.5 sm:p-[25px] bg-[#B5B6B8]"
+                className="aspect-square rounded-xl overflow-hidden relative cursor-pointer border border-gray-200 group p-0 sm:p-[25px] bg-[#B5B6B8]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={t.publicUrl} alt={t.name} className="w-full h-full object-contain mb-[10px] rounded-[10px]" />
+                <img src={t.publicUrl} alt={t.name} className="w-full h-full object-cover object-top sm:object-contain sm:mb-[10px] sm:rounded-[10px]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
                 <span className="absolute bottom-1 left-1.5 right-1.5 sm:bottom-2 sm:left-3 sm:right-3 text-[8px] sm:text-[10px] font-semibold text-white truncate">{t.name}</span>
                 <span className="absolute inset-0 hidden group-hover:flex items-center justify-center bg-black/30 text-white text-[9px] sm:text-[11px] text-center font-semibold">
