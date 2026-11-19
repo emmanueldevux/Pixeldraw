@@ -77,8 +77,10 @@ export function namedFormat(text: string): AdFormat | null {
   let best: { f: AdFormat; len: number } | null = null;
   for (const f of AD_FORMATS) {
     for (const a of [f.name.toLowerCase(), ...(f.aliases || [])]) {
-      if (f.needsCue && !cued) continue;
-      const re = new RegExp(`(^|[^a-z])${a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`);
+      const esc = a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`(^|[^a-z])${esc}([^a-z]|$)`);
+      // generic words count only with a cue ("as a", "format"...) or when directly followed by post/ad/card/style ("comparison post")
+      if (f.needsCue && !cued && !new RegExp(`(^|[^a-z])${esc}\\s+(post|posts|ad|ads|card|cards|format|layout|style|template)([^a-z]|$)`).test(t)) continue;
       if (re.test(t) && (!best || a.length > best.len)) best = { f, len: a.length };
     }
   }
