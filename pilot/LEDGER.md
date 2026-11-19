@@ -208,3 +208,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - /dashboard mobile: Files/Projects card restored; container padding, border, shadow and background removed on mobile so project cards fill the width.
 - Header menu (hamburger) button: light grey bg + border, same as the other header buttons; header is shared so it applies on every page.
 - Reverted the mobile .uxlly-content 12px side padding; back to the original 1.5rem.
+- Header hamburger: no border/padding/bg; icon lines stretched wider (28px).
