@@ -181,16 +181,16 @@ export default function DashboardPage() {
       <OnboardingReminder />
       <div className="uxlly-content">
         {/* ==================== Stat cards ==================== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-8">
           {stats.map((stat) => (
-            <LightCard key={stat.label} className="flex items-stretch gap-4">
-              <div className={`self-stretch aspect-square rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
-                <stat.icon size={32} className={stat.color} />
+            <LightCard key={stat.label} className="flex flex-col sm:flex-row items-start sm:items-stretch gap-2 sm:gap-4 !p-3 sm:!p-5">
+              <div className={`w-9 h-9 sm:w-auto sm:h-auto sm:self-stretch aspect-square rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
+                <stat.icon className={`${stat.color} w-5 h-5 sm:w-8 sm:h-8`} />
               </div>
               <div>
-                <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
-                <p className="text-sm text-gray-500">{stat.label}</p>
-                <p className="text-xs text-gray-400 mt-1">{stat.change}</p>
+                <p className="text-xl sm:text-2xl font-semibold text-gray-900 leading-tight">{stat.value}</p>
+                <p className="text-xs sm:text-sm text-gray-500">{stat.label}</p>
+                <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1">{stat.change}</p>
               </div>
             </LightCard>
           ))}
