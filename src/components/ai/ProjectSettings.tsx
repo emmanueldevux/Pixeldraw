@@ -512,6 +512,18 @@ export default function ProjectSettings({ brandId, platform }: { brandId: string
 </div>
         </Section>
 
+        {/* ===== Language ===== */}
+        <Section icon={<Languages size={15} />} title="Language">
+          <label className={LABEL}>On-image text language</label>
+          <Select
+            muted
+            value={state.language}
+            onChange={(v) => patch({ language: v })}
+            options={[{ value: "", label: "Default (English)" }, ...toOpts(LANGUAGES)]}
+          />
+          <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">Headlines and captions on the graphics will be written in this language.</p>
+        </Section>
+
         {/* ===== Logo ===== */}
         <Section icon={<ImageIcon size={15} />} title="Brand logo">
           <div className="flex flex-col gap-3.5">
@@ -630,17 +642,6 @@ export default function ProjectSettings({ brandId, platform }: { brandId: string
           </Section>
         )}
 
-        {/* ===== Language ===== */}
-        <Section icon={<Languages size={15} />} title="Language">
-          <label className={LABEL}>On-image text language</label>
-          <Select
-            muted
-            value={state.language}
-            onChange={(v) => patch({ language: v })}
-            options={[{ value: "", label: "Default (English)" }, ...toOpts(LANGUAGES)]}
-          />
-          <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">Headlines and captions on the graphics will be written in this language.</p>
-        </Section>
 
         {/* ===== Ecommerce ===== */}
         <Section
