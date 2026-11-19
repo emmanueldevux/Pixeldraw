@@ -419,9 +419,6 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="flex-1 overflow-y-auto">
-        {/* ===== Offers (the one part of the brand brain users edit) ===== */}
-        <OffersBox brandId={brandId} />
-
         {/* ===== References ===== */}
         <Section
           icon={<ImageIcon size={15} />}
@@ -484,6 +481,9 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
             />
           </div>
           </Section>
+
+        {/* ===== Offers, below Style references and Colors (the one part of the brand brain users edit) ===== */}
+        <OffersBox brandId={brandId} />
 
         {/* ===== Fonts ===== */}
         <Section icon={<Type size={15} />} title="Fonts">

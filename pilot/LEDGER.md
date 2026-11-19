@@ -199,3 +199,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Composition + format + pack together: fixed text position limits the shortlist to text-block-friendly formats; a named structured format becomes the visual idea only, text goes in the fixed block; pack still teaches the look; logo is pasted above the block as before.
 - Library only when the user names a format or explicitly asks for a different layout/style/surprise; a plain "make an ad" / "another one" stays on the simple path (reference pack + composition).
 - Smarter product interaction: packs/director adapt the reference pose to how the product is really used (bed = lie on it, bowl = eat from it...), realistic scale.
+- Project settings: Offers moved below Style references and Colors.
