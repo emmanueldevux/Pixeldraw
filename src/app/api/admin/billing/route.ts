@@ -2,11 +2,11 @@
 // /api/admin/billing — admin-only (ADMIN_EMAILS in .env)
 // GET  -> settings, pricing rules, plans, recent activity
 // POST -> { action: saveSettings | saveRule | deleteRule | savePlan |
-//                   findUser | grantCredits | removeCredits | unlockFree }
+//                   findUser | listUsers | setDisabled | grantCredits | removeCredits | unlockFree }
 // ============================================================
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/billing/http";
+import { requireAdmin, isAdminEmail } from "@/lib/billing/http";
 import { getSettings, saveSettings } from "@/lib/billing/settings";
 import { getRules, getPlans } from "@/lib/billing/pricing";
 import { getBalanceMilli, grantCredits, debitCredits } from "@/lib/billing/ledger";
@@ -98,6 +98,25 @@ export async function POST(request: Request) {
         };
         const plan = await db.billingPlan.upsert({ where: { key }, create: { key, ...data }, update: data });
         return NextResponse.json({ plan });
+      }
+
+      case "listUsers": {
+        const rows = await db.user.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 300,
+          select: { id: true, email: true, name: true, image: true, createdAt: true, disabled: true },
+        });
+        const users = await Promise.all(rows.map(async (u) => ({ ...u, balanceMilli: await getBalanceMilli(u.id).catch(() => 0) })));
+        const total = await db.user.count();
+        return NextResponse.json({ users, total });
+      }
+
+      case "setDisabled": {
+        const u = await userByEmail(body.email);
+        if (!u) return NextResponse.json({ error: "No user with that email" }, { status: 404 });
+        if (u.id === admin.id || isAdminEmail(u.email)) return NextResponse.json({ error: "You can't disable an admin." }, { status: 400 });
+        await db.user.update({ where: { id: u.id }, data: { disabled: body.disabled === true } });
+        return NextResponse.json({ ok: true });
       }
 
       case "findUser": {

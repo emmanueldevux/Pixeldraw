@@ -249,42 +249,88 @@ function SettingsForm({ settings, onSave }: { settings: Settings; onSave: (s: Pa
   );
 }
 
+interface ListedUser { id: string; email: string; name: string | null; image: string | null; createdAt: string; disabled: boolean; balanceMilli: number }
+
 function UsersPanel({ setMsg }: { setMsg: (m: string) => void }) {
-  const [email, setEmail] = useState("");
+  const [users, setUsers] = useState<ListedUser[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [q, setQ] = useState("");
   const [found, setFound] = useState<FoundUser | null>(null);
   const [credits, setCredits] = useState("10");
   const [note, setNote] = useState("");
   const [extra, setExtra] = useState("3");
 
-  async function find(e?: string) {
-    try { setFound(await post({ action: "findUser", email: e ?? email })); setMsg(""); } catch (err) { setFound(null); setMsg((err as Error).message); }
+  const load = useCallback(async () => {
+    try { const j = await post({ action: "listUsers" }); setUsers(j.users); setTotal(j.total); } catch (err) { setUsers([]); setMsg((err as Error).message); }
+  }, [setMsg]);
+  useEffect(() => { void load(); }, [load]);
+
+  async function open(email: string) {
+    try { setFound(await post({ action: "findUser", email })); setMsg(""); } catch (err) { setMsg((err as Error).message); }
   }
   async function act(body: Record<string, unknown>, ok: string) {
-    try { await post({ ...body, email: found!.user.email }); setMsg(ok); await find(found!.user.email); } catch (err) { setMsg((err as Error).message); }
+    try { await post({ ...body, email: found!.user.email }); setMsg(ok); await open(found!.user.email); await load(); } catch (err) { setMsg((err as Error).message); }
   }
-  return (
-    <div className="mt-6 max-w-2xl">
-      <div className="flex gap-2">
-        <input className={inputCls} placeholder="user@email.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && find()} />
-        <button className={btnPrimary} onClick={() => find()}>Find</button>
-      </div>
-      {found && (
-        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-5">
-          <p className="font-semibold text-gray-900">{found.user.name || found.user.email}</p>
-          <p className="text-sm text-gray-500">{found.user.email}{found.plan ? ` · ${found.plan} plan` : ""}</p>
-          <p className="mt-3 text-sm text-gray-800">Balance: <b>{formatCredits(Math.max(0, found.balanceMilli))} credits</b> · Free trial: <b>{found.free.usedTotal}/{found.free.cap}</b> used {found.free.available ? "(open)" : "(locked)"}</p>
+  async function toggle(u: ListedUser) {
+    if (!u.disabled && !confirm(`Disable ${u.email}? They will be signed out and can't use the app until you enable them again.`)) return;
+    try { await post({ action: "setDisabled", email: u.email, disabled: !u.disabled }); setMsg(u.disabled ? "User enabled." : "User disabled."); await load(); } catch (err) { setMsg((err as Error).message); }
+  }
 
-          <div className="mt-4 grid sm:grid-cols-[1fr_1fr_auto_auto] gap-2">
-            <input className={inputCls} inputMode="decimal" value={credits} onChange={(e) => setCredits(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="credits" />
-            <input className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} placeholder="note (optional)" />
-            <button className={btnPrimary} onClick={() => act({ action: "grantCredits", credits: Number(credits), note }, "Credits granted.")}>Grant</button>
-            <button className={btnSecondary} onClick={() => act({ action: "removeCredits", credits: Number(credits), note }, "Credits removed.")}>Remove</button>
+  const shown = (users || []).filter((u) => !q.trim() || `${u.email} ${u.name || ""}`.toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <div className="mt-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <input className={`${inputCls} max-w-md`} placeholder="Search by name or email…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <span className="text-sm text-gray-500">{users ? `${shown.length} shown · ${total} users` : "Loading…"}</span>
+      </div>
+      <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <table className="w-full text-sm min-w-[720px]">
+          <thead className="text-left text-xs uppercase tracking-wide text-gray-500">
+            <tr><th className="px-4 py-3">User</th><th className="px-4 py-3">Joined</th><th className="px-4 py-3">Credits</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Actions</th></tr>
+          </thead>
+          <tbody>
+            {shown.map((u) => (
+              <tr key={u.id} className="border-t border-gray-100">
+                <td className="px-4 py-3"><p className="font-medium text-gray-900">{u.name || u.email}</p>{u.name && <p className="text-xs text-gray-500">{u.email}</p>}</td>
+                <td className="px-4 py-3 text-gray-600">{new Date(u.createdAt).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-gray-900">{formatCredits(Math.max(0, u.balanceMilli))}</td>
+                <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${u.disabled ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>{u.disabled ? "Disabled" : "Active"}</span></td>
+                <td className="px-4 py-3">
+                  <div className="flex justify-end gap-2">
+                    <button className={btnPrimary} onClick={() => void open(u.email)}>Add credits</button>
+                    <button className={btnSecondary} onClick={() => void toggle(u)}>{u.disabled ? "Enable" : "Disable"}</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {users && shown.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">No users found.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      {found && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setFound(null)}>
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold text-gray-900">{found.user.name || found.user.email}</p>
+                <p className="text-sm text-gray-500">{found.user.email}{found.plan ? ` · ${found.plan} plan` : ""}</p>
+              </div>
+              <button className="text-gray-400 hover:text-gray-800 text-xl leading-none" onClick={() => setFound(null)} aria-label="Close">×</button>
+            </div>
+            <p className="mt-3 text-sm text-gray-800">Balance: <b>{formatCredits(Math.max(0, found.balanceMilli))} credits</b> · Free trial: <b>{found.free.usedTotal}/{found.free.cap}</b> used {found.free.available ? "(open)" : "(locked)"}</p>
+            <div className="mt-4 grid sm:grid-cols-[1fr_1fr_auto_auto] gap-2">
+              <input className={inputCls} inputMode="decimal" value={credits} onChange={(e) => setCredits(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="credits" />
+              <input className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} placeholder="note (optional)" />
+              <button className={btnPrimary} onClick={() => act({ action: "grantCredits", credits: Number(credits), note }, "Credits granted.")}>Grant</button>
+              <button className={btnSecondary} onClick={() => act({ action: "removeCredits", credits: Number(credits), note }, "Credits removed.")}>Remove</button>
+            </div>
+            <div className="mt-3 grid sm:grid-cols-[1fr_auto] gap-2">
+              <input className={inputCls} inputMode="numeric" value={extra} onChange={(e) => setExtra(e.target.value.replace(/[^0-9]/g, ""))} placeholder="extra free images" />
+              <button className={btnSecondary} onClick={() => act({ action: "unlockFree", extra: Number(extra) }, "Free images added.")}>Unlock free images</button>
+            </div>
+            <ProfileAnswers p={found.profile} />
           </div>
-          <div className="mt-3 grid sm:grid-cols-[1fr_auto] gap-2">
-            <input className={inputCls} inputMode="numeric" value={extra} onChange={(e) => setExtra(e.target.value.replace(/[^0-9]/g, ""))} placeholder="extra free images" />
-            <button className={btnSecondary} onClick={() => act({ action: "unlockFree", extra: Number(extra) }, "Free images added.")}>Unlock free images</button>
-          </div>
-          <ProfileAnswers p={found.profile} />
         </div>
       )}
     </div>

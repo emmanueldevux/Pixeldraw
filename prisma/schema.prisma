@@ -21,6 +21,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?   // hashed — null for OAuth-only users
+  disabled      Boolean   @default(false) // set by an admin: the user cannot sign in or use the app
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

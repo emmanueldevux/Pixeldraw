@@ -50,6 +50,7 @@ export const authOptions: NextAuthOptions = {
         if (!user || !user.password) {
           throw new Error("Invalid email or password");
         }
+        if (user.disabled) throw new Error("This account has been disabled. Contact support.");
 
         const isValid = await bcrypt.compare(
           credentials.password,
@@ -70,7 +71,17 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user }) {
+      if (!user?.email) return true;
+      const u = await db.user.findUnique({ where: { email: user.email }, select: { disabled: true } }).catch(() => null);
+      return u?.disabled ? "/login?error=disabled" : true;
+    },
     async session({ session, token }) {
+      // A disabled user is treated as signed out everywhere (no user on the session).
+      if (token.sub) {
+        const u = await db.user.findUnique({ where: { id: token.sub }, select: { disabled: true } }).catch(() => null);
+        if (u?.disabled) return { expires: session.expires } as typeof session;
+      }
       if (session.user && token.sub) {
         session.user.id = token.sub;
       }

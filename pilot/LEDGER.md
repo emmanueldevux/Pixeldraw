@@ -108,3 +108,9 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - The admin "Templates" tab is replaced by "Static ads" (category Ads: templates and reference packs) and "Thumbnails" (thumbnail reference packs). Each tab lists only its own category, creates new items in it, and hides the category picker. Carousels and Slideshows unchanged.
 - `npm start` now runs `prisma db push --skip-generate` first (additive only, no `--accept-data-loss`) so the new coverImage/extraPrompt columns exist; their absence made the Carousels tab spin forever.
 - Rig admin worlds not updated for the renamed tabs.
+
+## PRJ-0033 — Admin Users: full list, add-credits popup, disable/enable
+- Admin > Users now lists every user (newest first, up to 300, searchable) with joined date, credit balance and Active/Disabled. Each row has "Add credits" (opens a popup with balance, Grant/Remove credits, unlock free images, onboarding answers) and "Disable"/"Enable".
+- New `User.disabled` column. A disabled user cannot sign in (password or Google) and an existing session is treated as signed out on the next request. Admins can't be disabled.
+- API: `listUsers`, `setDisabled` actions on /api/admin/billing. The old find-by-email box is replaced by the search field.
+- Not run against the real DB (needs the column; `npm start` applies it).
