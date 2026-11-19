@@ -232,7 +232,7 @@ async function handlePOST(request: Request) {
     const inventFormat = adReq && !refAd && (!!named || wantsNewFormat(askText));
     const prevConcepts = previousConcepts(messages as AIMessage[]);
     const variantSeed = `${askText}|${(messages as AIMessage[]).length}`;
-    const formatShortlist = inventFormat && !named ? candidateFormats({ previous: prevConcepts, hasProductPhoto: !!productImage, seed: variantSeed }) : [];
+    const formatShortlist = inventFormat && !named ? candidateFormats({ previous: prevConcepts, hasProductPhoto: !!productImage, seed: variantSeed, textBlockOnly: composition !== "auto" }) : [];
     const styleShortlist = inventFormat ? candidateStyles(prevConcepts, variantSeed) : [];
 
     // The project's Brand Brain: audience, voice, positioning, real offers.
@@ -366,7 +366,7 @@ async function handlePOST(request: Request) {
           // for a custom format the director's own composition notes in the brief carry it.
           const conceptFormat = (response.content.match(/^\s*Concept:\s*(.+)$/im)?.[1] || "").toLowerCase();
           const libFormat = named || AD_FORMATS.find((f) => conceptFormat.includes(f.name.toLowerCase())) || null;
-          const formatLayoutText = libFormat ? `${libFormat.name}: ${libFormat.layout}` : "the layout in the design notes below (the format the assistant chose); ignore the reference's own layout";
+          const formatLayoutText = libFormat ? (composition !== "auto" ? `${libFormat.name} (use its visual idea only; the hook and subline go in the fixed text block described below, not where this layout puts them): ${libFormat.layout}` : `${libFormat.name}: ${libFormat.layout}`) : "the layout in the design notes below (the format the assistant chose); ignore the reference's own layout";
           if (pack) {
             const sgAny = loadedBrand?.styleGuide as unknown as Record<string, string | null> | null;
             const sizeFor: Record<string, string> = { instagram_portrait: "1080x1350", facebook_portrait: "1080x1350", linkedin_portrait: "1080x1350", instagram_story: "1080x1920", instagram_reel: "1080x1920", tiktok: "1080x1920", snapchat: "1080x1920", pinterest: "1000x1500", twitter: "1600x900", linkedin_post: "1200x627", facebook: "1200x630", youtube_thumbnail: "1280x720" };

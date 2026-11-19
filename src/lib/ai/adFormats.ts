@@ -58,6 +58,15 @@ export const AD_FORMATS: AdFormat[] = [
   { name: "FAQ card", base: "graphic", layout: "Hook is the question everyone asks (top 15%). Answer as 2-3 short lines (20-55%). Product at bottom 40% with a 'yes' tick.", suits: "objections", aliases: ["faq", "objection ad", "common question"] },
 ];
 
+// Formats whose visual idea still works when ALL the text sits in one block at a spot the user fixed
+// (the composition setting). The structured ones (phone screens, tables, charts, timelines...) do not.
+const BLOCK_OK = new Set([
+  "UGC hand-held", "Metaphor made literal", "Customer quote close-up", "Flat lay", "Unboxing", "Seasonal scene", "Founder note",
+  "Sticky note on product", "Neon night shot", "Giant product", "Person with product", "Polaroid memory", "Product callouts",
+  "Offer badge", "Pill list", "Open loop question", "Hand-drawn doodle overlay", "Ingredient breakdown",
+]);
+export const worksWithTextBlock = (f: AdFormat) => BLOCK_OK.has(f.name);
+
 // The words that mark "I am naming a format" for the generic-sounding names.
 const CUE = /\b(as an?|like an?|in the style of|style of|format|layout|using an?)\b/i;
 
@@ -93,11 +102,12 @@ function seeded<T>(arr: T[], seed: number): T[] {
 }
 
 /** A repeatable shortlist: skips formats already used in this chat, mixes graphic and photo. */
-export function candidateFormats(opts: { previous: string[]; hasProductPhoto: boolean; seed: string; count?: number }): AdFormat[] {
+export function candidateFormats(opts: { previous: string[]; hasProductPhoto: boolean; seed: string; count?: number; textBlockOnly?: boolean }): AdFormat[] {
   const count = opts.count || 8;
   const used = opts.previous.join(" | ").toLowerCase();
-  const fresh = AD_FORMATS.filter((f) => !used.includes(f.name.toLowerCase()));
-  const pool = seeded(fresh.length >= count ? fresh : AD_FORMATS, hash(opts.seed));
+  const all = opts.textBlockOnly ? AD_FORMATS.filter(worksWithTextBlock) : AD_FORMATS;
+  const fresh = all.filter((f) => !used.includes(f.name.toLowerCase()));
+  const pool = seeded(fresh.length >= count ? fresh : all, hash(opts.seed));
   const want = opts.hasProductPhoto ? ["graphic", "photo"] : ["photo", "graphic"];
   const out: AdFormat[] = [];
   for (let i = 0; out.length < count && i < pool.length * 2; i++) {

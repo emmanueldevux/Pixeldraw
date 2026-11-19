@@ -66,6 +66,7 @@ export function adDirectorRule(opts: { inventFormat: boolean; previous: string[]
     L.push("2. FORMAT. The layout is set by a reference ad chosen separately, so do not invent a layout. Describe the subject, scene, mood and the exact copy; keep the composition notes short.");
   }
   if (!opts.inventFormat && (!opts.composition || opts.composition === "auto")) L.push("   TEXT POSITION: follow the reference ad's layout. Only if the user's request says where the text should go (for example text at the bottom, headline on the left), put it there and keep the reference's look.");
+  if (opts.inventFormat && opts.composition && opts.composition !== "auto") L.push("   The user fixed the text position, so use the format as the VISUAL idea only: the hook and subline always go in the one text block at that position. Anything the format draws itself (phone screen, table, chart, callout labels) stays inside the visual and must not overlap the text block.");
   if (opts.composition && opts.composition !== "auto") L.push("   The user fixed the TEXT POSITION (" + opts.composition.replace("-", " ") + "): keep all text in one block there, never move it, and do not invent another text layout. The reference ad still sets the look (style, colours, type, decoration).");
   L.push(
     "",
