@@ -24,14 +24,14 @@ export function CreditsPill({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={() => openTopUp()}
-      className={`flex items-center gap-2 h-9 pl-3 pr-3.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold text-gray-900 transition-colors ${className}`}
+      className={`flex items-center gap-1 sm:gap-2 h-9 pl-3 pr-3.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold text-gray-900 transition-colors ${className}`}
       title="Add credits"
     >
       <Coins size={15} className="text-gray-500" />
       <span>{formatCredits(Math.max(0, overview.balanceMilli))}</span>
       <span className="font-medium text-gray-500 hidden sm:inline">credits</span>
       {freeLeft > 0 && (
-        <span className="ml-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-[#A3F76B] text-gray-900">{freeLeft} free</span>
+        <span className="ml-0 sm:ml-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-[#A3F76B] text-gray-900">{freeLeft} free</span>
       )}
     </button>
   );

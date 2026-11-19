@@ -214,3 +214,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - PRJ: Slideshow settings 'Your footage' library (images or video frames, free, used before AI photos)
 - PRJ: mobile header logo 17px -> 21px
 - PRJ: credits pill 'N free' badge radius reduced
+- PRJ: credits pill tighter gaps on mobile
