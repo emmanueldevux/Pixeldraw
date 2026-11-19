@@ -143,7 +143,9 @@ export async function generatePackAd(opts: {
       ? "IMAGE 2 is the brand's real product. Put it where the reference's product/subject sits, reproduced exactly (same shape, colours, label, every printed word spelled correctly)."
       : "Choose a product, subject or scene that fits the brief, placed where the reference's product/subject sits.",
     "",
-    opts.compositionNote ? `${opts.compositionNote}\n` : "",
+    opts.compositionNote
+      ? `${opts.compositionNote}\nThe reference still sets the look (style, colours, type, decoration); only the text position above overrides its text layout.\n`
+      : "TEXT POSITION: follow the reference's layout, unless WHAT THIS AD IS FOR clearly says where the text should go (for example text at the bottom or on the left). If it does, put the text there and keep the reference's look.\n",
     "THE PACK'S DESIGN DNA (shared style, follow it):",
     opts.pack.packDna || "(follow the reference closely)",
     opts.pack.prompt?.trim() ? `\nEXTRA INSTRUCTION FROM THE PACK AUTHOR:\n${opts.pack.prompt.trim()}` : "",

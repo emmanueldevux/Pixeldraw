@@ -187,3 +187,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - /chat tiles mobile: bottom padding 45px.
 - /dashboard mobile: Files/Projects card hidden; .uxlly-content side padding 12px below sm (matches header).
 - /templates mobile: search box hidden; category pills one row, no wrap, horizontal scroll.
+
+## PRJ-0052 — Composition + reference together
+- Pack generation and the ad director now combine both: fixed text position overrides only the text layout (reference still sets the look); on "auto" the reference layout is followed unless the request says where the text goes.
