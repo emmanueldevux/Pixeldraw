@@ -172,6 +172,10 @@ input, textarea, select {
   width: 100%;
   margin: 0 auto;
 }
+/* same side padding as the header (px-3) below sm */
+@media (max-width: 639px) {
+  .uxlly-content { padding-left: 0.75rem; padding-right: 0.75rem; }
+}
 
 /* ============================================================
    COMPONENT BASE STYLES

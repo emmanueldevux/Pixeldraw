@@ -185,3 +185,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - /chat tiles mobile: only 3 shown (Add reference + 2), 3 columns.
 - /chat tiles mobile: 30px bottom padding.
 - /chat tiles mobile: bottom padding 45px.
+- /dashboard mobile: Files/Projects card hidden; .uxlly-content side padding 12px below sm (matches header).
