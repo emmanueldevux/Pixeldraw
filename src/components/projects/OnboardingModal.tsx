@@ -286,6 +286,7 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
           body: JSON.stringify({
             brandId,
             advancedSettings: {
+              kind,
               ...(kind === "ads" ? { adPackId } : {}),
               ...(kind === "thumbnails" ? { thumbPackId } : {}),
               ...(kind === "carousels" ? { carousel: carouselS } : {}),

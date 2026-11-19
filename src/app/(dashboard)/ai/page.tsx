@@ -1118,7 +1118,7 @@ function AIStudioPageInner() {
 
           {activeRightTab === "settings" ? (
             <div className="flex-1 min-h-0">
-              <ProjectSettings brandId={selectedChannel?.brand?.id ?? null} />
+              <ProjectSettings brandId={selectedChannel?.brand?.id ?? null} platform={selectedChannel?.platform ?? null} />
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto p-4 space-y-3">

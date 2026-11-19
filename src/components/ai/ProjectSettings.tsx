@@ -59,6 +59,7 @@ interface State {
   language: string;
   ecommerce: EcommerceSettings;
   carousel: ProjectCarouselSettings;
+  kind: string; // ads | carousels | slideshows | thumbnails
   adPackId: string;
   thumbPackId: string;
   slideshowStyleId: string;
@@ -267,7 +268,16 @@ function UploadTile({ src, onClick, size = 64, children }: { src: string | null;
 }
 
 // ==================== Panel ====================
-export default function ProjectSettings({ brandId }: { brandId: string | null }) {
+// What kind of project this is. Saved at creation; older projects are worked out from their settings or platform.
+function inferKind(adv: Record<string, unknown>, platform?: string | null): string {
+  if (typeof adv.kind === "string" && ["ads", "carousels", "slideshows", "thumbnails"].includes(adv.kind)) return adv.kind;
+  if (platform === "youtube_thumbnail" || (typeof adv.thumbPackId === "string" && adv.thumbPackId)) return "thumbnails";
+  if (platform === "tiktok" || (typeof adv.slideshowStyleId === "string" && adv.slideshowStyleId) || (Array.isArray(adv.characters) && adv.characters.length)) return "slideshows";
+  if (readProjectCarousel(adv)?.styleId) return "carousels";
+  return "ads";
+}
+
+export default function ProjectSettings({ brandId, platform }: { brandId: string | null; platform?: string | null }) {
   const [state, setState] = useState<State | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -302,6 +312,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
         language: adv.language || "",
         ecommerce: { ...EMPTY_ECOM, ...(adv.ecommerce || {}) },
         carousel: readProjectCarousel(adv) || EMPTY_PROJECT_CAROUSEL,
+        kind: inferKind(adv as Record<string, unknown>, platform),
         adPackId: typeof adv.adPackId === "string" ? adv.adPackId : "",
         thumbPackId: typeof adv.thumbPackId === "string" ? adv.thumbPackId : "",
         slideshowStyleId: typeof adv.slideshowStyleId === "string" ? adv.slideshowStyleId : "",
@@ -373,7 +384,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
           headingFont: state.headingFont,
           tone: state.tone,
           referenceImages: state.referenceImages,
-          advancedSettings: { bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, slideshowStyleId: state.slideshowStyleId, composition: state.composition, negativePrompt: state.negativePrompt, characters: state.characters },
+          advancedSettings: { kind: state.kind, bodyFont: state.bodyFont, language: state.language, ecommerce: state.ecommerce, carousel: state.carousel, adPackId: state.adPackId, thumbPackId: state.thumbPackId, slideshowStyleId: state.slideshowStyleId, composition: state.composition, negativePrompt: state.negativePrompt, characters: state.characters },
         }),
       });
       const logoPut = fetch("/api/projects/logo", {
@@ -522,7 +533,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
   {state.logo ? "Update logo" : "Upload logo"}
 </button>
             </div>
-            <div className="min-w-0 space-y-3">
+            {state.kind === "ads" && <div className="min-w-0 space-y-3">
               <div>
                 <label className={LABEL}>Composition</label>
                 <Segmented
@@ -549,7 +560,7 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
                   )
                 )}
               </div>
-            </div>
+            </div>}
           </div>
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
@@ -566,19 +577,25 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
         </Section>
 
         {/* ===== Single ads ===== */}
-        <Section icon={<ImageIcon size={15} />} title="Single ads">
-          <AdPackPicker value={state.adPackId} onChange={(v) => patch({ adPackId: v })} />
-        </Section>
+        {state.kind === "ads" && (
+          <Section icon={<ImageIcon size={15} />} title="Single ads">
+            <AdPackPicker value={state.adPackId} onChange={(v) => patch({ adPackId: v })} />
+          </Section>
+        )}
 
         {/* ===== Thumbnails ===== */}
-        <Section icon={<ImageIcon size={15} />} title="Thumbnails">
-          <AdPackPicker purpose="thumbnail" value={state.thumbPackId} onChange={(v) => patch({ thumbPackId: v })} />
-        </Section>
+        {state.kind === "thumbnails" && (
+          <Section icon={<ImageIcon size={15} />} title="Thumbnails">
+            <AdPackPicker purpose="thumbnail" value={state.thumbPackId} onChange={(v) => patch({ thumbPackId: v })} />
+          </Section>
+        )}
 
         {/* ===== Characters (TikTok slideshows) ===== */}
-        <Section icon={<UserRound size={15} />} title="Characters">
-          <CharacterSheet characters={state.characters} onChange={(characters) => patch({ characters })} />
-        </Section>
+        {state.kind === "slideshows" && (
+          <Section icon={<UserRound size={15} />} title="Characters">
+            <CharacterSheet characters={state.characters} onChange={(characters) => patch({ characters })} />
+          </Section>
+        )}
 
         {/* ===== Negative prompt ===== */}
         <Section icon={<Ban size={15} />} title="Negative prompt">
@@ -593,9 +610,11 @@ export default function ProjectSettings({ brandId }: { brandId: string | null })
         </Section>
 
         {/* ===== Carousel ===== */}
-        <Section icon={<Layers size={15} />} title="Carousel">
-          <CarouselSettings value={state.carousel} onChange={(c) => patch({ carousel: c })} />
-        </Section>
+        {state.kind === "carousels" && (
+          <Section icon={<Layers size={15} />} title="Carousel">
+            <CarouselSettings value={state.carousel} onChange={(c) => patch({ carousel: c })} />
+          </Section>
+        )}
 
         {/* ===== Language ===== */}
         <Section icon={<Languages size={15} />} title="Language">
@@ -911,8 +930,8 @@ export function CharacterSheet({ characters, onChange }: { characters: Character
         </div>
       )}
       {characters.length < 6 && (
-        <button type="button" onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900">
-          <Plus className="w-3.5 h-3.5" /> Add a character
+        <button type="button" onClick={() => setAdding(true)} className="w-full h-11 rounded-xl border-2 border-dashed border-zinc-300 flex items-center justify-center gap-1.5 text-[13px] font-semibold text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 transition-colors">
+          <Plus className="w-4 h-4" /> Add character sheet
         </button>
       )}
       {adding && <CharacterWizard onClose={() => setAdding(false)} onCreated={(c) => { setAdding(false); onChange([...characters, c]); }} />}
