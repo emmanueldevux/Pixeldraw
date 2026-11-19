@@ -135,3 +135,9 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0040 — Template cards: image at full width, natural height
 - Cards with a cover image now show it at width 100% and height auto (no cropping, so each card is as tall as its image). Cards without an image keep the placeholder at the template's shape.
+
+## PRJ-0041 — Using a reference pack template creates/uses a project
+- On the templates page, "Use template" on an Ads or Thumbnails reference pack now opens "Add it to": a dropdown of your projects (that fit: thumbnail projects for thumbnail packs) plus "+ Create a new project".
+  - Existing project: the pack is saved into its settings (`adPackId` / `thumbPackId`, merged with what's there) and the AI studio opens on that project.
+  - New project: the project setup wizard runs (business, size, references, colours), the template step is skipped because it's preset, and it ends in the AI studio.
+- Either way the work lives under Projects. The older written-prompt templates (1-3) keep the previous popup. Not tested against the real API.

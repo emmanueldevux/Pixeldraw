@@ -134,21 +134,22 @@ function ColourBox({ label, value, onChange, disabled }: { label: string; value:
   );
 }
 
-export default function OnboardingModal({ isOpen, onClose, kind, openChat }: { isOpen: boolean; onClose: () => void; kind?: ProjectKind; openChat?: boolean }) {
+export default function OnboardingModal({ isOpen, onClose, kind, openChat, presetPackId }: { isOpen: boolean; onClose: () => void; kind?: ProjectKind; openChat?: boolean; presetPackId?: string }) {
   if (!isOpen) return null;
   // No kind given (New project): the wizard starts by asking what to make, and ends in the AI studio.
-  return <Wizard onClose={onClose} kindProp={kind} openChat={openChat ?? true} />;
+  return <Wizard onClose={onClose} kindProp={kind} openChat={openChat ?? true} presetPackId={presetPackId} />;
 }
 
-function Wizard({ onClose, kindProp, openChat }: { onClose: () => void; kindProp?: ProjectKind; openChat: boolean }) {
+function Wizard({ onClose, kindProp, openChat, presetPackId }: { onClose: () => void; kindProp?: ProjectKind; openChat: boolean; presetPackId?: string }) {
   const router = useRouter();
   const [kind, setKind] = useState<ProjectKind | undefined>(kindProp);
   const needPicker = kindProp === undefined;
   const K = kind ? KINDS[kind] : null;
-  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, ...(K.extra ? [K.extra] : []), ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
+  const KIND_STEPS: ShellStep[] = K ? [BUSINESS, K.size, ...(K.extra && !presetPackId ? [K.extra] : []), ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
   const STEPS: ShellStep[] = needPicker ? [PICK, ...KIND_STEPS] : KIND_STEPS;
-  const [adPackId, setAdPackId] = useState("");
-  const [thumbPackId, setThumbPackId] = useState("");
+  // Coming from a template: it is already chosen, so the template step is skipped.
+  const [adPackId, setAdPackId] = useState(kindProp === "ads" ? presetPackId || "" : "");
+  const [thumbPackId, setThumbPackId] = useState(kindProp === "thumbnails" ? presetPackId || "" : "");
   const [carouselS, setCarouselS] = useState<ProjectCarouselSettings>(EMPTY_PROJECT_CAROUSEL);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [slideshowStyleId, setSlideshowStyleId] = useState("");

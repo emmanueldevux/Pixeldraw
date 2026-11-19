@@ -7,6 +7,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, Search, Sparkles, X } from "lucide-react";
+import UseTemplateProject from "@/components/templates/UseTemplateProject";
 import UseTemplateModal, { Placeholder } from "@/components/templates/UseTemplateModal";
 import type { PublicTemplate } from "@/lib/designTemplates/types";
 
@@ -129,7 +130,9 @@ function TemplatesInner() {
         </main>
       </div>
 
-      {open && <UseTemplateModal template={open} onClose={() => setOpen(null)} />}
+      {open && (open.kind === "pack" && (open.category === "Ads" || open.category === "Thumbnails")
+        ? <UseTemplateProject template={open} onClose={() => setOpen(null)} />
+        : <UseTemplateModal template={open} onClose={() => setOpen(null)} />)}
     </div>
   );
 }
