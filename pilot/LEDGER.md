@@ -206,3 +206,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Project settings: new "Positive prompt" box under Negative. Saved as advancedSettings.positivePrompt, applied with the negative via applyProjectNegative (usage.ts) and appended to every image call as "ALWAYS INCLUDE (brand rules)" next to "NEVER INCLUDE (brand rules)" (openai + together providers).
 - Project settings: Language moved up (after Fonts, before Logo).
 - /dashboard mobile: Files/Projects card restored; container padding, border, shadow and background removed on mobile so project cards fill the width.
+- Header menu (hamburger) button: light grey bg + border, same as the other header buttons; header is shared so it applies on every page.
