@@ -212,3 +212,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - Header hamburger reverted to the original (w-8 h-8, hover bg only, 18px icon).
 - Header hamburger: light grey bg + border again (kept, 18px icon).
 - PRJ: Slideshow settings 'Your footage' library (images or video frames, free, used before AI photos)
+- PRJ: mobile header logo 17px -> 21px
