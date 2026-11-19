@@ -198,8 +198,8 @@ export default function DashboardPage() {
 
         {/* ==================== Projects / Files (left) + Quick actions (right, 30%) ==================== */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_30%] gap-6 items-start">
-          {/* ---- Left: Files / Projects (hidden on mobile) ---- */}
-          <LightCard className="min-w-0 hidden sm:block">
+          {/* ---- Left: Files / Projects (no box on mobile, cards fill the width) ---- */}
+          <LightCard className="min-w-0 max-sm:!p-0 max-sm:!border-0 max-sm:!shadow-none max-sm:!bg-transparent max-sm:!rounded-none">
             <div className="flex items-center gap-2 bg-gray-200/50 p-1 rounded-xl border border-gray-200 w-fit mb-4">
               {(
                 [
