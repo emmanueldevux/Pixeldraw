@@ -37,6 +37,7 @@ import { getRandomTemplateAsBase64 } from "@/lib/templates";
 import { randomUUID } from "crypto";
 import { parseComposition, compositionDirective, compositeLogoForComposition, type CompositionSpot } from "@/lib/ai/composition";
 import { isAdRequest, wantsNewFormat, previousConcepts, adDirectorRule } from "@/lib/ai/adDirector";
+import { namedFormat, candidateFormats, candidateStyles } from "@/lib/ai/adFormats";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
 import { insufficientResponse } from "@/lib/billing/http";
 import { imageKey } from "@/lib/billing/pricing";
@@ -225,7 +226,14 @@ async function handlePOST(request: Request) {
     const composition = adReq ? parseComposition(((loadedBrand?.styleGuide as unknown as { advancedSettings?: { composition?: string } } | null)?.advancedSettings)?.composition) : "auto";
     const compLogo = composition !== "auto" && !!loadedBrand?.logo;
     const compNote = compositionDirective(composition, compLogo);
-    const inventFormat = adReq && !explicitPack && !refAd && wantsNewFormat(askText);
+    // Format library: a format the user names (or a request for something new) skips the pack
+    // and builds from a repeatable shortlist of 37 named formats; explicit packs and reference ads still win.
+    const named = adReq ? namedFormat(askText) : null;
+    const inventFormat = adReq && !explicitPack && !refAd && (!!named || wantsNewFormat(askText));
+    const prevConcepts = previousConcepts(messages as AIMessage[]);
+    const variantSeed = `${askText}|${(messages as AIMessage[]).length}`;
+    const formatShortlist = inventFormat && !named ? candidateFormats({ previous: prevConcepts, hasProductPhoto: !!productImage, seed: variantSeed }) : [];
+    const styleShortlist = inventFormat ? candidateStyles(prevConcepts, variantSeed) : [];
 
     // The project's Brand Brain: audience, voice, positioning, real offers.
     // Every caption and headline the chat writes comes from this.
@@ -237,7 +245,7 @@ async function handlePOST(request: Request) {
     }
 
     const adRule = adReq
-      ? adDirectorRule({ composition, inventFormat, previous: previousConcepts(messages as AIMessage[]), hasBrain: !!brainBlock, hasProductPhoto: !!productImage, platform })
+      ? adDirectorRule({ composition, inventFormat, formats: formatShortlist, chosen: named, styles: styleShortlist, previous: prevConcepts, hasBrain: !!brainBlock, hasProductPhoto: !!productImage, platform })
       : "";
 
     // Prepend system message

@@ -8,6 +8,7 @@
 // questions. It shows its choices in a "Concept:" line, and later ads in the
 // same chat read those lines so formats and angles are not repeated.
 // ============================================================
+import { formatLibraryBlock, formatLine, type AdFormat } from "@/lib/ai/adFormats";
 
 /** A request for a single image ad (not a thumbnail, carousel or slideshow). */
 export function isAdRequest(text: string, platform?: string): boolean {
@@ -34,7 +35,7 @@ export function previousConcepts(messages: { role: string; content: unknown }[])
   return out.slice(-8);
 }
 
-export function adDirectorRule(opts: { inventFormat: boolean; previous: string[]; hasBrain: boolean; hasProductPhoto: boolean; platform?: string; composition?: string }): string {
+export function adDirectorRule(opts: { inventFormat: boolean; previous: string[]; hasBrain: boolean; hasProductPhoto: boolean; platform?: string; composition?: string; formats?: AdFormat[]; chosen?: AdFormat | null; styles?: string[] }): string {
   const L: string[] = [
     "",
     "AD DIRECTOR MODE (this request is for an ad). Work like a creative team, silently, then answer in the exact reply format at the end.",
@@ -43,9 +44,22 @@ export function adDirectorRule(opts: { inventFormat: boolean; previous: string[]
     "",
   ];
   if (opts.inventFormat) {
-    L.push(
-      "2. FORMAT. Invent a format built from blocks: hook + product (always) plus 0 to 4 more (subline, callouts, pills, badge, list, table, diagram, chart, timeline, before/after, comparison, faux phone UI such as a text thread, notes app, search bar or lock screen, a metaphor made literal, a real photo scene). Total 2 to 6 blocks. Push past a centered product with a headline: explain the benefit visually. Give the format a 2 to 4 word name and lay it out by areas with percentages (for example: hook top 12%, product centered at 55% height).",
-    );
+    if (opts.chosen) {
+      L.push(
+        "2. FORMAT. The user asked for this format by name, so use exactly it and adapt it to the brand (real product, brand colours, brand voice). Keep its layout and change only the content:",
+        "   " + formatLine(opts.chosen),
+      );
+    } else if (opts.formats?.length) {
+      L.push(
+        "2. FORMAT. Pick the ONE format below that best fits the persona and angle, keep its layout and change only the content (real product, brand colours, brand voice). Do not default to a centered product with a headline. If none fits, build your own from blocks (hook + product always, plus 1 to 4 more; 2 to 6 blocks in total). Name the format in the Concept line and lay it out by areas with percentages.",
+        formatLibraryBlock(opts.formats),
+      );
+    } else {
+      L.push(
+        "2. FORMAT. Invent a format built from blocks: hook + product (always) plus 0 to 4 more (subline, callouts, pills, badge, list, table, diagram, chart, timeline, before/after, comparison, faux phone UI such as a text thread, notes app, search bar or lock screen, a metaphor made literal, a real photo scene). Total 2 to 6 blocks. Push past a centered product with a headline: explain the benefit visually. Give the format a 2 to 4 word name and lay it out by areas with percentages (for example: hook top 12%, product centered at 55% height).",
+      );
+    }
+    L.push("   Photo-led formats look like a real iPhone shot (handheld, casual, slightly grainy, no glare, no polished skin). Graphic-led formats put the real product cutout on a background you design. Block counts: a block holds many sub-items but counts once.");
     if (opts.previous.length) L.push(`   Already used in this chat. Do NOT repeat these formats or angles:\n${opts.previous.map((p) => `   - ${p}`).join("\n")}`);
   } else {
     L.push("2. FORMAT. The layout is set by a reference ad chosen separately, so do not invent a layout. Describe the subject, scene, mood and the exact copy; keep the composition notes short.");
@@ -54,7 +68,7 @@ export function adDirectorRule(opts: { inventFormat: boolean; previous: string[]
   if (opts.composition && opts.composition !== "auto") L.push("   The user fixed the TEXT POSITION (" + opts.composition.replace("-", " ") + "): keep all text in one block there, never move it, and do not invent another text layout. The reference ad still sets the look (style, colours, type, decoration).");
   L.push(
     "",
-    "3. COPY. Direct response. The hook leads with the outcome the person wants, not a description of the product. Cold test: with the image covered, a stranger must know what is sold and who it is for. First mention of the brand is brand name plus plain category. Use ONE writing style for hook and subline (observational, rhetorical question, conditional, contrarian, confessional, imperative, comparative, testimonial, POV, stat-led, reframe, permission-granting, direct address...). Max 1 hook and 1 subline; any other text is short labels. Active voice, speech-like, no fillers. NEVER use em dashes. Never invent prices, numbers, awards, results or customer quotes; if the request or brand brain does not state one, write a strong line without it.",
+    "3. COPY. Direct response. The hook leads with the outcome the person wants, not a description of the product. Cold test: with the image covered, a stranger must know what is sold and who it is for. First mention of the brand is brand name plus plain category. Use ONE writing style for hook and subline" + (opts.styles?.length ? " (pick from: " + opts.styles.join(", ") + ")" : " (observational, rhetorical question, conditional, contrarian, confessional, imperative, comparative, testimonial, POV, stat-led, reframe, permission-granting, direct address...)") + ". Lead with the result the reader wants, not a description of the product. After the hook, ask \"so what\": a question or teaser must be paid off by the subline or the visual. Every line must point at something concrete (never a mood or value statement). Say only what the brand brain or reviews support. Max 1 hook and 1 subline; any other text is short labels. If the product is a multi-pack or a variety, show the full set, never a single unit. Active voice, speech-like, no fillers. NEVER use em dashes. Never invent prices, numbers, awards, results or customer quotes; if the request or brand brain does not state one, write a strong line without it.",
     "",
     "4. DESIGN. Choose colours (hex, from the brand if given), name fonts with the word \"font\" (for example \"bold grotesque sans font\"), set hierarchy (hook, then product, then support), keep generous spacing, and make text legible at feed size: put text over calm areas, and use an accent colour on the key words, a marker swash, a solid lozenge or a scrim instead of just recolouring.",
     "",

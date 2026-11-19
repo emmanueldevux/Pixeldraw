@@ -190,3 +190,8 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0052 — Composition + reference together
 - Pack generation and the ad director now combine both: fixed text position overrides only the text layout (reference still sets the look); on "auto" the reference layout is followed unless the request says where the text goes.
+
+## PRJ-0053 — Ad format library + hook styles (Madvera skill)
+- New src/lib/ai/adFormats.ts: 37 named formats (layouts in canvas %), namedFormat(), candidateFormats() (8, repeatable, skips formats used in the chat, mixes graphic/photo), 24 hook styles with a 6-style shortlist.
+- adDirector: named format -> use exactly it; else pick from shortlist; copy rules (outcome-led, so-what test, concrete lines, full set for multi-packs).
+- chat route: named format or "something new" skips packs and uses the library; explicit packs and reference ads still win.
