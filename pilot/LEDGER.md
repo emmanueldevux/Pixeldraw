@@ -217,3 +217,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - PRJ: credits pill tighter gaps on mobile
 - PRJ: mobile header logo 21px -> 16.8px (-20%)
 - PRJ: mobile header logo 18px
+- PRJ: chat ignores non-requests ('ff', 'hmm'): short reply, no image, no charge

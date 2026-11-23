@@ -11,6 +11,20 @@
 import { formatLibraryBlock, formatLine, type AdFormat } from "@/lib/ai/adFormats";
 
 /** A request for a single image ad (not a thumbnail, carousel or slideshow). */
+/** A message that isn't a request at all ("ff", "asdf", "hmm", "?"): no image should be made and nothing should be charged. */
+export function isNonRequest(text: string, hasImage: boolean): boolean {
+  if (hasImage) return false;
+  const t = (text || "").trim().toLowerCase();
+  const letters = t.replace(/[^a-z\u00c0-\uffff]/g, "");
+  if (letters.length === 0) return true;
+  if (/^(hi|hey|hello|yo|sup|hmm+|ok(ay)?|test(ing)?|thanks?|thx|lol|nice|cool|yes|no)\W*$/.test(t)) return true;
+  if (letters.length <= 3 && !/\b(ad|ads|cat|dog|car|sun|sea|tea|pen|bag|hat|bed|cup|toy)\b/.test(t)) return true;
+  if (/^(asdf?g?h?j?k?l?|qwer?t?y?|zxcv?b?n?m?|sdf+g?|dfg+h?)$/.test(letters)) return true;
+  // keyboard mash: one short word with no vowels, or a single character repeated
+  if (!/\s/.test(t) && letters.length < 12 && (!/[aeiouy]/.test(letters) || /^(.)\1+$/.test(letters))) return true;
+  return false;
+}
+
 export function isAdRequest(text: string, platform?: string): boolean {
   if (/\b(thumbnails?|thumbs?|carousels?|slide\s?shows?)\b/i.test(text)) return false;
   if (platform === "youtube_thumbnail") return false;

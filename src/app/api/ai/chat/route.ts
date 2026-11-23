@@ -36,7 +36,7 @@ import type { LogoPosition } from "@/lib/ai/logoComposite";
 import { getRandomTemplateAsBase64 } from "@/lib/templates";
 import { randomUUID } from "crypto";
 import { parseComposition, compositionDirective, compositeLogoForComposition, type CompositionSpot } from "@/lib/ai/composition";
-import { isAdRequest, wantsNewFormat, previousConcepts, adDirectorRule } from "@/lib/ai/adDirector";
+import { isNonRequest, isAdRequest, wantsNewFormat, previousConcepts, adDirectorRule } from "@/lib/ai/adDirector";
 import { namedFormat, candidateFormats, candidateStyles, AD_FORMATS } from "@/lib/ai/adFormats";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
 import { insufficientResponse } from "@/lib/billing/http";
@@ -117,6 +117,15 @@ async function handlePOST(request: Request) {
     const productImage: string | null = refAd ? null : productImageRaw || null;
     const refPack = refAd ? ({ refImages: [refAd], refDnas: [""], packDna: "" } as unknown as import("@/lib/designTemplates/types").DesignTemplate) : null;
     if (guest && !freeChat) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Not a request ("ff", "hmm", a stray key): answer in one line, make no image, charge nothing.
+    {
+      const last = [...((messages as AIMessage[]) || [])].reverse().find((m) => m.role === "user");
+      const lastText = typeof last?.content === "string" ? last.content : "";
+      if (isNonRequest(lastText, !!productImageRaw)) {
+        return NextResponse.json({ content: "What would you like me to make? Describe the image, ad or post you have in mind and I'll create it." });
+      }
+    }
 
     console.log("[CHAT] 🔑 Received brandId:", brandId, "brandName:", brandName);
 
