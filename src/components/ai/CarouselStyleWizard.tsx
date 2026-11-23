@@ -18,7 +18,7 @@ const STEPS = [
 ];
 type Slot = "introRefs" | "detailsRefs" | "outroRefs";
 
-function resize(file: File, max = 900): Promise<string> {
+export function resize(file: File, max = 900): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);

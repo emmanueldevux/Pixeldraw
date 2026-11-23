@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Globe, Image as ImageIcon, Images, LayoutGrid, Loader2, Plus, Smartphone, Upload } from "lucide-react";
 import { AdPackPicker, CarouselSettings, CharacterSheet } from "@/components/ai/ProjectSettings";
+import { resize as resizeSlide } from "@/components/ai/CarouselStyleWizard";
 import SlideshowStyleWizard from "@/components/ai/SlideshowStyleWizard";
 import { EMPTY_PROJECT_CAROUSEL, type ProjectCarouselSettings } from "@/lib/carousels/types";
 import type { Character } from "@/lib/slideshow/types";
@@ -28,6 +29,7 @@ export type ProjectKind = "ads" | "carousels" | "slideshows" | "thumbnails";
 const BUSINESS: ShellStep = { id: "business", title: "Tell us about the business", sub: "This is what the AI writes from, so be specific. You can change it later in project settings." };
 const TEMPLATE_START: ShellStep = { id: "business", title: "Set up your project", sub: "Add your details, or copy the style of a project you already have." };
 const REFS: ShellStep = { id: "refs", title: "Add references", sub: "Optional. Pick styles you like or upload designs to copy the feel from." };
+const REFS_CAROUSEL: ShellStep = { id: "refs", title: "Add references", sub: "Optional. Add examples of the first, middle and last slides you like. The AI copies the feel of each." };
 const LOOK: ShellStep = { id: "look", title: "Colours and font", sub: "Optional. Set your brand colours, tone and heading font." };
 
 const KINDS: Record<ProjectKind, { heading: string; sizeKeys?: string[]; size: ShellStep; extra?: ShellStep; style: boolean; firstPlatform: PlatformKey }> = {
@@ -115,6 +117,14 @@ function SlideshowStylePick({ value, onChange }: { value: string; onChange: (v: 
 
 const TONES = ["bold", "professional", "minimal", "casual", "playful"];
 
+type SlideSlot = "intro" | "details" | "outro";
+const SLIDE_SLOTS: SlideSlot[] = ["intro", "details", "outro"];
+const SLOT_TITLE: Record<SlideSlot, { title: string; hint: string }> = {
+  intro: { title: "Hero", hint: "First slide, the scroll stopper" },
+  details: { title: "Middle", hint: "The content slides" },
+  outro: { title: "Outro", hint: "Last slide, follow or call to action" },
+};
+
 const fileToBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -151,13 +161,16 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
   const [brainFrom, setBrainFrom] = useState("");
   const KIND_STEPS: ShellStep[] = presetPackId && K
     ? brainFrom ? [TEMPLATE_START] : [TEMPLATE_START, K.size, ...(K.extra && kind === "slideshows" ? [K.extra] : []), ...(K.style ? [LOOK] : [])]
-    : K ? [BUSINESS, K.size, ...(K.extra && !(presetPackId && kind !== "slideshows") ? [K.extra] : []), ...(K.style ? [REFS, LOOK] : [])] : DEFAULT_STEPS;
+    : K ? [BUSINESS, K.size, ...(K.extra && kind !== "carousels" && !(presetPackId && kind !== "slideshows") ? [K.extra] : []), ...(K.style ? [kind === "carousels" ? REFS_CAROUSEL : REFS, LOOK] : [])] : DEFAULT_STEPS;
   const STEPS: ShellStep[] = needPicker ? [PICK, ...KIND_STEPS] : KIND_STEPS;
   // Coming from a template: it is already chosen, so the template step is skipped.
   const [adPackId, setAdPackId] = useState(kindProp === "ads" ? presetPackId || "" : "");
   const [thumbPackId, setThumbPackId] = useState(kindProp === "thumbnails" ? presetPackId || "" : "");
   const [carouselS, setCarouselS] = useState<ProjectCarouselSettings>(kindProp === "carousels" && presetPackId ? { ...EMPTY_PROJECT_CAROUSEL, styleId: presetPackId } : EMPTY_PROJECT_CAROUSEL);
   const [characters, setCharacters] = useState<Character[]>([]);
+  // Carousels: example slides for the first (hero), middle and last (outro) slide. All three together make the project's own style.
+  const [slotFiles, setSlotFiles] = useState<Record<SlideSlot, File[]>>({ intro: [], details: [], outro: [] });
+  const slotCount = SLIDE_SLOTS.filter((k) => slotFiles[k].length > 0).length;
   const [slideshowStyleId, setSlideshowStyleId] = useState(kindProp === "slideshows" ? presetPackId || "" : "");
   const [i, setI] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -243,7 +256,7 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
 
   const sid = STEPS[i].id;
   const lastStep = i === STEPS.length - 1;
-  const canContinue = sid === "kind" ? !!kind : sid === "business" ? (fromTemplate || brandName.trim().length > 0) : sid === "size" ? !!platform : true;
+  const canContinue = sid === "kind" ? !!kind : sid === "business" ? (fromTemplate || brandName.trim().length > 0) : sid === "size" ? !!platform : sid === "refs" && kind === "carousels" ? slotCount === 0 || slotCount === 3 : true;
 
   async function create() {
     if (!platform) return;
@@ -278,6 +291,28 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
       const created = (await res.json()).data;
       const brandId = created?.brand?.id;
       const channelId = created?.channel?.id;
+      let carouselSettings = carouselS;
+      if (brandId && kind === "carousels" && slotCount === 3) {
+        setStatus("The AI is studying your slides…");
+        try {
+          const up: Record<string, string[]> = {};
+          for (const k of SLIDE_SLOTS) {
+            up[`${k}Refs`] = [];
+            for (const f of slotFiles[k].slice(0, 4)) {
+              const r = await fetch("/api/carousel-styles/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataUrl: await resizeSlide(f) }) });
+              const d = await r.json();
+              if (!r.ok) throw new Error(d.error || "Upload failed");
+              up[`${k}Refs`].push(d.url);
+            }
+          }
+          const r = await fetch("/api/carousel-styles", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: `${finalName()} style`, ...up }) });
+          const d = await r.json();
+          if (r.ok && d.style?.id) carouselSettings = { ...carouselS, styleId: d.style.id };
+          else console.error("[ONBOARDING] carousel style not created:", d.error);
+        } catch (e) {
+          console.error("[ONBOARDING] carousel style failed:", e);
+        }
+      }
       if (brandId && kind) {
         setStatus("Saving your settings…");
         await fetch("/api/projects/style", {
@@ -289,7 +324,7 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
               kind,
               ...(kind === "ads" ? { adPackId } : {}),
               ...(kind === "thumbnails" ? { thumbPackId } : {}),
-              ...(kind === "carousels" ? { carousel: carouselS } : {}),
+              ...(kind === "carousels" ? { carousel: carouselSettings } : {}),
               ...(kind === "slideshows" ? { characters, slideshowStyleId } : {}),
             },
           }),
@@ -403,6 +438,7 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
 
       {sid === "refs" && (
         <div className="space-y-6">
+          {kind !== "carousels" && (
           <div>
             <p className="mb-2 text-sm font-semibold text-gray-800">Pick a style you like</p>
             {templatesLoading ? (
@@ -420,7 +456,49 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
               </div>
             )}
           </div>
+          )}
 
+          {kind === "carousels" ? (
+            <div className="space-y-5">
+              <div className="grid grid-cols-3 gap-3">
+                {SLIDE_SLOTS.map((k) => (
+                  <div key={k}>
+                    <p className="text-sm font-semibold text-gray-800">{SLOT_TITLE[k].title} <span className="font-normal text-gray-400">({slotFiles[k].length}/4)</span></p>
+                    <p className="mb-2 text-[11px] text-gray-400 leading-snug">{SLOT_TITLE[k].hint}</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {slotFiles[k].map((f, n) => (
+                        <div key={f.name + n} className="relative aspect-[4/5] rounded-lg overflow-hidden border border-gray-200 group">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
+                          <button type="button" onClick={() => setSlotFiles({ ...slotFiles, [k]: slotFiles[k].filter((_, j) => j !== n) })} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-xs opacity-0 group-hover:opacity-100 max-sm:opacity-100">×</button>
+                        </div>
+                      ))}
+                      {slotFiles[k].length < 4 && (
+                        <label className="aspect-[4/5] rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 text-gray-400">
+                          <Upload size={16} />
+                          <span className="text-[10px] mt-1">Add</span>
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => setSlotFiles({ ...slotFiles, [k]: [...slotFiles[k], ...Array.from(e.target.files || [])].slice(0, 4) })} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500">
+                {slotCount === 0 || slotCount === 3 ? "Add 1 to 4 examples to each box. No references? No problem, the AI will use brand colours and a ready-made carousel style." : "Add at least one example to all three boxes, or clear them to skip."}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="mb-1.5 text-sm font-semibold text-gray-800">Author name</p>
+                  <LInput value={carouselS.authorName} onChange={(e) => setCarouselS({ ...carouselS, authorName: e.target.value })} placeholder="e.g. Elevated Path" />
+                </div>
+                <div>
+                  <p className="mb-1.5 text-sm font-semibold text-gray-800">Handle</p>
+                  <LInput value={carouselS.handle} onChange={(e) => setCarouselS({ ...carouselS, handle: e.target.value })} placeholder="@yourpage" />
+                </div>
+              </div>
+            </div>
+          ) : (
           <div>
             <p className="mb-2 text-sm font-semibold text-gray-800">Reference images <span className="font-normal text-gray-400">({refs.length}/10)</span></p>
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
@@ -441,6 +519,7 @@ function Wizard({ onClose, kindProp, openChat, presetPackId, templateName }: { o
             </div>
             <p className="mt-1.5 text-xs text-gray-500">Posts you like or competitor graphics. No references? No problem, the AI will use brand colours and the project's ad pack.</p>
           </div>
+          )}
         </div>
       )}
 

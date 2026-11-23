@@ -218,3 +218,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - PRJ: mobile header logo 21px -> 16.8px (-20%)
 - PRJ: mobile header logo 18px
 - PRJ: chat ignores non-requests ('ff', 'hmm'): short reply, no image, no charge
+- PRJ: carousel onboarding: dropped separate 'Carousel style' step; references step now has Hero/Middle/Outro boxes (builds the project's own style), author+handle moved there
