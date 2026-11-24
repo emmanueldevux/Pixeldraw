@@ -19,6 +19,7 @@ import { randomUUID } from "crypto";
 import { authorize, commit, InsufficientCreditsError } from "@/lib/billing/meter";
 import { insufficientResponse } from "@/lib/billing/http";
 import { Prisma } from "@prisma/client";
+import { persistDataImage } from "@/lib/storage";
 import { detectAndSliceGrid } from "@/lib/ai/gridDetect";
 import type { LayoutArchetype } from "@/types";
 
@@ -283,6 +284,10 @@ async function handlePOST(request: Request) {
       mergedArchetypes = Array.from(byName.values());
     }
 
+    // Keep images out of the database: store them as files and keep only URLs (the database is billed by transfer).
+    const refUrls = await Promise.all((referenceImages as string[]).map((r) => persistDataImage(r, "references")));
+    const poolUrls = await Promise.all(newPool.map((r) => persistDataImage(r, "references")));
+
     // Save analysis to StyleGuide
     if (brand.styleGuide) {
       await db.styleGuide.update({
@@ -294,7 +299,7 @@ async function handlePOST(request: Request) {
           accentColor,
           headingFont: finalFont,
           tone: finalTone,
-          generationPool: newPool,
+          generationPool: poolUrls,
           ...(mergedArchetypes ? { layoutArchetypes: mergedArchetypes as unknown as Prisma.InputJsonValue } : {}),
         },
       });
@@ -308,8 +313,8 @@ async function handlePOST(request: Request) {
           accentColor,
           headingFont: finalFont,
           tone: finalTone,
-          referenceImages: referenceImages,
-          generationPool: newPool,
+          referenceImages: refUrls,
+          generationPool: poolUrls,
           ...(mergedArchetypes ? { layoutArchetypes: mergedArchetypes as unknown as Prisma.InputJsonValue } : {}),
         },
       });

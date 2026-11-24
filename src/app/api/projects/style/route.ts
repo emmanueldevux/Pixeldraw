@@ -9,6 +9,7 @@
 // ============================================================
 
 import { NextResponse } from "next/server";
+import { persistDataImage } from "@/lib/storage";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -86,7 +87,7 @@ export async function PUT(request: Request) {
     if (styleData.headingFont !== undefined) updateData.headingFont = styleData.headingFont;
     if (styleData.tone !== undefined) updateData.tone = styleData.tone;
     if (styleData.extraNotes !== undefined) updateData.extraNotes = styleData.extraNotes;
-    if (styleData.referenceImages !== undefined) updateData.referenceImages = styleData.referenceImages;
+    if (styleData.referenceImages !== undefined) updateData.referenceImages = Array.isArray(styleData.referenceImages) ? await Promise.all((styleData.referenceImages as string[]).map((r) => persistDataImage(r, "references"))) : styleData.referenceImages;
 
     let styleGuideId: string;
 

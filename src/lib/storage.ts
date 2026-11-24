@@ -80,15 +80,20 @@ export async function deleteImage(key: string): Promise<void> {
 // works today without blocking on the R2 migration.
 
 export async function persistLogo(input: string): Promise<string> {
+  return persistDataImage(input, "logos");
+}
+
+/** Moves a base64 image out of the database into storage and returns its URL. A URL passes through; on failure the original is kept. */
+export async function persistDataImage(input: string, folder: string): Promise<string> {
   const match = input.match(/^data:(image\/[\w+.-]+);base64,(.+)$/);
   if (!match) return input; // already a URL, nothing to do
 
   const [, contentType, data] = match;
   try {
     const buffer = Buffer.from(data, "base64");
-    return await uploadImage(buffer, contentType, "logos");
+    return await uploadImage(buffer, contentType, folder);
   } catch (err) {
-    console.error("[STORAGE] R2 logo upload failed, storing base64 directly:", err);
+    console.error("[STORAGE] R2 upload failed, keeping base64:", err);
     return input;
   }
 }

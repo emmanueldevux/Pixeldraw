@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { persistLogo } from "@/lib/storage";
+import { persistLogo, persistDataImage } from "@/lib/storage";
 
 // ==================== GET: List User's Channels ====================
 export async function GET() {
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
         logo: logoUrl,
         styleGuide: {
           create: {
-            referenceImages: referenceImages || [],
+            referenceImages: await Promise.all(((referenceImages as string[]) || []).map((r) => persistDataImage(r, "references"))),
             extraNotes: styleNotes || null,
             primaryColor: primaryColor || "#1A1A1A",
             secondaryColor: secondaryColor || "#FFFFFF",

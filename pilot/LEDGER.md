@@ -219,3 +219,4 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - PRJ: mobile header logo 18px
 - PRJ: chat ignores non-requests ('ff', 'hmm'): short reply, no image, no charge
 - PRJ: carousel onboarding: dropped separate 'Carousel style' step; references step now has Hero/Middle/Outro boxes (builds the project's own style), author+handle moved there
+- PRJ: stop storing base64 reference images in DB (projects POST/analyze/style PUT persist to storage, openai reads URL refs); admin route /api/admin/offload-images migrates old rows

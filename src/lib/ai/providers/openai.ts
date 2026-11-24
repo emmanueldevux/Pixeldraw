@@ -90,6 +90,14 @@ export function getVisionModel(): string {
 const PRODUCT_RULE =
   " A product image has been provided as an additional reference. Incorporate THIS EXACT product into the composition as the hero element — reproduce it faithfully (same shape, colors, label text, and proportions). Do NOT redraw, restyle, recolor, crop out, or replace it. Place it naturally in the scene with correct perspective, lighting, and a believable shadow, sized so it clearly reads as the focal point.";
 
+// A stored reference is either a URL (new projects) or a base64 data URL (older ones).
+async function refBuffer(ref: string): Promise<Buffer> {
+  if (ref.startsWith("http")) return Buffer.from(await (await fetch(ref)).arrayBuffer());
+  let u = ref;
+  if (u.startsWith("data:") && !u.match(/^data:image\/(png|jpeg|gif|webp)/)) u = u.replace(/^data:[^;]+;/, "data:image/jpeg;");
+  return Buffer.from(u.replace(/^data:image\/\w+;base64,/, ""), "base64");
+}
+
 // Load a product image (data URL or http URL) into an OpenAI file WITHOUT
 // stripping its color — unlike the style reference, the product must keep its
 // real appearance.
@@ -363,8 +371,7 @@ export async function prepareDesaturatedReference(
   if (refUrl.startsWith("data:") && !refUrl.match(/^data:image\/(png|jpeg|gif|webp)/)) {
     refUrl = refUrl.replace(/^data:[^;]+;/, "data:image/jpeg;");
   }
-  const base64Data = refUrl.replace(/^data:image\/\w+;base64,/, "");
-  const rawImageBuffer = Buffer.from(base64Data, "base64");
+  const rawImageBuffer = await refBuffer(refUrl);
   const imageBuffer = await sharp(rawImageBuffer).modulate({ saturation: 0 }).png().toBuffer();
 
   return { editRef, imageBuffer };
@@ -505,8 +512,7 @@ let refUrl = editRef;
   if (refUrl.startsWith("data:") && !refUrl.match(/^data:image\/(png|jpeg|gif|webp)/)) {
     refUrl = refUrl.replace(/^data:[^;]+;/, "data:image/jpeg;");
   }
-  const base64Data = refUrl.replace(/^data:image\/\w+;base64,/, "");
-  const rawImageBuffer = Buffer.from(base64Data, "base64");
+  const rawImageBuffer = await refBuffer(refUrl);
 
   // Strip color entirely before this reaches images.edit. Text instructions
   // alone weren't enough — the model can see the reference's actual pixels
