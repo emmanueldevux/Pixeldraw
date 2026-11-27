@@ -220,3 +220,10 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 - PRJ: chat ignores non-requests ('ff', 'hmm'): short reply, no image, no charge
 - PRJ: carousel onboarding: dropped separate 'Carousel style' step; references step now has Hero/Middle/Outro boxes (builds the project's own style), author+handle moved there
 - PRJ: stop storing base64 reference images in DB (projects POST/analyze/style PUT persist to storage, openai reads URL refs); admin route /api/admin/offload-images migrates old rows
+
+## PRJ-0055 — Live rig republished as artifact "Pixeldraw Pilot"
+- The rig (PRJ-0002 to PRJ-0020) already existed in the repo but no live artifact existed in the account (only the old Design board "CrawlGecko Pilot", Nov 16). Rebuilt from main and published as a hand-built HTML artifact (a Design artifact cannot hold iframes, PRJ-0015), with `db` + `user` declared so "Add & send to Claude" writes `inbox/<id>`.
+- Build recipe is now a script: `pilot/design/export/build_static.sh` (static export with NEXT_PUBLIC_PILOT=1 + NEXT_PUBLIC_PILOT_STATIC=1, then `package_static.py`). The export copy drops `src/app/api`, `/login`, `/`, `/brain`, `/jobs`, `/projects/[id]` (no server / redirect-only); Google Fonts are swapped for local @fontsource Inter + Inter Tight because the sandbox cannot reach fonts.googleapis.com (so fonts match, other Google families fall back).
+- Checked before publishing: 17 interceptor tests pass, 48 worlds valid, 13 pages exported, 136 files / 3.7 MB, no names starting with "_". Smoke test in headless Chrome: /dashboard with `dashboard-few-files` shows the world's file ("bouquet"), and with an unknown world it does not, so the check can fail.
+- Not done: the full click crawl (`crawl_unpinned.py`) was not re-run on this build; the build has no code changes since PRJ-0054 apart from the export-only config above (applied to a copy, not the repo).
+- Commits are pushed straight to main; trailers are the standard Claude co-author and session lines.

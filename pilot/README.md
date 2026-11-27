@@ -20,6 +20,10 @@ Pick a page, a world and a width. The stage is an iframe of the real app; the wo
 2. New file `public/pilot/worlds/<name>.world.json`, `extends` a partial, override only what the story changes.
 3. Add it to `public/pilot/worlds/index.json`. Run `check-worlds`.
 
+## Rebuild the live canvas
+    pilot/design/export/build_static.sh /tmp/pilot-build    # static export with fake data -> /tmp/pilot-build/pkg
+Publish every file in `pkg` as one artifact (names must not start with "_"; `package_static.py` already renames them). Say "reload my canvas" and Claude does this.
+
 ## Ship (strip the rig)
 Delete `src/pilot`, `src/app/pilot`, `public/pilot`; remove the `@pilot-start … @pilot-end` blocks in `src/app/layout.tsx`;
 run `node pilot/scripts/strip-check.mjs` — it must print "zero rig remnants". Keep `pilot/` docs and worlds in git as the spec.
