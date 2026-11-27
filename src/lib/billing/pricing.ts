@@ -12,6 +12,7 @@ export const DEFAULT_RULES = [
   { key: "chat.text",       label: "Chat reply (text model)",             provider: "deepseek / openai", creditsMilli: 200,  costMicroUsd: 2_000 },
   { key: "image.openai",    label: "Image — GPT Image 2",                 provider: "openai",            creditsMilli: 1500, costMicroUsd: 45_000 },
   { key: "image.flux",      label: "Image — FLUX",                        provider: "together",          creditsMilli: 500,  costMicroUsd: 3_000 },
+  { key: "image.nanobanana", label: "Image — Nano Banana (Flow worker)", provider: "flow-worker",  creditsMilli: 500,  costMicroUsd: 0 },
   { key: "image.edit",      label: "Image with product / reference photo", provider: "openai",           creditsMilli: 2000, costMicroUsd: 60_000 },
   { key: "vision.analysis", label: "Brand / reference analysis (vision)", provider: "openai",            creditsMilli: 1000, costMicroUsd: 25_000 },
   { key: "carousel.plan",   label: "Carousel planning (text)",            provider: "deepseek / openai", creditsMilli: 300,  costMicroUsd: 5_000 },
@@ -74,8 +75,10 @@ export async function priceItemsMilli(items: PriceItem[]): Promise<number> {
  * dropdown pick (or IMAGE_PROVIDER) decides.
  */
 export function imageKey(opts: { imageProvider?: string | null; productImage?: unknown }): string {
-  if (opts.productImage) return "image.edit";
   const provider = opts.imageProvider || process.env.IMAGE_PROVIDER || "together";
+  // Nano Banana takes product/reference photos itself, so it is checked before the product-photo rule below.
+  if (provider === "nanobanana" && process.env.FLOW_WORKER_URL && process.env.FLOW_WORKER_TOKEN) return "image.nanobanana";
+  if (opts.productImage) return "image.edit";
   const wantsOpenAI = provider === "openai";
   if (wantsOpenAI && process.env.OPENAI_API_KEY) return "image.openai";
   if (process.env.TOGETHER_API_KEY) return "image.flux";

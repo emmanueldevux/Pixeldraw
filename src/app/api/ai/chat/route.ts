@@ -31,6 +31,7 @@ import { buildSystemPrompt } from "@/lib/ai/skills";
 import { extractImagePrompt } from "@/lib/utils";
 import { openaiGenerateImage } from "@/lib/ai/providers/openai";
 import { togetherGenerateImage } from "@/lib/ai/providers/together";
+import { flowGenerateImage, flowConfigured } from "@/lib/ai/providers/flow";
 import type { AIMessage, ImageSize, StyleGuideData } from "@/types";
 import type { LogoPosition } from "@/lib/ai/logoComposite";
 import { getRandomTemplateAsBase64 } from "@/lib/templates";
@@ -60,7 +61,8 @@ async function generateImage(
   // the server default. A product image only works through OpenAI images.edit,
   // so when one is attached we prefer OpenAI regardless of the dropdown/FLUX.
   const provider = imageProvider || process.env.IMAGE_PROVIDER || "together";
-  const preferOpenAI = provider === "openai" || !!productImage;
+  const preferFlow = provider === "nanobanana" && flowConfigured();
+  const preferOpenAI = !preferFlow && (provider === "openai" || !!productImage);
   const logoOpts = {
     logoUrl,
     logoPosition: (logoPosition as unknown as LogoPosition) || undefined,
@@ -70,6 +72,10 @@ async function generateImage(
   // Logo is NOT composited here anymore — it's returned to the client and
   // overlaid as a draggable layer on the generated post.
   void logoOpts;
+
+  if (preferFlow) {
+    return flowGenerateImage({ prompt, size: size as ImageSize, referenceImages, productImage });
+  }
 
   if (preferOpenAI && process.env.OPENAI_API_KEY) {
     return openaiGenerateImage({ prompt, size: size as ImageSize, referenceImages, styleGuide, platform, brandName, productImage });

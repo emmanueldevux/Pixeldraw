@@ -6,7 +6,7 @@ import { useRef, useState, useEffect } from "react";
 // The selected value is sent to the API as `imageProvider` and overrides the
 // server's default IMAGE_PROVIDER for that one generation.
 export interface ImageModelOption {
-  value: string; // "openai" | "together"
+  value: string; // "openai" | "together" | "nanobanana"
   label: string;
   hint: string;
 }
@@ -14,6 +14,7 @@ export interface ImageModelOption {
 export const IMAGE_MODELS: ImageModelOption[] = [
   { value: "openai", label: "GPT Image 2", hint: "Best quality · uses brand + attached product" },
   { value: "together", label: "FLUX", hint: "Fastest · ignores product/reference" },
+  { value: "nanobanana", label: "Nano Banana", hint: "Google · uses brand + attached product/reference" },
 ];
 
 interface ProjectPromptProps {

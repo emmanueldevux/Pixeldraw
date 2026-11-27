@@ -13,6 +13,7 @@ export const maxDuration = 300;
 import { db } from "@/lib/db";
 import { openaiGenerateImage } from "@/lib/ai/providers/openai";
 import { togetherGenerateImage } from "@/lib/ai/providers/together";
+import { flowGenerateImage, flowConfigured } from "@/lib/ai/providers/flow";
 import type { ImageSize } from "@/types";
 import type { LogoPosition } from "@/lib/ai/logoComposite";
 import { randomUUID } from "crypto";
@@ -87,14 +88,18 @@ async function handlePOST(request: Request) {
     // Per-request model pick overrides the server default; an attached product
     // image forces OpenAI (FLUX can't take an input image).
     const provider = imageProvider || process.env.IMAGE_PROVIDER || "together";
-    const preferOpenAI = provider === "openai" || !!productImage;
+    const preferFlow = provider === "nanobanana" && flowConfigured();
+    const preferOpenAI = !preferFlow && (provider === "openai" || !!productImage);
     console.log("[IMAGE] 🔧 Provider:", provider);
     console.log("[IMAGE] 🔑 OpenAI key:", process.env.OPENAI_API_KEY ? "SET" : "MISSING");
     console.log("[IMAGE] 🔑 Together key:", process.env.TOGETHER_API_KEY ? "SET" : "MISSING");
 
     let response;
 
-    if (preferOpenAI && process.env.OPENAI_API_KEY) {
+    if (preferFlow) {
+      console.log("[IMAGE] 🚀 Using Nano Banana (flow-worker)...", productImage ? "(with product image)" : "");
+      response = await flowGenerateImage({ prompt, size: imageSize, productImage: productImage || null });
+    } else if (preferOpenAI && process.env.OPENAI_API_KEY) {
       console.log("[IMAGE] 🚀 Using OpenAI...", productImage ? "(with product image)" : "");
       response = await openaiGenerateImage({
         prompt,
