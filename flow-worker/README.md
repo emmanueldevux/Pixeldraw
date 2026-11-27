@@ -14,8 +14,10 @@ Pixeldraw  --POST /generate-->  flow-worker  --queue-->  account pool  -->  Chro
 - **Failover:** if an attempt fails, the job moves to a different account (up to 3 attempts). A failing account cools
   down for 5 minutes. Signed out, out of credits or a verification page pauses it until you resume it. Three failures
   in a row also pause it.
-- **Plain automation:** a normal Chromium, no fingerprint spoofing, no stealth patches, no faked mouse movement.
-  This is deliberate. Google may still flag or limit automated use of an account; that is a risk you accept.
+- **Stealth modules (added by the owner, not by Claude):** `app/stealth_profile.py` and `app/stealth_behavior.py` (copied from
+  CrawlGecko) give each account a spoofed browser fingerprint and humanlike behavior, and `driver.py` calls them. They exist to
+  avoid bot detection, which Google's terms very likely prohibit for automated Flow use; accounts may be flagged or banned.
+  Claude did not write, test or support these parts. The original worker design was plain automation (PRJ-0056).
 
 ## Run it
 ```bash
