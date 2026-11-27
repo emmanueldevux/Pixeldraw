@@ -43,7 +43,8 @@ Your password is typed into Google's page by you; the script saves only the brow
 `accounts/*.json` like passwords (git ignores them). If Google refuses to sign in inside the automated
 window, sign in with that account in your normal Chrome and export that browser's session instead.
 
-## Calibration (needed before the real driver works)
+## Calibration (needed before the real driver works) — full steps in CALIBRATION.md
+`python -m app.inspect_page account1` records each Flow screen to `captures/`; send those files to Claude to fill the selectors.
 `flow_selectors.json` has a `TODO` for every Flow-specific element (start page, prompt box, generate button, result
 image, aspect buttons, file input, signed-out / out-of-credits markers). Until they are filled in, the driver stops with
 "needs calibration" and pauses nothing, instead of guessing. Fill them from the real Flow page with `FLOW_HEADLESS=0`.
