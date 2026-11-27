@@ -187,7 +187,8 @@ def test_only_one_reference_reaches_the_driver(tmp_path):
     assert seen["names"] == ["ref0.png"]   # legacy referenceImages: only the first becomes the reference
 
 
-def test_attachments_and_reference_are_separate(tmp_path):
+def test_attachments_and_reference_are_separate(tmp_path, monkeypatch):
+    import app.jobs as jobs; monkeypatch.setattr(jobs, "MAX_ATTACHMENTS", 2)   # prove they stay separate even if raised
     seen = {}
     class D(MockDriver):
         async def generate(self, job, path):
@@ -214,3 +215,20 @@ def test_no_reference_means_none(tmp_path):
     with c:
         assert c.post("/generate", json={"prompt": "x"}, headers=H).status_code == 200
     assert seen == {"ref": None, "n": 0}
+
+
+def test_default_is_one_attachment_and_one_reference(tmp_path):
+    seen = {}
+    class D(MockDriver):
+        async def generate(self, job, path):
+            seen["att"] = len(job.attachment_files); seen["ref"] = 1 if job.reference_file else 0
+            seen["all"] = len(job.reference_files); return await super().generate(job, path)
+    from PIL import Image
+    def img(color):
+        b = io.BytesIO(); Image.new("RGB", (8, 8), color).save(b, "PNG")
+        return "data:image/png;base64," + base64.b64encode(b.getvalue()).decode()
+    c, _ = client(tmp_path, D(), make_pool(tmp_path))
+    with c:
+        r = c.post("/generate", json={"prompt": "x", "attachments": [img("red"), img("blue"), img("black")], "reference": img("green")}, headers=H)
+        assert r.status_code == 200
+    assert seen == {"att": 1, "ref": 1, "all": 2}

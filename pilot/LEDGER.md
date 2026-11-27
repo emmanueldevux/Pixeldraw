@@ -248,6 +248,6 @@ PRJ-0012 · 2026-11-16 · check-worlds.mjs now also (a) requires every world lis
 
 ## PRJ-0059 — Flow gets attachments and ONE reference, kept apart
 - Owner: Flow cannot take 6 images, and the product photo / user attachments are a different thing from the style reference. Fixed in both places: the app (`src/lib/ai/providers/flow.ts`) now sends `attachments` (the product photo) and `reference` (the first style reference only) as separate fields; the worker keeps them apart (`Job.attachment_files`, `Job.reference_file`, plus the combined `reference_files` the driver already used). Older `referenceImages` callers still work (first one = reference).
-- `FLOW_MAX_ATTACHMENTS` defaults to 3. That number is an ASSUMPTION; set it to what Flow really accepts once the page is calibrated.
+- Owner: no piles of images. `FLOW_MAX_ATTACHMENTS` defaults to 1 (extra attachments dropped, first wins), and there is one reference, so Flow gets at most 2 images in total. Raise it only if the calibrated Flow page really takes more.
 - Known gap (not fixed): the OpenAI path builds its final prompt from the brand style guide (colors, text colors); the Flow path in `/api/ai/generate-image` does not pass the style guide, so brand colors/typography only reach Flow through the prompt text and the brand rules.
 - Tests: 21 worker tests pass (new: attachments vs reference kept separate, no-reference case, only the first reference used).
