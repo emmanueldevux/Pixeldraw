@@ -74,7 +74,7 @@ async function generateImage(
   void logoOpts;
 
   if (preferFlow) {
-    return flowGenerateImage({ prompt, size: size as ImageSize, referenceImages, productImage });
+    return flowGenerateImage({ prompt, size: size as ImageSize, referenceImages, styleGuide, platform, brandName, productImage });
   }
 
   if (preferOpenAI && process.env.OPENAI_API_KEY) {

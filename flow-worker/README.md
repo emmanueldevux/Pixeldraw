@@ -52,7 +52,7 @@ image, aspect buttons, file input, signed-out / out-of-credits markers). Until t
 "needs calibration" and pauses nothing, instead of guessing. Fill them from the real Flow page with `FLOW_HEADLESS=0`.
 
 ## API (all but /health need the token)
-- `POST /generate` `{prompt, size?|aspect?, attachments?[], reference?}`: `attachments` = the user's product photo / attached images (default max 1 via `FLOW_MAX_ATTACHMENTS`), `reference` = ONE style reference. They are different things and are kept apart (`Job.attachment_files`, `Job.reference_file`). Older callers' `referenceImages` still work: the first becomes the reference -> `200 {url}` | `502 {error}` | `504 {jobId}` (still running)
+- `POST /generate` `{prompt, size?|aspect?, attachments?[], reference?}`: `attachments` = the user's product photo / attached images (up to 3 via `FLOW_MAX_ATTACHMENTS`), `reference` = ONE style reference. They are different things and are kept apart (`Job.attachment_files`, `Job.reference_file`). Older callers' `referenceImages` still work: the first becomes the reference -> `200 {url}` | `502 {error}` | `504 {jobId}` (still running)
 - `POST /jobs`, `GET /jobs/{id}` — the same without waiting
 - `GET /accounts` — state only, never cookies; `POST /accounts/{id}/resume`; `POST /accounts/reload` after adding a file
 - `GET /health`

@@ -19,7 +19,7 @@ from .pool import AccountPool
 
 MAX_ATTEMPTS = int(os.getenv("JOB_MAX_ATTEMPTS", "3"))
 QUEUE_TIMEOUT = float(os.getenv("JOB_QUEUE_TIMEOUT_SECONDS", "600"))   # waiting for a free account
-MAX_ATTACHMENTS = int(os.getenv("FLOW_MAX_ATTACHMENTS", "1"))   # product photo / user attachment: ONE (extra ones are dropped, first wins)
+MAX_ATTACHMENTS = int(os.getenv("FLOW_MAX_ATTACHMENTS", "3"))   # product photo + other attached images: up to 3 (extra ones are dropped, first wins)
 MAX_REFS = 1                                                     # Flow takes ONE style reference; the first wins
 MAX_REF_BYTES = 10 * 1024 * 1024
 

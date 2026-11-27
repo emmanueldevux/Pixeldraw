@@ -217,7 +217,7 @@ def test_no_reference_means_none(tmp_path):
     assert seen == {"ref": None, "n": 0}
 
 
-def test_default_is_one_attachment_and_one_reference(tmp_path):
+def test_default_is_three_attachments_and_one_reference(tmp_path):
     seen = {}
     class D(MockDriver):
         async def generate(self, job, path):
@@ -229,6 +229,7 @@ def test_default_is_one_attachment_and_one_reference(tmp_path):
         return "data:image/png;base64," + base64.b64encode(b.getvalue()).decode()
     c, _ = client(tmp_path, D(), make_pool(tmp_path))
     with c:
-        r = c.post("/generate", json={"prompt": "x", "attachments": [img("red"), img("blue"), img("black")], "reference": img("green")}, headers=H)
+        four = [img("red"), img("blue"), img("black"), img("white")]
+        r = c.post("/generate", json={"prompt": "x", "attachments": four, "reference": img("green")}, headers=H)
         assert r.status_code == 200
-    assert seen == {"att": 1, "ref": 1, "all": 2}
+    assert seen == {"att": 3, "ref": 1, "all": 4}   # 4th attachment dropped; reference is separate
