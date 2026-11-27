@@ -19,8 +19,10 @@ export async function flowGenerateImage(
   const token = process.env.FLOW_WORKER_TOKEN;
   if (!base || !token) throw new Error("Nano Banana is not configured (FLOW_WORKER_URL / FLOW_WORKER_TOKEN)");
 
-  // The product photo comes first so it is the main reference; then the style references. The worker takes up to 6.
-  const refs = [request.productImage, ...(request.referenceImages || [])].filter((r): r is string => !!r).slice(0, 6);
+  // Two different things go to Flow: the user's product photo / attachments, and ONE style reference.
+  // Flow takes a single reference, so only the first style reference is sent (the product photo is not a reference).
+  const attachments = [request.productImage].filter((r): r is string => !!r);
+  const reference = (request.referenceImages || []).find((r) => !!r) || null;
   const rules = brandRulesText();
   const prompt = rules ? `${request.prompt}\n\n${rules}` : request.prompt;
 
@@ -28,7 +30,7 @@ export async function flowGenerateImage(
   const res = await fetch(`${base.replace(/\/$/, "")}/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ prompt, size: request.size, referenceImages: refs }),
+    body: JSON.stringify({ prompt, size: request.size, attachments, reference }),
     signal: AbortSignal.timeout(Number(process.env.FLOW_WORKER_TIMEOUT_MS || 270_000)),
   });
 

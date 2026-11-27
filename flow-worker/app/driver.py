@@ -99,7 +99,9 @@ class Job:
     id: str
     prompt: str
     aspect: str = "1:1"                          # "1:1" | "16:9" | "9:16" | "4:5" ...
-    reference_files: list[str] = field(default_factory=list)   # local paths, already downloaded
+    reference_files: list[str] = field(default_factory=list)   # ALL images to upload (attachments first, then the reference)
+    attachment_files: list[str] = field(default_factory=list)  # the user's product photo / attachments
+    reference_file: Optional[str] = None                       # the single style reference
 
 
 class Driver:
