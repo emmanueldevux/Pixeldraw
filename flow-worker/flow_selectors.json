@@ -1,12 +1,20 @@
 {
-  "_comment": "Every Flow-specific selector lives here. Values starting with TODO are not filled in yet: the driver stops with 'needs calibration' instead of guessing. Fill them in from the real Flow page (see README, Calibration).",
-  "start_url": "TODO https://labs.google/fx/tools/flow (the page where a new image is made)",
-  "signed_out_marker": "TODO selector that exists only when signed out (e.g. the Sign in button)",
-  "verification_marker": "TODO selector for a verification / 'unusual activity' page (optional)",
-  "out_of_credits_marker": "TODO selector for the out-of-credits message (optional)",
-  "reference_file_input": "TODO input[type=file] used to add a reference image",
-  "aspect_buttons": { "1:1": "TODO", "16:9": "TODO", "9:16": "TODO" },
-  "prompt_input": "TODO the prompt text box",
-  "generate_button": "TODO the Generate / create button",
-  "result_image": "TODO img selector matching finished result images"
+    "start_url":  "https://flow.google.com",
+    "signed_out_marker":  "text=Sign in",
+    "verification_marker":  "text=Verify",
+    "out_of_credits_marker":  "text=You\u0027ve reached your limit",
+    "prompt_input":  "div[aria-label=\"What do you want to create?\"]",
+    "generate_button":  "button[aria-label=\"Start generation\"]",
+    "settings_trigger":  "button[aria-label=\"Settings trigger\"]",
+    "image_tab":  "button:has-text(\"Image\")",
+    "aspect_buttons":  {
+                           "1:1":  "button:has-text(\"1:1\")",
+                           "16:9":  "button:has-text(\"16:9\")",
+                           "9:16":  "button:has-text(\"9:16\")",
+                           "4:3":  "button:has-text(\"4:3\")"
+                       },
+    "x4_button":  "button:has-text(\"x4\")",
+    "reference_file_input":  "input[type=\"file\"]",
+    "result_image":  "img[src*=\"googleusercontent.com\"]",
+    "add_media_button":  "button[aria-label=\"Add ingredients to the prompt box\"]"
 }

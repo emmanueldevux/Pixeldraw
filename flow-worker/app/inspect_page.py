@@ -8,11 +8,6 @@ label (for example "empty prompt screen", "prompt typed", "generating", "result 
 Enter. Press Enter on an empty label to finish. Each capture saves, in captures/:
   <account>-<n>-<label>.json   every visible button / link / input / image with a suggested selector
   <account>-<n>-<label>.png    a screenshot
-Send me those files (they are ignored by git). Nothing you type into the page is recorded: input values are never
-read, password fields are skipped, e-mail addresses are masked, and image links keep only host + path.
-
-If accounts/<account>.json exists it is used (already signed in); otherwise sign in in the window, and the login is
-saved to that file when you finish, so the pool can use it.
 """
 import argparse
 import json
@@ -48,7 +43,6 @@ JS = r"""
       o.src = s; o.alt = e.alt || ''; o.natural = [e.naturalWidth, e.naturalHeight];
     }
     if (tag === 'input' && e.type === 'file') o.accept = e.accept || '';
-    // suggested selector, most stable first
     let sel = '';
     if (o.testid) sel = `[data-testid="${o.testid}"]`;
     else if (o.id && !/\d{3,}/.test(o.id)) sel = '#' + CSS.escape(o.id);
@@ -96,22 +90,57 @@ def main() -> None:
     ap.add_argument("--once", metavar="LABEL", help="capture once without asking (used by tests)")
     ap.add_argument("--headless", action="store_true")
     a = ap.parse_args()
+    
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,40}", a.account_id):
         raise SystemExit("account id: letters, digits, - and _ only")
+        
     os.makedirs(a.out, exist_ok=True)
     state = os.path.join(a.dir, f"{a.account_id}.json")
     have_login = os.path.isfile(state)
+
+    proxy_server = os.getenv("PROXY_SERVER")
+    proxy_user = os.getenv("PROXY_USER")
+    proxy_pass = os.getenv("PROXY_PASS")
+
+    launch_kwargs = {
+        "headless": a.headless,
+        "channel": "chrome", 
+        "args": ["--disable-blink-features=AutomationControlled", "--start-maximized"]
+    }
+
+    if proxy_server:
+        print(f"🌐 Using Proxy: {proxy_server}")
+        launch_kwargs["proxy"] = {
+            "server": proxy_server,
+            "username": proxy_user,
+            "password": proxy_pass
+        }
+
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=a.headless)
-        ctx = browser.new_context(storage_state=state if have_login else None, viewport={"width": 1440, "height": 900})
+        browser = pw.chromium.launch(**launch_kwargs)
+        
+        # Use no_viewport=True so it respects the maximized OS window size
+        ctx = browser.new_context(
+            storage_state=state if have_login else None, 
+            no_viewport=True
+        )
         page = ctx.new_page()
-        page.goto(a.url)
+        
+        print(f"Navigating to {a.url}...")
+        page.goto(a.url, wait_until="domcontentloaded", timeout=60000)
+        
+        # Auto zoom out to force Flow to reveal the prompt box
+        print("Zooming out to reveal bottom UI...")
+        page.keyboard.press("Control+-")
+        page.keyboard.press("Control+-")
+        page.wait_for_timeout(1000)
+        
         n = 0
         if a.once:
             page.wait_for_timeout(500)
             capture(page, a.account_id, 1, a.once, a.out)
         else:
-            print("Sign in if needed, then get the screen into the state you want to record.")
+            print("\nSign in if needed, then get the screen into the state you want to record.")
             while True:
                 label = input("label for this screen (empty = finish): ").strip()
                 if not label:

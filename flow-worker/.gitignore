@@ -1,7 +1,14 @@
+﻿# Google Account Sessions (DO NOT PUSH)
 accounts/
-files/
+*.json.bak
+
+# Fingerprint profiles & captured data
+data/
+captures/
+result.png
+
+# Python junk
 __pycache__/
 *.pyc
 .env
-.pytest_cache/
-captures/
+patch_script.py

@@ -1,0 +1,21 @@
+{
+    "start_url":  "https://flow.google.com",
+    "new_project_button":  "text=\u0027New project\u0027",
+    "signed_out_marker":  "text=Sign in",
+    "verification_marker":  "text=Verify",
+    "out_of_credits_marker":  "text=You\u0027ve reached your limit",
+    "prompt_input":  "div[aria-label=\"What do you want to create?\"]",
+    "generate_button":  "button[aria-label=\"Start generation\"]",
+    "settings_trigger":  "button[aria-label=\"Settings trigger\"]",
+    "image_tab":  "button:has-text(\"Image\")",
+    "aspect_buttons":  {
+                           "1:1":  "button:has-text(\"1:1\")",
+                           "16:9":  "button:has-text(\"16:9\")",
+                           "9:16":  "button:has-text(\"9:16\")",
+                           "4:3":  "button:has-text(\"4:3\")"
+                       },
+    "x4_button":  "button:has-text(\"x4\")",
+    "reference_file_input":  "input[type=\"file\"]",
+    "result_image":  "img[src*=\"googleusercontent.com\"]",
+    "add_media_button":  "button[aria-label=\"Add ingredients to the prompt box\"]"
+}
