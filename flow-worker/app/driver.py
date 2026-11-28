@@ -57,8 +57,15 @@ class NeedsCalibration(NeedsHuman): pass
 class Job:
     id: str
     prompt: str
+<<<<<<< HEAD
     aspect: str = "1:1"
     reference_files: list[str] = field(default_factory=list)
+=======
+    aspect: str = "1:1"                          # "1:1" | "16:9" | "9:16" | "4:5" ...
+    reference_files: list[str] = field(default_factory=list)   # ALL images to upload (attachments first, then the reference)
+    attachment_files: list[str] = field(default_factory=list)  # the user's product photo / attachments
+    reference_file: Optional[str] = None                       # the single style reference
+>>>>>>> ab7572b39a955ce62e40fbdffc3eb5bfdd08b72c
 
 
 class Driver:

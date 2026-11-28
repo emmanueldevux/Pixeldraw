@@ -98,7 +98,7 @@ async function handlePOST(request: Request) {
 
     if (preferFlow) {
       console.log("[IMAGE] 🚀 Using Nano Banana (flow-worker)...", productImage ? "(with product image)" : "");
-      response = await flowGenerateImage({ prompt, size: imageSize, productImage: productImage || null });
+      response = await flowGenerateImage({ prompt, size: imageSize, styleGuide: brandStyleGuide, productImage: productImage || null });
     } else if (preferOpenAI && process.env.OPENAI_API_KEY) {
       console.log("[IMAGE] 🚀 Using OpenAI...", productImage ? "(with product image)" : "");
       response = await openaiGenerateImage({

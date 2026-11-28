@@ -187,6 +187,22 @@ export async function openaiComplete(
 
 // ==================== Image Generation ====================
 
+// Platform pixel size -> the closest size gpt-image-2 renders (shared by the OpenAI and Nano Banana paths).
+const SIZE_MAP: Record<string, "1024x1024" | "1024x1536" | "1536x1024"> = {
+    "1080x1080": "1024x1024",
+    "1080x1350": "1024x1536", // 4:5: rendered 2:3, trimmed to 4:5 by the caller
+    "1080x1920": "1024x1536",
+    "1920x1080": "1536x1024",
+    "1200x627": "1536x1024",
+    "1200x630": "1536x1024",
+    "1600x900": "1536x1024",
+    "1280x720": "1536x1024",
+    "1000x1500": "1024x1536",
+  };
+export function toOpenAISize(size: string): "1024x1024" | "1024x1536" | "1536x1024" {
+  return SIZE_MAP[size] || "1024x1024";
+}
+
 export async function openaiGenerateImage(
   request: ImageGenerationRequest & {
     referenceImages?: string[];
@@ -216,18 +232,7 @@ export async function openaiGenerateImage(
   }
 
   // Parse size for the platform
-  const sizeMap: Record<string, "1024x1024" | "1024x1536" | "1536x1024"> = {
-    "1080x1080": "1024x1024",
-    "1080x1350": "1024x1536", // 4:5: rendered 2:3, trimmed to 4:5 by the caller
-    "1080x1920": "1024x1536",
-    "1920x1080": "1536x1024",
-    "1200x627": "1536x1024",
-    "1200x630": "1536x1024",
-    "1600x900": "1536x1024",
-    "1280x720": "1536x1024",
-    "1000x1500": "1024x1536",
-  };
-  const imageSize = sizeMap[request.size] || "1024x1024";
+  const imageSize = toOpenAISize(request.size);
 
   let result: ImageGenerationResponse;
 
@@ -402,7 +407,9 @@ function advancedPromptAddon(style: Partial<StyleGuideData> | null | undefined):
   return parts.join("");
 }
 
-async function structuredPipeline(
+// Steps 1-3 of the pipeline (visual DNA, creative direction, subject, inspiration, brand layer, final prompt).
+// Split out so the Nano Banana path builds the SAME prompt as OpenAI; the OpenAI path calls it too, unchanged.
+export async function prepareStructuredPrompt(
   client: OpenAI,
   userPrompt: string,
   referenceImages: string[],
@@ -410,10 +417,8 @@ async function structuredPipeline(
   size: "1024x1024" | "1024x1536" | "1536x1024",
   platform?: string,
   brandName?: string | null,
-  quality: ImageQuality = "medium",
   productImage?: string | null
-): Promise<ImageGenerationResponse> {
-
+) {
   // ========== STEP 1: Reference → Base Prompt JSON ==========
   console.log("[OPENAI] Step 1: Extracting visual DNA from reference...");
   const basePromptJSON = await extractVisualDNA(client, referenceImages);
@@ -489,6 +494,25 @@ async function structuredPipeline(
   console.log("[OPENAI] Step 3: ===== FULL FINAL PROMPT SENT TO gpt-image-2 =====");
   console.log(finalPrompt);
   console.log("[OPENAI] Step 3: ===== END FULL FINAL PROMPT =====");
+
+  return { finalPrompt, direction, basePromptJSON };
+}
+
+async function structuredPipeline(
+  client: OpenAI,
+  userPrompt: string,
+  referenceImages: string[],
+  style: Partial<StyleGuideData> | null | undefined,
+  size: "1024x1024" | "1024x1536" | "1536x1024",
+  platform?: string,
+  brandName?: string | null,
+  quality: ImageQuality = "medium",
+  productImage?: string | null
+): Promise<ImageGenerationResponse> {
+
+  const { finalPrompt, direction, basePromptJSON } = await prepareStructuredPrompt(
+    client, userPrompt, referenceImages, style, size, platform, brandName, productImage
+  );
 
   // ========== STEP 4: Generate with Reference ==========
   console.log("[OPENAI] Step 4: Generating image at", size, "quality: high...");
@@ -730,16 +754,8 @@ export function buildFinalPrompt(
 
 // ==================== Standard Generation (no references) ====================
 
-async function standardGenerate(
-  client: OpenAI,
-  prompt: string,
-  style: Partial<StyleGuideData> | null | undefined,
-  size: "1024x1024" | "1024x1536" | "1536x1024",
-  quality: ImageQuality = "medium",
-  productImage?: string | null
-): Promise<ImageGenerationResponse> {
-  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
-
+// The brand-colour wrapper used when there is no style reference (shared with the Nano Banana path).
+export function buildStandardPrompt(prompt: string, style: Partial<StyleGuideData> | null | undefined): string {
   // Always apply brand colors, even with no style guide passed in at all —
   // fall back to the same defaults the reference-based pipeline uses,
   // rather than silently generating with no color guidance whatsoever.
@@ -760,6 +776,21 @@ async function standardGenerate(
   // sentence was too weak for the model to reliably prioritize over its
   // own stylistic instincts (e.g. defaulting to a dark "coming soon" look).
   const styledPrompt = `CRITICAL COLOR RULE: Use ONLY these exact brand colors —${bgNote} primary ${primary}, accent ${accent}, text/secondary ${textColor}. These MUST be followed exactly, especially the background color which MUST be the dominant background of the entire image. These colors apply to background, UI elements, glows, highlights, and text — NOT to human figures, characters, or naturalistic subjects, which must render in natural, realistic color rather than being tinted in the brand hue.${contrastNote} Tone: ${tone}. CRITICAL — DO NOT DRAW A LOGO: do not render any logo, brand icon, wordmark, or stylized brand lockup — that gets added separately after generation. Plain brand-name text is fine if it fits naturally, but not a designed logo mark. ${prompt}` + advancedPromptAddon(style);
+
+  return styledPrompt;
+}
+
+async function standardGenerate(
+  client: OpenAI,
+  prompt: string,
+  style: Partial<StyleGuideData> | null | undefined,
+  size: "1024x1024" | "1024x1536" | "1536x1024",
+  quality: ImageQuality = "medium",
+  productImage?: string | null
+): Promise<ImageGenerationResponse> {
+  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+
+  const styledPrompt = buildStandardPrompt(prompt, style);
 
   console.log("[OPENAI] Standard generation with", model, "at", quality, "quality, size:", size, productImage ? "(with product image)" : "");
 
@@ -836,4 +867,53 @@ export async function openaiTemplateImage(opts: {
   const url = d?.url ? String(d.url) : d?.b64_json ? `data:image/png;base64,${d.b64_json}` : "";
   if (!url) throw new Error("No image returned");
   return { url, revisedPrompt: opts.prompt, usage: (response as { usage?: unknown }).usage ?? null, size, quality };
+}
+
+
+// ==================== Nano Banana (Flow) preparation ====================
+// Flow only DRAWS. The thinking (visual DNA, layout/background direction, subject, inspiration technique, brand
+// colours/tone/font, readable text colour) is done here by the same code the OpenAI path uses, then the finished
+// prompt and ONE colour-stripped style reference go to the flow-worker.
+
+async function pickDesaturatedReference(referenceImages: string[]): Promise<Buffer> {
+  const ref = referenceImages[Math.floor(Math.random() * referenceImages.length)];
+  let u = ref;
+  if (u.startsWith("data:") && !u.match(/^data:image\/(png|jpeg|gif|webp)/)) u = u.replace(/^data:[^;]+;/, "data:image/jpeg;");
+  return sharp(await refBuffer(u)).modulate({ saturation: 0 }).png().toBuffer();
+}
+
+export async function prepareForFlow(request: {
+  prompt: string;
+  size: string;
+  referenceImages?: string[];
+  styleGuide?: Partial<StyleGuideData> | null;
+  platform?: string;
+  brandName?: string | null;
+  productImage?: string | null;
+}): Promise<{ prompt: string; reference: string | null; structured: boolean }> {
+  const refs = request.referenceImages || [];
+  const style = request.styleGuide;
+
+  let reference: string | null = null;
+  if (refs.length > 0) {
+    try {
+      reference = `data:image/png;base64,${(await pickDesaturatedReference(refs)).toString("base64")}`;
+    } catch (err) {
+      console.error("[FLOW] could not prepare the style reference, sending none:", err);
+    }
+  }
+
+  let prompt: string | null = null;
+  if (refs.length > 0 && process.env.OPENAI_API_KEY) {
+    try {
+      const r = await prepareStructuredPrompt(getClient(), request.prompt, refs, style, toOpenAISize(request.size),
+        request.platform, request.brandName, request.productImage || null);
+      prompt = r.finalPrompt;
+    } catch (err) {
+      console.error("[FLOW] structured prompt failed, using the standard brand prompt:", err);
+    }
+  }
+  const structured = !!prompt;
+  if (!prompt) prompt = buildStandardPrompt(request.prompt, style) + (request.productImage ? PRODUCT_RULE : "");
+  return { prompt, reference, structured };
 }

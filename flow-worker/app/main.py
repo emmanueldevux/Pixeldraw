@@ -22,7 +22,9 @@ class GenerateIn(BaseModel):
     prompt: str = Field(min_length=1, max_length=8000)
     size: Optional[str] = None                       # "1080x1920"
     aspect: Optional[str] = None                     # "9:16" (wins over size)
-    referenceImages: list[str] = Field(default_factory=list, max_length=6)   # http(s) or data: URLs
+    attachments: list[str] = Field(default_factory=list, max_length=6)   # product photo / user attachments (http(s) or data: URLs)
+    reference: Optional[str] = None                                      # ONE style reference (separate from attachments)
+    referenceImages: list[str] = Field(default_factory=list, max_length=6)   # older callers: style references, only the first is used
 
 
 def create_app(pool: Optional[AccountPool] = None, driver=None, store=None) -> FastAPI:
@@ -53,7 +55,7 @@ def create_app(pool: Optional[AccountPool] = None, driver=None, store=None) -> F
     async def generate(body: GenerateIn):
         """Submit and wait. 200 {url} when done; 502 on failure; 504 {jobId} if it is still running."""
         aspect = body.aspect or aspect_for_size(body.size or "")
-        rec = mgr.submit(body.prompt, aspect, body.referenceImages)
+        rec = mgr.submit(body.prompt, aspect, body.attachments, body.reference or (body.referenceImages[0] if body.referenceImages else None))
         rec = await mgr.wait(rec.id, WAIT_SECONDS)
         if rec.status == "done":
             return {"url": rec.url, "jobId": rec.id, "attempts": rec.attempts}
@@ -63,7 +65,8 @@ def create_app(pool: Optional[AccountPool] = None, driver=None, store=None) -> F
 
     @app.post("/jobs", dependencies=[Depends(auth)])
     async def submit(body: GenerateIn):
-        rec = mgr.submit(body.prompt, body.aspect or aspect_for_size(body.size or ""), body.referenceImages)
+        rec = mgr.submit(body.prompt, body.aspect or aspect_for_size(body.size or ""), body.attachments,
+                         body.reference or (body.referenceImages[0] if body.referenceImages else None))
         return rec.public()
 
     @app.get("/jobs/{job_id}", dependencies=[Depends(auth)])

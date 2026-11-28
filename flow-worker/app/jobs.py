@@ -19,7 +19,8 @@ from .pool import AccountPool
 
 MAX_ATTEMPTS = int(os.getenv("JOB_MAX_ATTEMPTS", "3"))
 QUEUE_TIMEOUT = float(os.getenv("JOB_QUEUE_TIMEOUT_SECONDS", "600"))   # waiting for a free account
-MAX_REFS = 6
+MAX_ATTACHMENTS = int(os.getenv("FLOW_MAX_ATTACHMENTS", "3"))   # product photo + other attached images: up to 3 (extra ones are dropped, first wins)
+MAX_REFS = 1                                                     # Flow takes ONE style reference; the first wins
 MAX_REF_BYTES = 10 * 1024 * 1024
 
 
@@ -28,7 +29,8 @@ class Record:
     id: str
     prompt: str
     aspect: str
-    references: list[str]
+    attachments: list[str]
+    reference: Optional[str] = None
     status: str = "queued"            # queued | running | done | failed
     attempts: int = 0
     tried: list[str] = field(default_factory=list)   # account ids already used (never shown to the app)
@@ -54,7 +56,7 @@ def _is_public_host(host: str) -> bool:
     return True
 
 
-async def fetch_reference(ref: str, directory: str, index: int) -> str:
+async def fetch_reference(ref: str, directory: str, index: int, kind: str = "ref") -> str:
     """Download one reference (http(s) URL or data: URL) to a local file; returns its path."""
     if ref.startswith("data:"):
         head, _, b64 = ref.partition(",")
@@ -73,7 +75,7 @@ async def fetch_reference(ref: str, directory: str, index: int) -> str:
         ext = "png" if "png" in ct else "webp" if "webp" in ct else "jpg"
     if len(data) > MAX_REF_BYTES:
         raise ValueError("reference image too large")
-    path = os.path.join(directory, f"ref{index}.{ext}")
+    path = os.path.join(directory, f"{kind}{index}.{ext}")
     with open(path, "wb") as f:
         f.write(data)
     return path
@@ -90,8 +92,10 @@ class JobManager:
         if not self._dispatcher:
             self._dispatcher = asyncio.create_task(self._dispatch())
 
-    def submit(self, prompt: str, aspect: str, references: list[str]) -> Record:
-        rec = Record(id=uuid.uuid4().hex[:16], prompt=prompt, aspect=aspect, references=references[:MAX_REFS])
+    def submit(self, prompt: str, aspect: str, attachments: list[str], reference: Optional[str] = None) -> Record:
+        """attachments = the user's product photo / attached images; reference = ONE style reference (separate thing)."""
+        rec = Record(id=uuid.uuid4().hex[:16], prompt=prompt, aspect=aspect,
+                     attachments=attachments[:MAX_ATTACHMENTS], reference=reference or None)
         self.jobs[rec.id] = rec
         self.queue.put_nowait(rec.id)
         self._trim()
@@ -136,8 +140,11 @@ class JobManager:
     async def _run(self, rec: Record, account_id: str) -> None:
         tmp = tempfile.mkdtemp(prefix="flowjob_")
         try:
-            files = [await fetch_reference(r, tmp, i) for i, r in enumerate(rec.references)]
-            png = await self.driver.generate(Job(rec.id, rec.prompt, rec.aspect, files), self.pool.storage_path(account_id))
+            att = [await fetch_reference(r, tmp, i, "att") for i, r in enumerate(rec.attachments)]
+            ref = await fetch_reference(rec.reference, tmp, 0, "ref") if rec.reference else None
+            job = Job(rec.id, rec.prompt, rec.aspect, reference_files=att + ([ref] if ref else []),
+                      attachment_files=att, reference_file=ref)
+            png = await self.driver.generate(job, self.pool.storage_path(account_id))
             rec.url = await self.store.save(png, rec.id)
             self.pool.release_ok(account_id)
             rec.status = "done"

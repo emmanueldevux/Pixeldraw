@@ -168,3 +168,68 @@ def test_uncalibrated_flow_driver_stops_instead_of_guessing(tmp_path):
     from app.driver import PlaywrightFlowDriver, NeedsCalibration, Job
     with pytest.raises(NeedsCalibration):
         asyncio.run(PlaywrightFlowDriver().generate(Job("j", "x"), str(tmp_path / "a.json")))
+
+
+def test_only_one_reference_reaches_the_driver(tmp_path):
+    seen = {}
+    class D(MockDriver):
+        async def generate(self, job, path):
+            seen["names"] = [os.path.basename(f) for f in job.reference_files]
+            return await super().generate(job, path)
+    from PIL import Image
+    def ref(color):
+        b = io.BytesIO(); Image.new("RGB", (8, 8), color).save(b, "PNG")
+        return "data:image/png;base64," + base64.b64encode(b.getvalue()).decode()
+    c, _ = client(tmp_path, D(), make_pool(tmp_path))
+    with c:
+        r = c.post("/generate", json={"prompt": "x", "referenceImages": [ref("red"), ref("blue"), ref("green")]}, headers=H)
+        assert r.status_code == 200
+    assert seen["names"] == ["ref0.png"]   # legacy referenceImages: only the first becomes the reference
+
+
+def test_attachments_and_reference_are_separate(tmp_path, monkeypatch):
+    import app.jobs as jobs; monkeypatch.setattr(jobs, "MAX_ATTACHMENTS", 2)   # prove they stay separate even if raised
+    seen = {}
+    class D(MockDriver):
+        async def generate(self, job, path):
+            b = os.path.basename
+            seen["att"] = [b(f) for f in job.attachment_files]; seen["ref"] = b(job.reference_file) if job.reference_file else None
+            seen["all"] = [b(f) for f in job.reference_files]
+            return await super().generate(job, path)
+    from PIL import Image
+    def img(color):
+        b = io.BytesIO(); Image.new("RGB", (8, 8), color).save(b, "PNG")
+        return "data:image/png;base64," + base64.b64encode(b.getvalue()).decode()
+    c, _ = client(tmp_path, D(), make_pool(tmp_path))
+    with c:
+        r = c.post("/generate", json={"prompt": "x", "attachments": [img("red"), img("blue")], "reference": img("green")}, headers=H)
+        assert r.status_code == 200
+    assert seen == {"att": ["att0.png", "att1.png"], "ref": "ref0.png", "all": ["att0.png", "att1.png", "ref0.png"]}
+
+def test_no_reference_means_none(tmp_path):
+    seen = {}
+    class D(MockDriver):
+        async def generate(self, job, path):
+            seen["ref"] = job.reference_file; seen["n"] = len(job.reference_files); return await super().generate(job, path)
+    c, _ = client(tmp_path, D(), make_pool(tmp_path))
+    with c:
+        assert c.post("/generate", json={"prompt": "x"}, headers=H).status_code == 200
+    assert seen == {"ref": None, "n": 0}
+
+
+def test_default_is_three_attachments_and_one_reference(tmp_path):
+    seen = {}
+    class D(MockDriver):
+        async def generate(self, job, path):
+            seen["att"] = len(job.attachment_files); seen["ref"] = 1 if job.reference_file else 0
+            seen["all"] = len(job.reference_files); return await super().generate(job, path)
+    from PIL import Image
+    def img(color):
+        b = io.BytesIO(); Image.new("RGB", (8, 8), color).save(b, "PNG")
+        return "data:image/png;base64," + base64.b64encode(b.getvalue()).decode()
+    c, _ = client(tmp_path, D(), make_pool(tmp_path))
+    with c:
+        four = [img("red"), img("blue"), img("black"), img("white")]
+        r = c.post("/generate", json={"prompt": "x", "attachments": four, "reference": img("green")}, headers=H)
+        assert r.status_code == 200
+    assert seen == {"att": 3, "ref": 1, "all": 4}   # 4th attachment dropped; reference is separate
